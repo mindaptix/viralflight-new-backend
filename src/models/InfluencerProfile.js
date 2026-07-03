@@ -1,18 +1,11 @@
 const mongoose = require("mongoose");
-const {
-  ALLOWED_CITIES,
-  ALLOWED_PLATFORMS,
-  CONTENT_CATEGORIES,
-  CONTENT_LANGUAGES,
-  COLLABORATION_PREFERENCES,
-} = require("../constants/onboardingConstants");
-
 const platformSchema = new mongoose.Schema(
   {
     platform: {
       type: String,
-      enum: ALLOWED_PLATFORMS,
       required: true,
+      trim: true,
+      lowercase: true,
     },
     username: {
       type: String,
@@ -59,7 +52,7 @@ const influencerProfileSchema = new mongoose.Schema(
     },
     city: {
       type: String,
-      enum: ALLOWED_CITIES,
+      trim: true,
     },
     platforms: {
       type: [platformSchema],
@@ -69,7 +62,7 @@ const influencerProfileSchema = new mongoose.Schema(
       type: [
         {
           type: String,
-          enum: CONTENT_CATEGORIES,
+          trim: true,
         },
       ],
       default: [],
@@ -78,7 +71,7 @@ const influencerProfileSchema = new mongoose.Schema(
       type: [
         {
           type: String,
-          enum: CONTENT_LANGUAGES,
+          trim: true,
         },
       ],
       default: [],
@@ -91,7 +84,7 @@ const influencerProfileSchema = new mongoose.Schema(
       type: [
         {
           type: String,
-          enum: COLLABORATION_PREFERENCES,
+          trim: true,
         },
       ],
       default: [],

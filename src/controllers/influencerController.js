@@ -1,19 +1,12 @@
 const InfluencerProfile = require("../models/InfluencerProfile");
 const {
-  ALLOWED_CITIES,
-  ALLOWED_PLATFORMS,
-  COLLABORATION_PREFERENCES,
-  CONTENT_CATEGORIES,
-  CONTENT_LANGUAGES,
-  PLATFORM_OPTIONS,
-  PLATFORM_REQUIRED_FIELDS,
-  PRIMARY_PLATFORMS,
-} = require("../constants/onboardingConstants");
+  getOnboardingSettings,
+} = require("../services/onboardingSettingsService");
 
-const normalizeCity = (city) => {
+const normalizeCity = (city, cities) => {
   if (!city || typeof city !== "string") return null;
 
-  return ALLOWED_CITIES.find(
+  return cities.find(
     (allowedCity) => allowedCity.toLowerCase() === city.trim().toLowerCase()
   );
 };
@@ -59,12 +52,20 @@ const isValidUrl = (value) => {
   }
 };
 
-const hasPrimaryPlatform = (profile) =>
-  profile.platforms.some((item) => PRIMARY_PLATFORMS.includes(item.platform));
+const getPlatformRequiredFields = (settings) =>
+  settings.platforms.reduce((fields, option) => {
+    fields[option.platform] = option.fields;
+    return fields;
+  }, {});
 
-const getOnboardingStep = (profile) => {
+const hasPrimaryPlatform = (profile, settings) =>
+  profile.platforms.some((item) =>
+    settings.primaryPlatforms.includes(item.platform)
+  );
+
+const getOnboardingStep = (profile, settings) => {
   if (!profile.name || !profile.city) return "basic-info";
-  if (!profile.platforms || !hasPrimaryPlatform(profile)) {
+  if (!profile.platforms || !hasPrimaryPlatform(profile, settings)) {
     return "connect-platform";
   }
   if (
@@ -101,8 +102,9 @@ const getOrCreateProfile = async (user) => {
 
 exports.saveBasicInfo = async (req, res) => {
   try {
+    const settings = await getOnboardingSettings();
     const { name, city } = req.body;
-    const selectedCity = normalizeCity(city);
+    const selectedCity = normalizeCity(city, settings.cities);
 
     if (!name || typeof name !== "string" || name.trim().length < 2) {
       return res.status(400).json({
@@ -114,8 +116,7 @@ exports.saveBasicInfo = async (req, res) => {
     if (!selectedCity) {
       return res.status(400).json({
         success: false,
-        message:
-          "Valid city is required: Mumbai, Delhi, Bengaluru, Hyderabad, Chennai, or Kolkata",
+        message: `Valid city is required: ${settings.cities.join(", ")}`,
       });
     }
 
@@ -133,7 +134,7 @@ exports.saveBasicInfo = async (req, res) => {
     res.json({
       success: true,
       message: "Basic info saved successfully",
-      onboardingStep: getOnboardingStep(profile),
+      onboardingStep: getOnboardingStep(profile, settings),
       nextStep: "connect-platform",
       profile,
     });
@@ -144,13 +145,15 @@ exports.saveBasicInfo = async (req, res) => {
 
 exports.connectPlatform = async (req, res) => {
   try {
+    const settings = await getOnboardingSettings();
+    const allowedPlatforms = settings.platforms.map((item) => item.platform);
+    const platformRequiredFields = getPlatformRequiredFields(settings);
     const { platform } = req.body;
 
-    if (!ALLOWED_PLATFORMS.includes(platform)) {
+    if (!allowedPlatforms.includes(platform)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Valid platform is required: instagram, youtube, tiktok, twitter, facebook, linkedin, or snapchat",
+        message: `Valid platform is required: ${allowedPlatforms.join(", ")}`,
       });
     }
 
@@ -163,15 +166,19 @@ exports.connectPlatform = async (req, res) => {
       });
     }
 
-    if (profile.platforms.length === 0 && !PRIMARY_PLATFORMS.includes(platform)) {
+    if (
+      profile.platforms.length === 0 &&
+      !settings.primaryPlatforms.includes(platform)
+    ) {
       return res.status(400).json({
         success: false,
-        message:
-          "Please connect Instagram, YouTube, or TikTok before adding more platforms",
+        message: `Please connect ${settings.primaryPlatforms.join(
+          ", "
+        )} before adding more platforms`,
       });
     }
 
-    const requiredFields = PLATFORM_REQUIRED_FIELDS[platform];
+    const requiredFields = platformRequiredFields[platform];
     const platformData = { platform };
 
     for (const field of requiredFields) {
@@ -234,8 +241,8 @@ exports.connectPlatform = async (req, res) => {
     res.json({
       success: true,
       message: `${platform} connected successfully`,
-      onboardingStep: getOnboardingStep(profile),
-      nextStep: getOnboardingStep(profile),
+      onboardingStep: getOnboardingStep(profile, settings),
+      nextStep: getOnboardingStep(profile, settings),
       profile,
     });
   } catch (error) {
@@ -245,22 +252,23 @@ exports.connectPlatform = async (req, res) => {
 
 exports.saveContentPreferences = async (req, res) => {
   try {
+    const settings = await getOnboardingSettings();
     const profile = await getOrCreateProfile(req.user);
 
-    if (!profile.platforms || !hasPrimaryPlatform(profile)) {
+    if (!profile.platforms || !hasPrimaryPlatform(profile, settings)) {
       return res.status(400).json({
         success: false,
-        message: "Please connect Instagram, YouTube, or TikTok first",
+        message: `Please connect ${settings.primaryPlatforms.join(", ")} first`,
       });
     }
 
     const contentCategories = normalizeSelectedValues(
       req.body.contentCategories,
-      CONTENT_CATEGORIES
+      settings.contentCategories
     );
     const contentLanguages = normalizeSelectedValues(
       req.body.contentLanguages,
-      CONTENT_LANGUAGES
+      settings.contentLanguages
     );
 
     if (contentCategories.length < 5) {
@@ -287,7 +295,7 @@ exports.saveContentPreferences = async (req, res) => {
     res.json({
       success: true,
       message: "Content preferences saved successfully",
-      onboardingStep: getOnboardingStep(profile),
+      onboardingStep: getOnboardingStep(profile, settings),
       nextStep: "finish-profile",
       profile,
     });
@@ -298,22 +306,23 @@ exports.saveContentPreferences = async (req, res) => {
 
 exports.finishProfile = async (req, res) => {
   try {
+    const settings = await getOnboardingSettings();
     const profile = await getOrCreateProfile(req.user);
 
-    if (getOnboardingStep(profile) === "basic-info") {
+    if (getOnboardingStep(profile, settings) === "basic-info") {
       return res
         .status(400)
         .json({ success: false, message: "Please complete basic info first" });
     }
 
-    if (getOnboardingStep(profile) === "connect-platform") {
+    if (getOnboardingStep(profile, settings) === "connect-platform") {
       return res.status(400).json({
         success: false,
         message: "Please connect Instagram, YouTube, or TikTok first",
       });
     }
 
-    if (getOnboardingStep(profile) === "content-preferences") {
+    if (getOnboardingStep(profile, settings) === "content-preferences") {
       return res.status(400).json({
         success: false,
         message: "Please complete content preferences first",
@@ -323,7 +332,7 @@ exports.finishProfile = async (req, res) => {
     const bio = typeof req.body.bio === "string" ? req.body.bio.trim() : "";
     const collaborationPreferences = normalizeSelectedValues(
       req.body.collaborationPreferences,
-      COLLABORATION_PREFERENCES
+      settings.collaborationPreferences
     );
     const pastCollaborations = normalizeStringList(req.body.pastCollaborations);
     const portfolioLinks = normalizeStringList(req.body.portfolioLinks);
@@ -401,11 +410,12 @@ exports.finishProfile = async (req, res) => {
 
 exports.getMyProfile = async (req, res) => {
   try {
+    const settings = await getOnboardingSettings();
     const profile = await getOrCreateProfile(req.user);
 
     res.json({
       success: true,
-      onboardingStep: getOnboardingStep(profile),
+      onboardingStep: getOnboardingStep(profile, settings),
       profile,
     });
   } catch (error) {
@@ -414,20 +424,24 @@ exports.getMyProfile = async (req, res) => {
 };
 
 exports.getPlatformOptions = async (req, res) => {
+  const settings = await getOnboardingSettings();
+
   res.json({
     success: true,
-    platforms: PLATFORM_OPTIONS,
+    platforms: settings.platforms,
   });
 };
 
 exports.getOnboardingOptions = async (req, res) => {
+  const settings = await getOnboardingSettings();
+
   res.json({
     success: true,
-    cities: ALLOWED_CITIES,
-    platforms: PLATFORM_OPTIONS,
-    primaryPlatforms: PRIMARY_PLATFORMS,
-    contentCategories: CONTENT_CATEGORIES,
-    contentLanguages: CONTENT_LANGUAGES,
-    collaborationPreferences: COLLABORATION_PREFERENCES,
+    cities: settings.cities,
+    platforms: settings.platforms,
+    primaryPlatforms: settings.primaryPlatforms,
+    contentCategories: settings.contentCategories,
+    contentLanguages: settings.contentLanguages,
+    collaborationPreferences: settings.collaborationPreferences,
   });
 };

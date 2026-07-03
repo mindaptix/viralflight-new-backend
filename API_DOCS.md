@@ -14,6 +14,13 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 Content-Type: application/json
 ```
 
+Protected admin APIs need this header:
+
+```txt
+Authorization: Bearer YOUR_ADMIN_TOKEN
+Content-Type: application/json
+```
+
 ## MongoDB Storage
 
 Auth user data is saved in:
@@ -40,6 +47,130 @@ Main fields:
 userId, mobile, name, city, platforms, contentCategories, contentLanguages,
 bio, collaborationPreferences, rateRange, pastCollaborations, portfolioLinks,
 isProfileComplete, completedAt
+```
+
+CMS/admin editable settings are saved in:
+
+```txt
+Collection: cms_settings
+Key: influencer_onboarding
+```
+
+Admin users are saved in:
+
+```txt
+Collection: admins
+```
+
+## Admin CMS
+
+### Super Admin Credentials
+
+Local `.env` keys:
+
+```txt
+SUPER_ADMIN_EMAIL=admin@viralflight.com
+SUPER_ADMIN_PASSWORD=ChangeMe@12345
+```
+
+For production, set these same keys in Render Environment Variables. Change the password before real production use.
+
+### Admin Login
+
+```txt
+POST /api/admin/login
+```
+
+```json
+{
+  "email": "admin@viralflight.com",
+  "password": "ChangeMe@12345"
+}
+```
+
+Success response:
+
+```json
+{
+  "success": true,
+  "message": "Admin login successful",
+  "admin": {
+    "id": "ADMIN_ID",
+    "name": "Super Admin",
+    "email": "admin@viralflight.com",
+    "role": "super_admin"
+  },
+  "adminToken": "ADMIN_TOKEN"
+}
+```
+
+### Get Admin Profile
+
+```txt
+GET /api/admin/me
+```
+
+### Get Onboarding Settings For Admin
+
+```txt
+GET /api/admin/onboarding-settings
+```
+
+### Update Onboarding Settings
+
+```txt
+PUT /api/admin/onboarding-settings
+```
+
+Only `super_admin` can update these settings.
+
+```json
+{
+  "cities": ["Mumbai", "Delhi", "Bengaluru", "Hyderabad", "Chennai", "Kolkata"],
+  "platforms": [
+    {
+      "platform": "instagram",
+      "label": "Instagram",
+      "fields": ["username", "followers", "engagement"]
+    },
+    {
+      "platform": "youtube",
+      "label": "YouTube",
+      "fields": ["channelName", "subscribers", "engagement"]
+    },
+    {
+      "platform": "tiktok",
+      "label": "TikTok",
+      "fields": ["username", "followers", "engagement"]
+    },
+    {
+      "platform": "twitter",
+      "label": "Twitter",
+      "fields": ["username", "followers", "engagement"]
+    }
+  ],
+  "primaryPlatforms": ["instagram", "youtube", "tiktok"],
+  "contentCategories": [
+    "Fashion",
+    "Beauty",
+    "Travel",
+    "Food",
+    "Fitness",
+    "Technology"
+  ],
+  "contentLanguages": ["English", "Hindi"],
+  "collaborationPreferences": [
+    "paid_only",
+    "barter_product",
+    "paid_and_barter"
+  ]
+}
+```
+
+The influencer app reads these updated values from:
+
+```txt
+GET /api/influencer/onboarding-options
 ```
 
 ## Auth
