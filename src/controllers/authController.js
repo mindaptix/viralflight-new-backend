@@ -1,13 +1,13 @@
 const twilio = require("twilio");
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+const { ALLOWED_ROLES } = require("../constants/onboardingConstants");
+const { createTokens, verifyRefreshToken } = require("../utils/tokenUtils");
 
 const client = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
-
-const allowedRoles = ["agency", "influencer", "brand"];
-const pendingOtpRoles = new Map();
 
 const getDashboardPath = (role) => `/dashboard/${role}`;
 
@@ -21,7 +21,7 @@ exports.sendOtp = async (req, res) => {
         .json({ success: false, message: "Mobile number is required" });
     }
 
-    if (!allowedRoles.includes(role)) {
+    if (!ALLOWED_ROLES.includes(role)) {
       return res.status(400).json({
         success: false,
         message: "Valid role is required: agency, influencer, or brand",
@@ -35,7 +35,16 @@ exports.sendOtp = async (req, res) => {
         channel: "sms",
       });
 
-    pendingOtpRoles.set(mobile, role);
+    await User.findOneAndUpdate(
+      { mobile },
+      {
+        mobile,
+        role,
+        isMobileVerified: false,
+        lastOtpRequestedAt: new Date(),
+      },
+      { upsert: true, new: true, runValidators: true }
+    );
 
     res.json({
       success: true,
@@ -50,7 +59,6 @@ exports.sendOtp = async (req, res) => {
 exports.verifyOtp = async (req, res) => {
   try {
     const { mobile, otp } = req.body;
-    const selectedRole = pendingOtpRoles.get(mobile);
 
     if (!mobile || !otp) {
       return res
@@ -58,7 +66,9 @@ exports.verifyOtp = async (req, res) => {
         .json({ success: false, message: "Mobile number and OTP are required" });
     }
 
-    if (!selectedRole) {
+    const user = await User.findOne({ mobile });
+
+    if (!user) {
       return res.status(400).json({
         success: false,
         message: "Please select a role and request OTP first",
@@ -76,21 +86,72 @@ exports.verifyOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid OTP" });
     }
 
-    const token = jwt.sign({ mobile, role: selectedRole }, process.env.JWT_SECRET, {
-      expiresIn: "30d",
+    const { accessToken, refreshToken } = createTokens({
+      userId: user._id.toString(),
+      mobile,
+      role: user.role,
     });
 
-    pendingOtpRoles.delete(mobile);
+    user.isMobileVerified = true;
+    user.lastLoginAt = new Date();
+    await user.save();
 
     res.json({
       success: true,
       message: "OTP verified successfully",
-      selectedRole,
-      dashboard: selectedRole,
-      redirectTo: getDashboardPath(selectedRole),
-      token,
+      selectedRole: user.role,
+      dashboard: user.role,
+      redirectTo: getDashboardPath(user.role),
+      accessToken,
+      refreshToken,
+      token: accessToken,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Refresh token is required" });
+    }
+
+    const decoded = verifyRefreshToken(refreshToken);
+    const { userId, mobile, role } = decoded;
+
+    const user = await User.findOne({
+      _id: userId,
+      mobile,
+      role,
+      isMobileVerified: true,
+    });
+
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid refresh token" });
+    }
+
+    const accessToken = jwt.sign(
+      { userId: user._id.toString(), mobile, role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
+      }
+    );
+
+    res.json({
+      success: true,
+      message: "Access token refreshed successfully",
+      accessToken,
+      token: accessToken,
+    });
+  } catch (error) {
+    res.status(401).json({ success: false, message: "Invalid refresh token" });
   }
 };
