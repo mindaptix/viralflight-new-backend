@@ -104,7 +104,6 @@ exports.verifyOtp = async (req, res) => {
       redirectTo: getDashboardPath(user.role),
       accessToken,
       refreshToken,
-      token: accessToken,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -149,7 +148,6 @@ exports.refreshToken = async (req, res) => {
       success: true,
       message: "Access token refreshed successfully",
       accessToken,
-      token: accessToken,
     });
   } catch (error) {
     res.status(401).json({ success: false, message: "Invalid refresh token" });

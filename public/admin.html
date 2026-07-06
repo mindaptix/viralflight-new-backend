@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Viral Flight Admin</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7fb;
+        --panel: #ffffff;
+        --text: #151922;
+        --muted: #667085;
+        --line: #d9dee8;
+        --brand: #1769e0;
+        --brand-dark: #0f55ba;
+        --danger: #b42318;
+        --success: #067647;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 15px;
+      }
+
+      header {
+        background: #111827;
+        color: white;
+        padding: 18px 24px;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      header p {
+        margin: 6px 0 0;
+        color: #cbd5e1;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 18px;
+      }
+
+      label {
+        display: block;
+        margin: 12px 0 6px;
+        color: #344054;
+        font-weight: 600;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 10px 12px;
+        color: var(--text);
+        background: white;
+        font: inherit;
+      }
+
+      textarea {
+        min-height: 430px;
+        resize: vertical;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      button {
+        border: 0;
+        border-radius: 6px;
+        background: var(--brand);
+        color: white;
+        padding: 10px 14px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: var(--brand-dark);
+      }
+
+      button.secondary {
+        background: #eef4ff;
+        color: #1849a9;
+      }
+
+      button.secondary:hover {
+        background: #dbeafe;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+
+      .status {
+        min-height: 22px;
+        margin-top: 12px;
+        color: var(--muted);
+      }
+
+      .status.error {
+        color: var(--danger);
+      }
+
+      .status.success {
+        color: var(--success);
+      }
+
+      .api-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .api-row {
+        display: grid;
+        grid-template-columns: 82px 1fr;
+        gap: 10px;
+        align-items: center;
+        padding: 9px 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fbfcff;
+      }
+
+      .method {
+        display: inline-block;
+        border-radius: 4px;
+        padding: 4px 6px;
+        text-align: center;
+        font-weight: 800;
+        font-size: 12px;
+        background: #ecfdf3;
+        color: #067647;
+      }
+
+      .method.post {
+        background: #eff8ff;
+        color: #175cd3;
+      }
+
+      .method.put {
+        background: #fff6ed;
+        color: #c4320a;
+      }
+
+      code {
+        color: #344054;
+        overflow-wrap: anywhere;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .muted {
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      @media (max-width: 860px) {
+        main {
+          padding: 16px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Viral Flight Admin</h1>
+      <p>Login, edit influencer onboarding settings, and view API endpoints.</p>
+    </header>
+
+    <main>
+      <div class="grid">
+        <section class="panel" id="loginPanel">
+          <h2>Admin Login</h2>
+          <form id="loginForm">
+            <label for="email">Email</label>
+            <input id="email" type="email" value="admin@viralflight.com" autocomplete="username" />
+
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="Enter admin password" autocomplete="current-password" />
+
+            <div class="actions">
+              <button type="submit">Login</button>
+            </div>
+          </form>
+          <div class="status" id="loginStatus"></div>
+        </section>
+
+        <section class="panel hidden" id="settingsPanel">
+          <h2>Onboarding CMS Settings</h2>
+          <p class="muted">
+            JSON update karne ke baad Save dabao. Ye same data influencer onboarding screens me use hota hai.
+          </p>
+          <textarea id="settingsJson" spellcheck="false"></textarea>
+          <div class="actions">
+            <button id="saveSettings" type="button">Save Settings</button>
+            <button id="refreshSettings" class="secondary" type="button">Refresh</button>
+            <button id="logout" class="secondary" type="button">Logout</button>
+          </div>
+          <div class="status" id="settingsStatus"></div>
+        </section>
+      </div>
+
+      <section class="panel" style="margin-top: 18px">
+        <h2>API Endpoints</h2>
+        <div class="api-list" id="apiList"></div>
+      </section>
+    </main>
+
+    <script>
+      const apiEndpoints = [
+        ["POST", "/api/admin/login"],
+        ["GET", "/api/admin/me"],
+        ["GET", "/api/admin/onboarding-settings"],
+        ["PUT", "/api/admin/onboarding-settings"],
+        ["POST", "/api/auth/send-otp"],
+        ["POST", "/api/auth/verify-otp"],
+        ["POST", "/api/auth/refresh-token"],
+        ["GET", "/api/influencer/onboarding-options"],
+        ["GET", "/api/influencer/platform-options"],
+        ["GET", "/api/influencer/me"],
+        ["POST", "/api/influencer/basic-info"],
+        ["POST", "/api/influencer/connect-platform"],
+        ["POST", "/api/influencer/content-preferences"],
+        ["POST", "/api/influencer/finish-profile"],
+        ["POST", "/api/influencer/complete-profile"],
+      ];
+
+      const tokenKey = "viralFlightAdminToken";
+      const loginForm = document.getElementById("loginForm");
+      const loginStatus = document.getElementById("loginStatus");
+      const settingsPanel = document.getElementById("settingsPanel");
+      const settingsJson = document.getElementById("settingsJson");
+      const settingsStatus = document.getElementById("settingsStatus");
+      const apiList = document.getElementById("apiList");
+
+      apiList.innerHTML = apiEndpoints
+        .map(([method, path]) => {
+          const methodClass = method.toLowerCase();
+          return `<div class="api-row"><span class="method ${methodClass}">${method}</span><code>${path}</code></div>`;
+        })
+        .join("");
+
+      const setStatus = (element, message, type) => {
+        element.className = type ? `status ${type}` : "status";
+        element.textContent = message;
+      };
+
+      const getToken = () => localStorage.getItem(tokenKey);
+
+      const showSettingsPanel = () => {
+        settingsPanel.classList.remove("hidden");
+      };
+
+      const fetchSettings = async () => {
+        const token = getToken();
+        if (!token) return;
+
+        setStatus(settingsStatus, "Loading settings...", "");
+        const response = await fetch("/api/admin/onboarding-settings", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          setStatus(settingsStatus, data.message || "Settings load failed", "error");
+          return;
+        }
+
+        settingsJson.value = JSON.stringify(data.settings, null, 2);
+        setStatus(settingsStatus, "Settings loaded", "success");
+      };
+
+      loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        setStatus(loginStatus, "Logging in...", "");
+
+        const response = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+          }),
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          setStatus(loginStatus, data.message || "Login failed", "error");
+          return;
+        }
+
+        localStorage.setItem(tokenKey, data.adminToken);
+        setStatus(loginStatus, `Logged in as ${data.admin.email}`, "success");
+        showSettingsPanel();
+        fetchSettings();
+      });
+
+      document.getElementById("refreshSettings").addEventListener("click", fetchSettings);
+
+      document.getElementById("saveSettings").addEventListener("click", async () => {
+        const token = getToken();
+        if (!token) {
+          setStatus(settingsStatus, "Login required", "error");
+          return;
+        }
+
+        let payload;
+        try {
+          payload = JSON.parse(settingsJson.value);
+        } catch (error) {
+          setStatus(settingsStatus, "Invalid JSON", "error");
+          return;
+        }
+
+        setStatus(settingsStatus, "Saving settings...", "");
+        const response = await fetch("/api/admin/onboarding-settings", {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          setStatus(settingsStatus, data.message || "Settings save failed", "error");
+          return;
+        }
+
+        settingsJson.value = JSON.stringify(data.settings, null, 2);
+        setStatus(settingsStatus, "Settings saved", "success");
+      });
+
+      document.getElementById("logout").addEventListener("click", () => {
+        localStorage.removeItem(tokenKey);
+        settingsPanel.classList.add("hidden");
+        settingsJson.value = "";
+        setStatus(loginStatus, "Logged out", "");
+      });
+
+      if (getToken()) {
+        showSettingsPanel();
+        fetchSettings();
+      }
+    </script>
+  </body>
+</html>

@@ -219,8 +219,7 @@ Success response:
   "dashboard": "influencer",
   "redirectTo": "/dashboard/influencer",
   "accessToken": "...",
-  "refreshToken": "...",
-  "token": "..."
+  "refreshToken": "..."
 }
 ```
 
