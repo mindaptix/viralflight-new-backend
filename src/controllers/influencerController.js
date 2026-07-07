@@ -1,7 +1,7 @@
-const InfluencerProfile = require("../models/InfluencerProfile");
-const {
+import InfluencerProfile from "../models/InfluencerProfile.js";
+import {
   getOnboardingSettings,
-} = require("../services/onboardingSettingsService");
+} from "../services/onboardingSettingsService.js";
 
 const normalizeCity = (city, cities) => {
   if (!city || typeof city !== "string") return null;
@@ -100,7 +100,7 @@ const getOrCreateProfile = async (user) => {
   return profile;
 };
 
-exports.saveBasicInfo = async (req, res) => {
+export const saveBasicInfo = async (req, res) => {
   try {
     const settings = await getOnboardingSettings();
     const { name, city } = req.body;
@@ -143,7 +143,7 @@ exports.saveBasicInfo = async (req, res) => {
   }
 };
 
-exports.connectPlatform = async (req, res) => {
+export const connectPlatform = async (req, res) => {
   try {
     const settings = await getOnboardingSettings();
     const allowedPlatforms = settings.platforms.map((item) => item.platform);
@@ -250,7 +250,7 @@ exports.connectPlatform = async (req, res) => {
   }
 };
 
-exports.saveContentPreferences = async (req, res) => {
+export const saveContentPreferences = async (req, res) => {
   try {
     const settings = await getOnboardingSettings();
     const profile = await getOrCreateProfile(req.user);
@@ -304,7 +304,7 @@ exports.saveContentPreferences = async (req, res) => {
   }
 };
 
-exports.finishProfile = async (req, res) => {
+export const finishProfile = async (req, res) => {
   try {
     const settings = await getOnboardingSettings();
     const profile = await getOrCreateProfile(req.user);
@@ -408,7 +408,7 @@ exports.finishProfile = async (req, res) => {
   }
 };
 
-exports.getMyProfile = async (req, res) => {
+export const getMyProfile = async (req, res) => {
   try {
     const settings = await getOnboardingSettings();
     const profile = await getOrCreateProfile(req.user);
@@ -423,7 +423,7 @@ exports.getMyProfile = async (req, res) => {
   }
 };
 
-exports.getPlatformOptions = async (req, res) => {
+export const getPlatformOptions = async (req, res) => {
   const settings = await getOnboardingSettings();
 
   res.json({
@@ -432,7 +432,7 @@ exports.getPlatformOptions = async (req, res) => {
   });
 };
 
-exports.getOnboardingOptions = async (req, res) => {
+export const getOnboardingOptions = async (req, res) => {
   const settings = await getOnboardingSettings();
 
   res.json({

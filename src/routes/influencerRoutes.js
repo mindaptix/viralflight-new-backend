@@ -1,8 +1,7 @@
-const express = require("express");
-const router = express.Router();
+import express from "express";
 
-const authMiddleware = require("../middleware/authMiddleware");
-const {
+import authMiddleware from "../middleware/authMiddleware.js";
+import {
   saveBasicInfo,
   connectPlatform,
   saveContentPreferences,
@@ -10,7 +9,9 @@ const {
   getMyProfile,
   getPlatformOptions,
   getOnboardingOptions,
-} = require("../controllers/influencerController");
+} from "../controllers/influencerController.js";
+
+const router = express.Router();
 
 router.get("/onboarding-options", authMiddleware, getOnboardingOptions);
 router.get("/platform-options", authMiddleware, getPlatformOptions);
@@ -21,4 +22,4 @@ router.post("/content-preferences", authMiddleware, saveContentPreferences);
 router.post("/finish-profile", authMiddleware, finishProfile);
 router.post("/complete-profile", authMiddleware, finishProfile);
 
-module.exports = router;
+export default router;

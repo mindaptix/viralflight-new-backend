@@ -22,31 +22,14 @@ Authorization: Bearer ACCESS_TOKEN
 Content-Type: application/json
 ```
 
-Admin/CMS protected APIs:
+## Admin CMS
+
+Use Payload CMS for admin login and content editing. This backend no longer ships a custom admin login page or `/api/admin/*` endpoints.
 
 ```txt
-Authorization: Bearer ADMIN_TOKEN
-Content-Type: application/json
+Payload Admin: /admin
+Payload CMS: https://payloadcms.com/
 ```
-
-## Admin CMS Panel
-
-Browser admin page:
-
-```txt
-GET /admin
-```
-
-Use this page for admin login, onboarding CMS settings, and API endpoint list.
-
-Default local admin:
-
-```txt
-Email: admin@viralflight.com
-Password: ChangeMe@12345
-```
-
-In production, use the password configured in Render env variable `SUPER_ADMIN_PASSWORD`.
 
 ## Auth Flow
 
@@ -433,174 +416,6 @@ rateRange.min and rateRange.max: valid numbers, max must be greater than or equa
 portfolioLinks: valid http/https URLs
 ```
 
-## Admin/CMS APIs
-
-### 1. Admin Login
-
-```txt
-POST /api/admin/login
-```
-
-Request:
-
-```json
-{
-  "email": "admin@viralflight.com",
-  "password": "ChangeMe@12345"
-}
-```
-
-Success response:
-
-```json
-{
-  "success": true,
-  "message": "Admin login successful",
-  "admin": {
-    "id": "ADMIN_ID",
-    "name": "Super Admin",
-    "email": "admin@viralflight.com",
-    "role": "super_admin"
-  },
-  "adminToken": "ADMIN_TOKEN"
-}
-```
-
-Frontend should save `adminToken` and pass it in admin protected APIs.
-
-### 2. Get Admin Profile
-
-```txt
-GET /api/admin/me
-```
-
-Headers:
-
-```txt
-Authorization: Bearer ADMIN_TOKEN
-```
-
-Success response:
-
-```json
-{
-  "success": true,
-  "admin": {
-    "_id": "ADMIN_ID",
-    "name": "Super Admin",
-    "email": "admin@viralflight.com",
-    "role": "super_admin",
-    "isActive": true
-  }
-}
-```
-
-### 3. Get CMS Onboarding Settings
-
-```txt
-GET /api/admin/onboarding-settings
-```
-
-Headers:
-
-```txt
-Authorization: Bearer ADMIN_TOKEN
-```
-
-Success response:
-
-```json
-{
-  "success": true,
-  "settings": {
-    "cities": ["Mumbai", "Delhi", "Bengaluru", "Hyderabad", "Chennai", "Kolkata"],
-    "platforms": [
-      {
-        "platform": "instagram",
-        "label": "Instagram",
-        "fields": ["username", "followers", "engagement"]
-      }
-    ],
-    "primaryPlatforms": ["instagram", "youtube", "tiktok"],
-    "contentCategories": ["Fashion", "Beauty", "Travel", "Food", "Fitness", "Technology"],
-    "contentLanguages": ["English", "Hindi"],
-    "collaborationPreferences": ["paid_only", "barter_product", "paid_and_barter"]
-  }
-}
-```
-
-### 4. Update CMS Onboarding Settings
-
-```txt
-PUT /api/admin/onboarding-settings
-```
-
-Only `super_admin` can update this.
-
-Headers:
-
-```txt
-Authorization: Bearer ADMIN_TOKEN
-Content-Type: application/json
-```
-
-Request:
-
-```json
-{
-  "cities": ["Mumbai", "Delhi", "Bengaluru", "Hyderabad", "Chennai", "Kolkata"],
-  "platforms": [
-    {
-      "platform": "instagram",
-      "label": "Instagram",
-      "fields": ["username", "followers", "engagement"]
-    },
-    {
-      "platform": "youtube",
-      "label": "YouTube",
-      "fields": ["channelName", "subscribers", "engagement"]
-    },
-    {
-      "platform": "tiktok",
-      "label": "TikTok",
-      "fields": ["username", "followers", "engagement"]
-    }
-  ],
-  "primaryPlatforms": ["instagram", "youtube", "tiktok"],
-  "contentCategories": ["Fashion", "Beauty", "Travel", "Food", "Fitness", "Technology"],
-  "contentLanguages": ["English", "Hindi"],
-  "collaborationPreferences": ["paid_only", "barter_product", "paid_and_barter"]
-}
-```
-
-Success response:
-
-```json
-{
-  "success": true,
-  "message": "Onboarding settings updated successfully",
-  "settings": {
-    "cities": ["Mumbai", "Delhi"],
-    "platforms": [],
-    "primaryPlatforms": [],
-    "contentCategories": [],
-    "contentLanguages": [],
-    "collaborationPreferences": []
-  }
-}
-```
-
-Validation:
-
-```txt
-cities: minimum 1
-platforms: minimum 1
-primaryPlatforms: minimum 1 and must exist in platforms
-contentCategories: minimum 5
-contentLanguages: minimum 1
-collaborationPreferences: minimum 1
-```
-
 ## Frontend Flow Summary
 
 1. Role select screen: call `POST /api/auth/send-otp`.
@@ -611,13 +426,5 @@ collaborationPreferences: minimum 1
 6. Before rendering form dropdowns, call `GET /api/influencer/onboarding-options`.
 7. Submit each onboarding step to its matching API.
 8. When `onboardingStep` is `completed`, redirect to `/dashboard/influencer`.
-
-## Important Notes
-
-```txt
-GET /api/admin/login will not work in browser.
-Admin login is POST /api/admin/login.
-Browser page is GET /admin.
-```
 
 Brand and campaign route files exist in the repo but are currently empty and not mounted in `src/app.js`, so there are no active brand/campaign APIs yet.

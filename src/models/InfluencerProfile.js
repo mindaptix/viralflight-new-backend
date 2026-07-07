@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const platformSchema = new mongoose.Schema(
   {
     platform: {
@@ -134,7 +134,7 @@ const influencerProfileSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model(
+export default mongoose.model(
   "InfluencerProfile",
   influencerProfileSchema,
   "influencer_profiles"

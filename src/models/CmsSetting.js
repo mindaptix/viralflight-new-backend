@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const cmsSettingSchema = new mongoose.Schema(
   {
@@ -13,12 +13,8 @@ const cmsSettingSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       required: true,
     },
-    updatedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
-    },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("CmsSetting", cmsSettingSchema, "cms_settings");
+export default mongoose.model("CmsSetting", cmsSettingSchema, "cms_settings");

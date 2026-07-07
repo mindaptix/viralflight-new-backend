@@ -1,8 +1,9 @@
-const twilio = require("twilio");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-const { ALLOWED_ROLES } = require("../constants/onboardingConstants");
-const { createTokens, verifyRefreshToken } = require("../utils/tokenUtils");
+import twilio from "twilio";
+import jwt from "jsonwebtoken";
+
+import User from "../models/User.js";
+import { ALLOWED_ROLES } from "../constants/onboardingConstants.js";
+import { createTokens, verifyRefreshToken } from "../utils/tokenUtils.js";
 
 const client = twilio(
   process.env.TWILIO_ACCOUNT_SID,
@@ -11,7 +12,7 @@ const client = twilio(
 
 const getDashboardPath = (role) => `/dashboard/${role}`;
 
-exports.sendOtp = async (req, res) => {
+export const sendOtp = async (req, res) => {
   try {
     const { mobile, role } = req.body;
 
@@ -56,7 +57,7 @@ exports.sendOtp = async (req, res) => {
   }
 };
 
-exports.verifyOtp = async (req, res) => {
+export const verifyOtp = async (req, res) => {
   try {
     const { mobile, otp } = req.body;
 
@@ -110,7 +111,7 @@ exports.verifyOtp = async (req, res) => {
   }
 };
 
-exports.refreshToken = async (req, res) => {
+export const refreshToken = async (req, res) => {
   try {
     const { refreshToken } = req.body;
 

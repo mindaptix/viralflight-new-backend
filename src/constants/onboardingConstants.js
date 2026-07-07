@@ -94,7 +94,7 @@ const COLLABORATION_PREFERENCES = [
   "paid_and_barter",
 ];
 
-module.exports = {
+export {
   ALLOWED_ROLES,
   ALLOWED_CITIES,
   PLATFORM_OPTIONS,
