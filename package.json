@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "node scripts/clean-next-dev-lock.js && nodemon server.js",
     "build": "next build",
     "start": "node server.js",
     "cms:dev": "next dev",

@@ -71,6 +71,7 @@ const getOnboardingStep = (profile, settings) => {
   if (
     !profile.contentCategories ||
     profile.contentCategories.length < 5 ||
+    profile.contentCategories.length > 5 ||
     !profile.contentLanguages ||
     profile.contentLanguages.length === 0
   ) {
@@ -274,7 +275,14 @@ export const saveContentPreferences = async (req, res) => {
     if (contentCategories.length < 5) {
       return res.status(400).json({
         success: false,
-        message: "Please select at least 5 content categories",
+        message: "Please select exactly 5 content categories",
+      });
+    }
+
+    if (contentCategories.length > 5) {
+      return res.status(400).json({
+        success: false,
+        message: "You can select up to 5 content categories only",
       });
     }
 
@@ -330,12 +338,25 @@ export const finishProfile = async (req, res) => {
     }
 
     const bio = typeof req.body.bio === "string" ? req.body.bio.trim() : "";
-    const collaborationPreferences = normalizeSelectedValues(
-      req.body.collaborationPreferences,
+    const collaborationPreference = normalizeSelectedValues(
+      Array.isArray(req.body.collaborationPreferences)
+        ? req.body.collaborationPreferences
+        : req.body.collaborationPreference
+          ? [req.body.collaborationPreference]
+          : [],
       settings.collaborationPreferences
+    )[0];
+
+    const pastCollaborations = normalizeStringList(
+      req.body.pastCollaborations ?? req.body.pastCollaboration
     );
-    const pastCollaborations = normalizeStringList(req.body.pastCollaborations);
-    const portfolioLinks = normalizeStringList(req.body.portfolioLinks);
+
+    const portfolioLinkRaw =
+      typeof req.body.portfolioLink === "string"
+        ? req.body.portfolioLink.trim()
+        : Array.isArray(req.body.portfolioLinks) && req.body.portfolioLinks[0]
+          ? String(req.body.portfolioLinks[0]).trim()
+          : "";
     const rateRange = req.body.rateRange || {};
     const minRate = Number(rateRange.min);
     const maxRate = Number(rateRange.max);
@@ -351,46 +372,50 @@ export const finishProfile = async (req, res) => {
       });
     }
 
-    if (
-      collaborationPreferences.length < 1 ||
-      collaborationPreferences.length > 2
-    ) {
+    if (!collaborationPreference) {
       return res.status(400).json({
         success: false,
-        message: "Please select 1 or 2 collaboration preferences",
+        message: "Please select exactly 1 collaboration preference",
       });
     }
 
-    if (
-      !Number.isFinite(minRate) ||
-      !Number.isFinite(maxRate) ||
-      minRate < 0 ||
-      maxRate < minRate
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Please enter a valid rate range",
-      });
+    const hasRateRange =
+      rateRange.min !== undefined ||
+      rateRange.max !== undefined ||
+      rateRange.currency;
+
+    if (hasRateRange) {
+      if (
+        !Number.isFinite(minRate) ||
+        !Number.isFinite(maxRate) ||
+        minRate < 0 ||
+        maxRate < minRate
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Please enter a valid rate range",
+        });
+      }
     }
 
-    const invalidPortfolioLink = portfolioLinks.find((link) => !isValidUrl(link));
-
-    if (invalidPortfolioLink) {
+    if (portfolioLinkRaw && !isValidUrl(portfolioLinkRaw)) {
       return res.status(400).json({
         success: false,
-        message: "Portfolio links must be valid http or https URLs",
+        message: "Portfolio link must be a valid http or https URL",
       });
     }
 
     profile.bio = bio;
-    profile.collaborationPreferences = collaborationPreferences;
-    profile.rateRange = {
-      min: minRate,
-      max: maxRate,
-      currency,
-    };
+    profile.collaborationPreference = collaborationPreference;
+    profile.rateRange = hasRateRange
+      ? {
+          min: minRate,
+          max: maxRate,
+          currency,
+        }
+      : undefined;
     profile.pastCollaborations = pastCollaborations;
-    profile.portfolioLinks = portfolioLinks;
+    profile.portfolioLink = portfolioLinkRaw || undefined;
     profile.isProfileComplete = true;
     profile.completedAt = new Date();
 
@@ -440,8 +465,16 @@ export const getOnboardingOptions = async (req, res) => {
     cities: settings.cities,
     platforms: settings.platforms,
     primaryPlatforms: settings.primaryPlatforms,
+    secondaryPlatforms: settings.secondaryPlatforms,
     contentCategories: settings.contentCategories,
     contentLanguages: settings.contentLanguages,
-    collaborationPreferences: settings.collaborationPreferences,
+    collaborationPreferences: settings.collaborationPreferenceOptions,
+    validation: settings.validation,
+    steps: [
+      { step: 1, key: "basic-info", title: "Enter your name" },
+      { step: 2, key: "connect-platform", title: "Add your socials" },
+      { step: 3, key: "content-preferences", title: "What do you create?" },
+      { step: 4, key: "finish-profile", title: "Finish your profile" },
+    ],
   });
 };

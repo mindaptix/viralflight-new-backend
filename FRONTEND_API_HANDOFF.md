@@ -1,47 +1,56 @@
-# Viral Flight Backend API Handoff
+# Viral Flight API - Simple Frontend Note
 
-Base URLs:
-
-```txt
-Local: http://localhost:5000
-Production: https://viralflight-new-backend.onrender.com
-```
-
-## Common Headers
-
-Public APIs:
+Base URL:
 
 ```txt
-Content-Type: application/json
+https://viralflight-new-backend.onrender.com
 ```
 
-Influencer protected APIs:
+## Main Rules
+
+```txt
+GET API me body nahi bhejni.
+POST API me body bhejni.
+accessToken verify OTP ke response se milega.
+Jahan token chahiye, header me Authorization bhejna.
+```
+
+Token header:
 
 ```txt
 Authorization: Bearer ACCESS_TOKEN
 Content-Type: application/json
 ```
 
-## Admin CMS
-
-Use Payload CMS for admin login and content editing. This backend no longer ships a custom admin login page or `/api/admin/*` endpoints.
+## 0. Health Check - Token nahi chahiye
 
 ```txt
-Payload Admin: /admin
-Payload CMS: https://payloadcms.com/
+GET https://viralflight-new-backend.onrender.com/api/health
 ```
 
-## Auth Flow
-
-### 1. Send OTP
+Body:
 
 ```txt
-POST /api/auth/send-otp
+No body
 ```
 
-Use when user selects role and enters mobile number.
+Response:
 
-Request:
+```json
+{
+  "success": true,
+  "message": "Viral Flight API is running",
+  "env": "production"
+}
+```
+
+## 1. Send OTP - Token nahi chahiye
+
+```txt
+POST https://viralflight-new-backend.onrender.com/api/auth/send-otp
+```
+
+Body:
 
 ```json
 {
@@ -50,13 +59,7 @@ Request:
 }
 ```
 
-Allowed roles:
-
-```txt
-agency, influencer, brand
-```
-
-Success response:
+Response:
 
 ```json
 {
@@ -66,24 +69,13 @@ Success response:
 }
 ```
 
-Possible error:
-
-```json
-{
-  "success": false,
-  "message": "Valid role is required: agency, influencer, or brand"
-}
-```
-
-### 2. Verify OTP
+## 2. Verify OTP - Token nahi chahiye
 
 ```txt
-POST /api/auth/verify-otp
+POST https://viralflight-new-backend.onrender.com/api/auth/verify-otp
 ```
 
-Use after user enters OTP.
-
-Request:
+Body:
 
 ```json
 {
@@ -92,7 +84,7 @@ Request:
 }
 ```
 
-Success response:
+Response:
 
 ```json
 {
@@ -106,49 +98,64 @@ Success response:
 }
 ```
 
-Frontend should save `accessToken` for protected APIs and `refreshToken` for token refresh.
+Save `accessToken` and `refreshToken`.
 
-### 3. Refresh Access Token
+## 3. Get Influencer Profile - Token chahiye
 
 ```txt
-POST /api/auth/refresh-token
+GET https://viralflight-new-backend.onrender.com/api/influencer/me
 ```
 
-Request:
+Headers:
 
-```json
-{
-  "refreshToken": "REFRESH_TOKEN"
-}
+```txt
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: application/json
 ```
 
-Success response:
+Body:
+
+```txt
+No body
+```
+
+Response:
 
 ```json
 {
   "success": true,
-  "message": "Access token refreshed successfully",
-  "accessToken": "NEW_ACCESS_TOKEN"
+  "onboardingStep": "basic-info",
+  "profile": {
+    "_id": "PROFILE_ID",
+    "mobile": "+917018319344",
+    "platforms": [],
+    "contentCategories": [],
+    "contentLanguages": [],
+    "isProfileComplete": false
+  }
 }
 ```
 
-## Influencer Onboarding
+## 4. Get Onboarding Options - Token chahiye
 
-All APIs below need:
+```txt
+GET https://viralflight-new-backend.onrender.com/api/influencer/onboarding-options
+```
+
+Headers:
 
 ```txt
 Authorization: Bearer ACCESS_TOKEN
+Content-Type: application/json
 ```
 
-### 1. Get Onboarding Options
+Body:
 
 ```txt
-GET /api/influencer/onboarding-options
+No body
 ```
 
-Use before rendering onboarding screens. This data comes from CMS settings.
-
-Success response:
+Response:
 
 ```json
 {
@@ -162,54 +169,28 @@ Success response:
     }
   ],
   "primaryPlatforms": ["instagram", "youtube", "tiktok"],
-  "contentCategories": ["Fashion", "Beauty", "Travel", "Food", "Fitness"],
-  "contentLanguages": ["English", "Hindi"],
-  "collaborationPreferences": ["paid_only", "barter_product", "paid_and_barter"]
+  "contentCategories": ["Fashion", "Lifestyle", "Beauty"],
+  "contentLanguages": ["Hindi", "English"],
+  "collaborationPreferences": [
+    { "value": "paid_only", "label": "Paid only" }
+  ]
 }
 ```
 
-### 2. Get My Profile
+## 5. Save Basic Info - Token chahiye
 
 ```txt
-GET /api/influencer/me
+POST https://viralflight-new-backend.onrender.com/api/influencer/basic-info
 ```
 
-Use to resume onboarding from the correct step.
-
-Success response:
-
-```json
-{
-  "success": true,
-  "onboardingStep": "basic-info",
-  "profile": {
-    "_id": "PROFILE_ID",
-    "mobile": "+917018319344",
-    "platforms": [],
-    "isProfileComplete": false
-  }
-}
-```
-
-Possible `onboardingStep` values:
+Headers:
 
 ```txt
-basic-info
-connect-platform
-content-preferences
-finish-profile
-completed
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: application/json
 ```
 
-### 3. Save Basic Info
-
-```txt
-POST /api/influencer/basic-info
-```
-
-Use on first onboarding screen.
-
-Request:
+Body:
 
 ```json
 {
@@ -218,7 +199,7 @@ Request:
 }
 ```
 
-Success response:
+Response:
 
 ```json
 {
@@ -230,22 +211,26 @@ Success response:
 }
 ```
 
-Validation:
+## 6. Get Platform Options - Token chahiye
 
 ```txt
-name: required, minimum 2 characters
-city: must be one of CMS cities
+GET https://viralflight-new-backend.onrender.com/api/influencer/platform-options
 ```
 
-### 4. Get Platform Options
+Headers:
 
 ```txt
-GET /api/influencer/platform-options
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: application/json
 ```
 
-Use to render dynamic platform fields.
+Body:
 
-Success response:
+```txt
+No body
+```
+
+Response:
 
 ```json
 {
@@ -265,15 +250,20 @@ Success response:
 }
 ```
 
-### 5. Connect Platform
+## 7. Connect Platform - Token chahiye
 
 ```txt
-POST /api/influencer/connect-platform
+POST https://viralflight-new-backend.onrender.com/api/influencer/connect-platform
 ```
 
-Use when user connects Instagram, YouTube, TikTok, etc.
+Headers:
 
-Instagram request:
+```txt
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Instagram body:
 
 ```json
 {
@@ -284,7 +274,7 @@ Instagram request:
 }
 ```
 
-YouTube request:
+YouTube body:
 
 ```json
 {
@@ -295,18 +285,7 @@ YouTube request:
 }
 ```
 
-Other platform request:
-
-```json
-{
-  "platform": "twitter",
-  "username": "garry_twitter",
-  "followers": 25000,
-  "engagement": 3.8
-}
-```
-
-Success response:
+Response:
 
 ```json
 {
@@ -318,33 +297,29 @@ Success response:
 }
 ```
 
-Validation:
+## 8. Save Content Preferences - Token chahiye
 
 ```txt
-Basic info must be completed first.
-First connected platform must be one of primaryPlatforms.
-engagement must be 0 to 100.
-followers/subscribers must be valid positive numbers.
+POST https://viralflight-new-backend.onrender.com/api/influencer/content-preferences
 ```
 
-### 6. Save Content Preferences
+Headers:
 
 ```txt
-POST /api/influencer/content-preferences
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: application/json
 ```
 
-Use after at least one primary platform is connected.
-
-Request:
+Body:
 
 ```json
 {
-  "contentCategories": ["Fashion", "Beauty", "Travel", "Lifestyle", "Technology"],
+  "contentCategories": ["Fashion", "Lifestyle", "Beauty", "Fitness", "Travel"],
   "contentLanguages": ["Hindi", "English"]
 }
 ```
 
-Success response:
+Response:
 
 ```json
 {
@@ -356,46 +331,36 @@ Success response:
 }
 ```
 
-Validation:
+## 9. Finish Profile - Token chahiye
 
 ```txt
-contentCategories: minimum 5
-contentLanguages: minimum 1
-values must exist in CMS settings
+POST https://viralflight-new-backend.onrender.com/api/influencer/finish-profile
 ```
 
-### 7. Finish Profile
+Headers:
 
 ```txt
-POST /api/influencer/finish-profile
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: application/json
 ```
 
-Alternative endpoint:
-
-```txt
-POST /api/influencer/complete-profile
-```
-
-Request:
+Body:
 
 ```json
 {
   "bio": "I create lifestyle and fashion content for young urban audiences.",
-  "collaborationPreferences": ["paid_only", "paid_and_barter"],
+  "collaborationPreferences": ["paid_only"],
   "rateRange": {
     "min": 5000,
     "max": 25000,
     "currency": "INR"
   },
   "pastCollaborations": ["Nike", "Boat", "Nykaa"],
-  "portfolioLinks": [
-    "https://instagram.com/garry_insta",
-    "https://youtube.com/@garryvlogs"
-  ]
+  "portfolioLink": "https://instagram.com/garry_insta"
 }
 ```
 
-Success response:
+Response:
 
 ```json
 {
@@ -407,24 +372,65 @@ Success response:
 }
 ```
 
-Validation:
+## 10. Refresh Token - Token nahi chahiye
 
 ```txt
-bio: minimum 30 characters
-collaborationPreferences: select 1 or 2
-rateRange.min and rateRange.max: valid numbers, max must be greater than or equal to min
-portfolioLinks: valid http/https URLs
+POST https://viralflight-new-backend.onrender.com/api/auth/refresh-token
 ```
 
-## Frontend Flow Summary
+Body:
 
-1. Role select screen: call `POST /api/auth/send-otp`.
-2. OTP screen: call `POST /api/auth/verify-otp`.
-3. Save `accessToken` and `refreshToken`.
-4. If role is `influencer`, call `GET /api/influencer/me`.
-5. Route user based on `onboardingStep`.
-6. Before rendering form dropdowns, call `GET /api/influencer/onboarding-options`.
-7. Submit each onboarding step to its matching API.
-8. When `onboardingStep` is `completed`, redirect to `/dashboard/influencer`.
+```json
+{
+  "refreshToken": "REFRESH_TOKEN"
+}
+```
 
-Brand and campaign route files exist in the repo but are currently empty and not mounted in `src/app.js`, so there are no active brand/campaign APIs yet.
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Access token refreshed successfully",
+  "accessToken": "NEW_ACCESS_TOKEN"
+}
+```
+
+## Token Summary
+
+Token nahi chahiye:
+
+```txt
+0. Health Check
+1. Send OTP
+2. Verify OTP
+10. Refresh Token
+```
+
+Token chahiye:
+
+```txt
+3. Get Influencer Profile
+4. Get Onboarding Options
+5. Save Basic Info
+6. Get Platform Options
+7. Connect Platform
+8. Save Content Preferences
+9. Finish Profile
+```
+
+## Flow
+
+```txt
+Send OTP
+Verify OTP
+Save accessToken
+Get Profile
+Get Options
+Save Basic Info
+Connect Platform
+Save Content Preferences
+Finish Profile
+```
+
+Brand/campaign APIs abhi ready nahi hain. Abhi sirf influencer onboarding APIs use karni hain.

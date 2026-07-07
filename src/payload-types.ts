@@ -76,7 +76,11 @@ export interface Config {
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    'app-users': {
+      influencerProfile: 'influencer-profiles';
+    };
+  };
   collectionsSelect: {
     'cms-users': CmsUsersSelect<false> | CmsUsersSelect<true>;
     'app-users': AppUsersSelect<false> | AppUsersSelect<true>;
@@ -149,20 +153,32 @@ export interface CmsUser {
   collection: 'cms-users';
 }
 /**
+ * Users who sign in with mobile OTP. Mobile number is the main identifier.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "app-users".
  */
 export interface AppUser {
   id: string;
+  /**
+   * Login mobile number (e.g. +919876543210)
+   */
   mobile: string;
   role: 'agency' | 'influencer' | 'brand';
   isMobileVerified?: boolean | null;
   lastOtpRequestedAt?: string | null;
   lastLoginAt?: string | null;
+  influencerProfile?: {
+    docs?: (string | InfluencerProfile)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   updatedAt: string;
   createdAt: string;
 }
 /**
+ * Complete influencer profile — all 4 onboarding screens in one schema.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "influencer-profiles".
  */
@@ -171,10 +187,10 @@ export interface InfluencerProfile {
   userId?: (string | null) | AppUser;
   mobile: string;
   name?: string | null;
-  city?: string | null;
+  city?: ('Mumbai' | 'Delhi' | 'Bengaluru' | 'Hyderabad' | 'Chennai' | 'Kolkata') | null;
   platforms?:
     | {
-        platform: string;
+        platform: 'instagram' | 'youtube' | 'tiktok' | 'twitter' | 'facebook' | 'linkedin' | 'snapchat';
         username?: string | null;
         channelName?: string | null;
         followers?: number | null;
@@ -184,56 +200,58 @@ export interface InfluencerProfile {
       }[]
     | null;
   contentCategories?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
+    | (
+        | 'Fashion'
+        | 'Lifestyle'
+        | 'Beauty'
+        | 'Fitness'
+        | 'Food'
+        | 'Travel'
+        | 'Tech'
+        | 'Finance'
+        | 'Gaming'
+        | 'Parenting'
+        | 'Education'
+        | 'Comedy'
+        | 'Music'
+        | 'Dance'
+        | 'Photography'
+        | 'Art & Design'
+        | 'Health & Wellness'
+        | 'Automobile'
+        | 'Real Estate'
+        | 'Sports'
+        | 'Pets'
+        | 'Spirituality'
+        | 'News & Commentary'
+        | 'DIY & Crafts'
+      )[]
     | null;
   contentLanguages?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
+    | (
+        | 'Hindi'
+        | 'English'
+        | 'Tamil'
+        | 'Telugu'
+        | 'Bengali'
+        | 'Marathi'
+        | 'Gujarati'
+        | 'Kannada'
+        | 'Malayalam'
+        | 'Punjabi'
+        | 'Urdu'
+        | 'Odia'
+      )[]
     | null;
   bio?: string | null;
-  collaborationPreferences?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
+  collaborationPreference?: ('paid_only' | 'barter_product' | 'paid_and_barter') | null;
   rateRange?: {
     min?: number | null;
     max?: number | null;
     currency?: string | null;
   };
-  pastCollaborations?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  portfolioLinks?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
+  pastCollaborations?: string[] | null;
+  portfolioLink?: string | null;
   isProfileComplete?: boolean | null;
   completedAt?: string | null;
   updatedAt: string;
@@ -249,7 +267,7 @@ export interface OnboardingSetting {
   id: string;
   key: string;
   /**
-   * Expected keys: cities, platforms, primaryPlatforms, contentCategories, contentLanguages, collaborationPreferences.
+   * Expected keys: cities, platforms, primaryPlatforms, secondaryPlatforms, contentCategories, contentLanguages, collaborationPreferences, collaborationPreferenceOptions, validation.
    */
   value:
     | {
@@ -379,6 +397,7 @@ export interface AppUsersSelect<T extends boolean = true> {
   isMobileVerified?: T;
   lastOtpRequestedAt?: T;
   lastLoginAt?: T;
+  influencerProfile?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -405,7 +424,7 @@ export interface InfluencerProfilesSelect<T extends boolean = true> {
   contentCategories?: T;
   contentLanguages?: T;
   bio?: T;
-  collaborationPreferences?: T;
+  collaborationPreference?: T;
   rateRange?:
     | T
     | {
@@ -414,7 +433,7 @@ export interface InfluencerProfilesSelect<T extends boolean = true> {
         currency?: T;
       };
   pastCollaborations?: T;
-  portfolioLinks?: T;
+  portfolioLink?: T;
   isProfileComplete?: T;
   completedAt?: T;
   updatedAt?: T;

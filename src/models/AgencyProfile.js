@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const brandProfileSchema = new mongoose.Schema(
+const agencyProfileSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -13,7 +13,7 @@ const brandProfileSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    brandName: {
+    agencyName: {
       type: String,
       trim: true,
     },
@@ -21,19 +21,7 @@ const brandProfileSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    industry: {
-      type: String,
-      trim: true,
-    },
-    website: {
-      type: String,
-      trim: true,
-    },
-    description: {
-      type: String,
-      trim: true,
-    },
-    campaignTypes: {
+    services: {
       type: [
         {
           type: String,
@@ -42,21 +30,26 @@ const brandProfileSchema = new mongoose.Schema(
       ],
       default: [],
     },
-    budgetRange: {
-      min: {
-        type: Number,
-        min: 0,
-      },
-      max: {
-        type: Number,
-        min: 0,
-      },
-      currency: {
-        type: String,
-        default: "INR",
-        trim: true,
-        uppercase: true,
-      },
+    website: {
+      type: String,
+      trim: true,
+    },
+    teamSize: {
+      type: Number,
+      min: 1,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    clientIndustries: {
+      type: [
+        {
+          type: String,
+          trim: true,
+        },
+      ],
+      default: [],
     },
     isProfileComplete: {
       type: Boolean,
@@ -69,4 +62,8 @@ const brandProfileSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("BrandProfile", brandProfileSchema, "brand_profiles");
+export default mongoose.model(
+  "AgencyProfile",
+  agencyProfileSchema,
+  "agency_profiles"
+);

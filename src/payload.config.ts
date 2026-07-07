@@ -14,7 +14,12 @@ export default buildConfig({
   admin: {
     user: CMSUsers.slug,
   },
-  collections: [CMSUsers, AppUsers, InfluencerProfiles, OnboardingSettings],
+  collections: [
+    CMSUsers,
+    AppUsers,
+    InfluencerProfiles,
+    OnboardingSettings,
+  ],
   db: mongooseAdapter({
     url: databaseURL,
   }),

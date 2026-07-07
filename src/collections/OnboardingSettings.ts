@@ -32,7 +32,7 @@ export const OnboardingSettings: CollectionConfig = {
       required: true,
       admin: {
         description:
-          'Expected keys: cities, platforms, primaryPlatforms, contentCategories, contentLanguages, collaborationPreferences.',
+          'Expected keys: cities, platforms, primaryPlatforms, secondaryPlatforms, contentCategories, contentLanguages, collaborationPreferences, collaborationPreferenceOptions, validation.',
       },
     },
   ],

@@ -1,65 +1,55 @@
 # Viral Flight Backend APIs
 
-Base URL:
+Production base URL:
 
 ```txt
-Local: http://localhost:5000
-Production: https://viralflight-new-backend.onrender.com
+https://viralflight-new-backend.onrender.com
 ```
 
-Protected influencer APIs need this header:
+Local base URL:
 
 ```txt
-Authorization: Bearer YOUR_ACCESS_TOKEN
+http://localhost:5000
+```
+
+## Active Custom APIs
+
+```txt
+GET  /
+GET  /health
+GET  /api/health
+POST /api/auth/send-otp
+POST /api/auth/verify-otp
+POST /api/auth/refresh-token
+GET  /api/influencer/onboarding-options
+GET  /api/influencer/platform-options
+GET  /api/influencer/me
+POST /api/influencer/basic-info
+POST /api/influencer/connect-platform
+POST /api/influencer/content-preferences
+POST /api/influencer/finish-profile
+POST /api/influencer/complete-profile
+```
+
+There are no active custom `/api/admin/*`, brand, or campaign APIs right now. Payload CMS admin is available at:
+
+```txt
+/admin
+```
+
+## Headers
+
+Public APIs:
+
+```txt
 Content-Type: application/json
 ```
 
-## MongoDB Storage
-
-Auth user data is saved in:
+Protected influencer APIs:
 
 ```txt
-Collection: users
-```
-
-Main fields:
-
-```txt
-mobile, role, isMobileVerified, lastOtpRequestedAt, lastLoginAt
-```
-
-Influencer onboarding data is saved in:
-
-```txt
-Collection: influencer_profiles
-```
-
-Main fields:
-
-```txt
-userId, mobile, name, city, platforms, contentCategories, contentLanguages,
-bio, collaborationPreferences, rateRange, pastCollaborations, portfolioLinks,
-isProfileComplete, completedAt
-```
-
-Influencer onboarding settings are read from:
-
-```txt
-Collection: cms_settings
-Key: influencer_onboarding
-```
-
-Admin editing is handled by Payload CMS, not by custom backend admin APIs.
-
-```txt
-Payload Admin: /admin
-Payload CMS: https://payloadcms.com/
-```
-
-The influencer app reads CMS values from:
-
-```txt
-GET /api/influencer/onboarding-options
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: application/json
 ```
 
 ## Auth
@@ -69,6 +59,8 @@ GET /api/influencer/onboarding-options
 ```txt
 POST /api/auth/send-otp
 ```
+
+Body:
 
 ```json
 {
@@ -83,13 +75,23 @@ Allowed roles:
 agency, influencer, brand
 ```
 
-This saves/updates the user in MongoDB with selected role and OTP request time.
+Success:
+
+```json
+{
+  "success": true,
+  "message": "OTP sent successfully",
+  "selectedRole": "influencer"
+}
+```
 
 ### Verify OTP
 
 ```txt
 POST /api/auth/verify-otp
 ```
+
+Body:
 
 ```json
 {
@@ -98,7 +100,7 @@ POST /api/auth/verify-otp
 }
 ```
 
-Success response:
+Success:
 
 ```json
 {
@@ -107,12 +109,10 @@ Success response:
   "selectedRole": "influencer",
   "dashboard": "influencer",
   "redirectTo": "/dashboard/influencer",
-  "accessToken": "...",
-  "refreshToken": "..."
+  "accessToken": "ACCESS_TOKEN",
+  "refreshToken": "REFRESH_TOKEN"
 }
 ```
-
-`accessToken` is used for API calls. `refreshToken` is used to get a new access token.
 
 ### Refresh Token
 
@@ -120,13 +120,27 @@ Success response:
 POST /api/auth/refresh-token
 ```
 
+Body:
+
 ```json
 {
-  "refreshToken": "YOUR_REFRESH_TOKEN"
+  "refreshToken": "REFRESH_TOKEN"
+}
+```
+
+Success:
+
+```json
+{
+  "success": true,
+  "message": "Access token refreshed successfully",
+  "accessToken": "NEW_ACCESS_TOKEN"
 }
 ```
 
 ## Influencer Onboarding
+
+All APIs below require `Authorization: Bearer ACCESS_TOKEN`.
 
 ### Get Onboarding Options
 
@@ -134,13 +148,41 @@ POST /api/auth/refresh-token
 GET /api/influencer/onboarding-options
 ```
 
-Returns cities, platforms, primary platforms, content categories, content languages, and collaboration preferences for frontend screens.
+Returns cities, platform config, primary/secondary platforms, content categories, languages, collaboration preferences, validation, and steps.
+
+### Get Platform Options
+
+```txt
+GET /api/influencer/platform-options
+```
+
+Returns platform options and required fields.
+
+### Get My Profile
+
+```txt
+GET /api/influencer/me
+```
+
+Returns saved profile and current onboarding step.
+
+Possible steps:
+
+```txt
+basic-info
+connect-platform
+content-preferences
+finish-profile
+completed
+```
 
 ### Save Basic Info
 
 ```txt
 POST /api/influencer/basic-info
 ```
+
+Body:
 
 ```json
 {
@@ -149,19 +191,12 @@ POST /api/influencer/basic-info
 }
 ```
 
-Allowed cities:
+Validation:
 
 ```txt
-Mumbai, Delhi, Bengaluru, Hyderabad, Chennai, Kolkata
+name: minimum 2 characters
+city: must match onboarding-options cities
 ```
-
-### Get Platform Options
-
-```txt
-GET /api/influencer/platform-options
-```
-
-Returns all platform options and required fields for frontend forms.
 
 ### Connect Platform
 
@@ -191,7 +226,7 @@ YouTube:
 }
 ```
 
-TikTok, Twitter, Facebook, LinkedIn, Snapchat:
+Other username-based platforms:
 
 ```json
 {
@@ -202,19 +237,14 @@ TikTok, Twitter, Facebook, LinkedIn, Snapchat:
 }
 ```
 
-Allowed platforms:
+Rules:
 
 ```txt
-instagram, youtube, tiktok, twitter, facebook, linkedin, snapchat
+Basic info must be completed first.
+First platform must be instagram, youtube, or tiktok.
+engagement must be 0 to 100.
+followers/subscribers cannot be negative.
 ```
-
-At least one primary platform is required before the user can continue:
-
-```txt
-instagram, youtube, tiktok
-```
-
-Twitter, Facebook, LinkedIn, and Snapchat are optional add-more platforms.
 
 ### Save Content Preferences
 
@@ -222,68 +252,95 @@ Twitter, Facebook, LinkedIn, and Snapchat are optional add-more platforms.
 POST /api/influencer/content-preferences
 ```
 
-The user must select at least 5 content categories and at least 1 language.
+Body:
 
 ```json
 {
-  "contentCategories": [
-    "Fashion",
-    "Beauty",
-    "Travel",
-    "Lifestyle",
-    "Technology"
-  ],
+  "contentCategories": ["Fashion", "Lifestyle", "Beauty", "Fitness", "Travel"],
   "contentLanguages": ["Hindi", "English"]
 }
 ```
 
+Rules:
+
+```txt
+contentCategories: exactly 5
+contentLanguages: minimum 1
+all values must match onboarding-options
+```
+
 ### Finish Profile
+
+Preferred:
 
 ```txt
 POST /api/influencer/finish-profile
+```
+
+Alternative:
+
+```txt
 POST /api/influencer/complete-profile
 ```
 
-Bio must be at least 30 characters. Collaboration preferences must have 1 or 2 selected values.
+Body:
 
 ```json
 {
   "bio": "I create lifestyle and fashion content for young urban audiences.",
-  "collaborationPreferences": ["paid_only", "paid_and_barter"],
+  "collaborationPreferences": ["paid_only"],
   "rateRange": {
     "min": 5000,
     "max": 25000,
     "currency": "INR"
   },
   "pastCollaborations": ["Nike", "Boat", "Nykaa"],
-  "portfolioLinks": [
-    "https://instagram.com/garry_insta",
-    "https://youtube.com/@garryvlogs"
-  ]
+  "portfolioLink": "https://instagram.com/garry_insta"
 }
 ```
 
-Allowed collaboration preferences:
+Rules:
 
 ```txt
-paid_only, barter_product, paid_and_barter
+bio: minimum 30 characters
+collaborationPreferences: send one selected value in an array
+rateRange: optional, max must be greater than or equal to min
+portfolioLink: optional, valid http/https URL
 ```
 
-Success response includes:
+Success:
 
 ```json
 {
   "success": true,
   "message": "Influencer profile completed successfully",
   "onboardingStep": "completed",
-  "redirectTo": "/dashboard/influencer"
+  "redirectTo": "/dashboard/influencer",
+  "profile": {}
 }
 ```
 
-### Get My Profile
+## Database Storage
+
+Auth users:
 
 ```txt
-GET /api/influencer/me
+Collection: users
+Fields: mobile, role, isMobileVerified, lastOtpRequestedAt, lastLoginAt
 ```
 
-Returns saved influencer profile, onboarding step, and connected platforms.
+Influencer profiles:
+
+```txt
+Collection: influencer_profiles
+Fields: userId, mobile, name, city, platforms, contentCategories,
+contentLanguages, bio, collaborationPreference, rateRange,
+pastCollaborations, portfolioLink, isProfileComplete, completedAt
+```
+
+Onboarding settings:
+
+```txt
+Collection: cms_settings
+Key: influencer_onboarding
+```

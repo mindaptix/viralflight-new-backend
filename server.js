@@ -13,11 +13,15 @@ const startServer = async () => {
   await nextApp.prepare();
   await connectDB();
 
+  // Express APIs first, then Payload/Next for /admin and /api/*
   app.use((req, res) => nextHandler(req, res));
 
-  app.listen(PORT, () => {
+  app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
   });
 };
 
-startServer();
+startServer().catch((error) => {
+  console.error("Failed to start server:", error);
+  process.exit(1);
+});

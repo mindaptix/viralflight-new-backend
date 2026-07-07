@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 
 import User from "../models/User.js";
 import { ALLOWED_ROLES } from "../constants/onboardingConstants.js";
+import { normalizeMobile } from "../utils/mobileUtils.js";
 import { createTokens, verifyRefreshToken } from "../utils/tokenUtils.js";
 
 const client = twilio(
@@ -14,12 +15,15 @@ const getDashboardPath = (role) => `/dashboard/${role}`;
 
 export const sendOtp = async (req, res) => {
   try {
-    const { mobile, role } = req.body;
+    const { role } = req.body;
+    const mobile = normalizeMobile(req.body.mobile);
 
     if (!mobile) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Mobile number is required" });
+      return res.status(400).json({
+        success: false,
+        message:
+          "Valid mobile number is required. Use 10 digits or +91 format, e.g. +917018319344",
+      });
     }
 
     if (!ALLOWED_ROLES.includes(role)) {
@@ -51,6 +55,7 @@ export const sendOtp = async (req, res) => {
       success: true,
       message: "OTP sent successfully",
       selectedRole: role,
+      mobile,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -59,12 +64,14 @@ export const sendOtp = async (req, res) => {
 
 export const verifyOtp = async (req, res) => {
   try {
-    const { mobile, otp } = req.body;
+    const { otp } = req.body;
+    const mobile = normalizeMobile(req.body.mobile);
 
     if (!mobile || !otp) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Mobile number and OTP are required" });
+      return res.status(400).json({
+        success: false,
+        message: "Mobile number and OTP are required",
+      });
     }
 
     const user = await User.findOne({ mobile });
