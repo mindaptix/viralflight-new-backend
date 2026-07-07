@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon server.js",
     "build": "next build",
-    "start": "node server.js",
+    "start": "npm run build && node server.js",
     "cms:dev": "next dev",
     "cms:build": "next build",
     "payload": "payload",
