@@ -13,7 +13,7 @@ const startServer = async () => {
   await nextApp.prepare();
   await connectDB();
 
-  app.all("*", (req, res) => nextHandler(req, res));
+  app.use((req, res) => nextHandler(req, res));
 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
