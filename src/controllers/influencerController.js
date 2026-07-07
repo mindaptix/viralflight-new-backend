@@ -101,6 +101,129 @@ const getOrCreateProfile = async (user) => {
   return profile;
 };
 
+const buildPlatformData = (body, settings) => {
+  const allowedPlatforms = settings.platforms.map((item) => item.platform);
+  const platformRequiredFields = getPlatformRequiredFields(settings);
+  const platform = body.platform;
+
+  if (!allowedPlatforms.includes(platform)) {
+    return {
+      error: `Valid platform is required: ${allowedPlatforms.join(", ")}`,
+    };
+  }
+
+  const requiredFields = platformRequiredFields[platform];
+  const platformData = { platform };
+
+  for (const field of requiredFields) {
+    const value = body[field];
+
+    if (value === undefined || value === null || value === "") {
+      return { error: `${field} is required for ${platform}` };
+    }
+
+    platformData[field] =
+      typeof value === "string" ? value.trim() : Number(value);
+  }
+
+  if (
+    platformData.followers !== undefined &&
+    (!Number.isFinite(platformData.followers) || platformData.followers < 0)
+  ) {
+    return { error: "Followers must be a valid number" };
+  }
+
+  if (
+    platformData.subscribers !== undefined &&
+    (!Number.isFinite(platformData.subscribers) ||
+      platformData.subscribers < 0)
+  ) {
+    return { error: "Subscribers must be a valid number" };
+  }
+
+  if (
+    !Number.isFinite(platformData.engagement) ||
+    platformData.engagement < 0 ||
+    platformData.engagement > 100
+  ) {
+    return { error: "Engagement must be a valid percentage from 0 to 100" };
+  }
+
+  return { platformData };
+};
+
+const buildFinishProfileData = (body, settings) => {
+  const bio = typeof body.bio === "string" ? body.bio.trim() : "";
+  const collaborationPreference = normalizeSelectedValues(
+    Array.isArray(body.collaborationPreferences)
+      ? body.collaborationPreferences
+      : body.collaborationPreference
+        ? [body.collaborationPreference]
+        : [],
+    settings.collaborationPreferences
+  )[0];
+
+  const pastCollaborations = normalizeStringList(
+    body.pastCollaborations ?? body.pastCollaboration
+  );
+
+  const portfolioLinkRaw =
+    typeof body.portfolioLink === "string"
+      ? body.portfolioLink.trim()
+      : Array.isArray(body.portfolioLinks) && body.portfolioLinks[0]
+        ? String(body.portfolioLinks[0]).trim()
+        : "";
+  const rateRange = body.rateRange || {};
+  const minRate = Number(rateRange.min);
+  const maxRate = Number(rateRange.max);
+  const currency =
+    typeof rateRange.currency === "string" && rateRange.currency.trim()
+      ? rateRange.currency.trim().toUpperCase()
+      : "INR";
+
+  if (bio.length < 30) {
+    return { error: "Bio must be at least 30 characters" };
+  }
+
+  if (!collaborationPreference) {
+    return { error: "Please select exactly 1 collaboration preference" };
+  }
+
+  const hasRateRange =
+    rateRange.min !== undefined || rateRange.max !== undefined || rateRange.currency;
+
+  if (hasRateRange) {
+    if (
+      !Number.isFinite(minRate) ||
+      !Number.isFinite(maxRate) ||
+      minRate < 0 ||
+      maxRate < minRate
+    ) {
+      return { error: "Please enter a valid rate range" };
+    }
+  }
+
+  if (portfolioLinkRaw && !isValidUrl(portfolioLinkRaw)) {
+    return { error: "Portfolio link must be a valid http or https URL" };
+  }
+
+  return {
+    profileData: {
+      bio,
+      collaborationPreference,
+      rateRange: hasRateRange
+        ? {
+            min: minRate,
+            max: maxRate,
+            currency,
+          }
+        : undefined,
+      pastCollaborations,
+      portfolioLink: portfolioLinkRaw || undefined,
+    },
+  };
+};
+
 export const saveBasicInfo = async (req, res) => {
   try {
     const settings = await getOnboardingSettings();
@@ -147,15 +270,11 @@ export const saveBasicInfo = async (req, res) => {
 export const connectPlatform = async (req, res) => {
   try {
     const settings = await getOnboardingSettings();
-    const allowedPlatforms = settings.platforms.map((item) => item.platform);
-    const platformRequiredFields = getPlatformRequiredFields(settings);
     const { platform } = req.body;
+    const { platformData, error } = buildPlatformData(req.body, settings);
 
-    if (!allowedPlatforms.includes(platform)) {
-      return res.status(400).json({
-        success: false,
-        message: `Valid platform is required: ${allowedPlatforms.join(", ")}`,
-      });
+    if (error) {
+      return res.status(400).json({ success: false, message: error });
     }
 
     const profile = await getOrCreateProfile(req.user);
@@ -176,54 +295,6 @@ export const connectPlatform = async (req, res) => {
         message: `Please connect ${settings.primaryPlatforms.join(
           ", "
         )} before adding more platforms`,
-      });
-    }
-
-    const requiredFields = platformRequiredFields[platform];
-    const platformData = { platform };
-
-    for (const field of requiredFields) {
-      const value = req.body[field];
-
-      if (value === undefined || value === null || value === "") {
-        return res.status(400).json({
-          success: false,
-          message: `${field} is required for ${platform}`,
-        });
-      }
-
-      platformData[field] =
-        typeof value === "string" ? value.trim() : Number(value);
-    }
-
-    if (
-      platformData.followers !== undefined &&
-      (!Number.isFinite(platformData.followers) || platformData.followers < 0)
-    ) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Followers must be a valid number" });
-    }
-
-    if (
-      platformData.subscribers !== undefined &&
-      (!Number.isFinite(platformData.subscribers) ||
-        platformData.subscribers < 0)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Subscribers must be a valid number",
-      });
-    }
-
-    if (
-      !Number.isFinite(platformData.engagement) ||
-      platformData.engagement < 0 ||
-      platformData.engagement > 100
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Engagement must be a valid percentage from 0 to 100",
       });
     }
 
@@ -337,85 +408,17 @@ export const finishProfile = async (req, res) => {
       });
     }
 
-    const bio = typeof req.body.bio === "string" ? req.body.bio.trim() : "";
-    const collaborationPreference = normalizeSelectedValues(
-      Array.isArray(req.body.collaborationPreferences)
-        ? req.body.collaborationPreferences
-        : req.body.collaborationPreference
-          ? [req.body.collaborationPreference]
-          : [],
-      settings.collaborationPreferences
-    )[0];
+    const { profileData, error } = buildFinishProfileData(req.body, settings);
 
-    const pastCollaborations = normalizeStringList(
-      req.body.pastCollaborations ?? req.body.pastCollaboration
-    );
-
-    const portfolioLinkRaw =
-      typeof req.body.portfolioLink === "string"
-        ? req.body.portfolioLink.trim()
-        : Array.isArray(req.body.portfolioLinks) && req.body.portfolioLinks[0]
-          ? String(req.body.portfolioLinks[0]).trim()
-          : "";
-    const rateRange = req.body.rateRange || {};
-    const minRate = Number(rateRange.min);
-    const maxRate = Number(rateRange.max);
-    const currency =
-      typeof rateRange.currency === "string" && rateRange.currency.trim()
-        ? rateRange.currency.trim().toUpperCase()
-        : "INR";
-
-    if (bio.length < 30) {
-      return res.status(400).json({
-        success: false,
-        message: "Bio must be at least 30 characters",
-      });
+    if (error) {
+      return res.status(400).json({ success: false, message: error });
     }
 
-    if (!collaborationPreference) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select exactly 1 collaboration preference",
-      });
-    }
-
-    const hasRateRange =
-      rateRange.min !== undefined ||
-      rateRange.max !== undefined ||
-      rateRange.currency;
-
-    if (hasRateRange) {
-      if (
-        !Number.isFinite(minRate) ||
-        !Number.isFinite(maxRate) ||
-        minRate < 0 ||
-        maxRate < minRate
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "Please enter a valid rate range",
-        });
-      }
-    }
-
-    if (portfolioLinkRaw && !isValidUrl(portfolioLinkRaw)) {
-      return res.status(400).json({
-        success: false,
-        message: "Portfolio link must be a valid http or https URL",
-      });
-    }
-
-    profile.bio = bio;
-    profile.collaborationPreference = collaborationPreference;
-    profile.rateRange = hasRateRange
-      ? {
-          min: minRate,
-          max: maxRate,
-          currency,
-        }
-      : undefined;
-    profile.pastCollaborations = pastCollaborations;
-    profile.portfolioLink = portfolioLinkRaw || undefined;
+    profile.bio = profileData.bio;
+    profile.collaborationPreference = profileData.collaborationPreference;
+    profile.rateRange = profileData.rateRange;
+    profile.pastCollaborations = profileData.pastCollaborations;
+    profile.portfolioLink = profileData.portfolioLink;
     profile.isProfileComplete = true;
     profile.completedAt = new Date();
 
@@ -424,6 +427,115 @@ export const finishProfile = async (req, res) => {
     res.json({
       success: true,
       message: "Influencer profile completed successfully",
+      onboardingStep: "completed",
+      redirectTo: "/dashboard/influencer",
+      profile,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const saveFullOnboarding = async (req, res) => {
+  try {
+    const settings = await getOnboardingSettings();
+    const { name, city } = req.body;
+    const selectedCity = normalizeCity(city, settings.cities);
+
+    if (!name || typeof name !== "string" || name.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Name is required and must be at least 2 characters",
+      });
+    }
+
+    if (!selectedCity) {
+      return res.status(400).json({
+        success: false,
+        message: `Valid city is required: ${settings.cities.join(", ")}`,
+      });
+    }
+
+    const platformBody = req.body.platform || req.body;
+    const { platformData, error: platformError } = buildPlatformData(
+      platformBody,
+      settings
+    );
+
+    if (platformError) {
+      return res.status(400).json({ success: false, message: platformError });
+    }
+
+    if (!settings.primaryPlatforms.includes(platformData.platform)) {
+      return res.status(400).json({
+        success: false,
+        message: `Please connect ${settings.primaryPlatforms.join(
+          ", "
+        )} before adding more platforms`,
+      });
+    }
+
+    const contentCategories = normalizeSelectedValues(
+      req.body.contentCategories,
+      settings.contentCategories
+    );
+    const contentLanguages = normalizeSelectedValues(
+      req.body.contentLanguages,
+      settings.contentLanguages
+    );
+
+    if (contentCategories.length < 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select exactly 5 content categories",
+      });
+    }
+
+    if (contentCategories.length > 5) {
+      return res.status(400).json({
+        success: false,
+        message: "You can select up to 5 content categories only",
+      });
+    }
+
+    if (contentLanguages.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select at least 1 content language",
+      });
+    }
+
+    const { profileData, error: profileError } = buildFinishProfileData(
+      req.body,
+      settings
+    );
+
+    if (profileError) {
+      return res.status(400).json({ success: false, message: profileError });
+    }
+
+    const profile = await getOrCreateProfile(req.user);
+
+    profile.userId = req.user.userId;
+    profile.mobile = req.user.mobile;
+    profile.name = name.trim();
+    profile.city = selectedCity;
+    profile.platforms = [platformData];
+    profile.contentCategories = contentCategories;
+    profile.contentLanguages = contentLanguages;
+    profile.bio = profileData.bio;
+    profile.collaborationPreference = profileData.collaborationPreference;
+    profile.rateRange = profileData.rateRange;
+    profile.pastCollaborations = profileData.pastCollaborations;
+    profile.portfolioLink = profileData.portfolioLink;
+    profile.isProfileComplete = true;
+    profile.completedAt = new Date();
+
+    await profile.save();
+
+    res.json({
+      success: true,
+      message: "Influencer onboarding completed successfully",
       onboardingStep: "completed",
       redirectTo: "/dashboard/influencer",
       profile,

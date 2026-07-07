@@ -29,6 +29,7 @@ POST /api/influencer/connect-platform
 POST /api/influencer/content-preferences
 POST /api/influencer/finish-profile
 POST /api/influencer/complete-profile
+POST /api/influencer/full-onboarding
 ```
 
 There are no active custom `/api/admin/*`, brand, or campaign APIs right now. Payload CMS admin is available at:
@@ -314,6 +315,52 @@ Success:
 {
   "success": true,
   "message": "Influencer profile completed successfully",
+  "onboardingStep": "completed",
+  "redirectTo": "/dashboard/influencer",
+  "profile": {}
+}
+```
+
+### Full Onboarding
+
+Use this when frontend has one full form after login.
+
+```txt
+POST /api/influencer/full-onboarding
+```
+
+Body:
+
+```json
+{
+  "name": "Garry",
+  "city": "Mumbai",
+  "platform": {
+    "platform": "instagram",
+    "username": "garry_insta",
+    "followers": 50000,
+    "engagement": 4.5
+  },
+  "contentCategories": ["Fashion", "Lifestyle", "Beauty", "Fitness", "Travel"],
+  "contentLanguages": ["Hindi", "English"],
+  "bio": "I create lifestyle and fashion content for young urban audiences.",
+  "collaborationPreferences": ["paid_only"],
+  "rateRange": {
+    "min": 5000,
+    "max": 25000,
+    "currency": "INR"
+  },
+  "pastCollaborations": ["Nike", "Boat", "Nykaa"],
+  "portfolioLink": "https://instagram.com/garry_insta"
+}
+```
+
+Success:
+
+```json
+{
+  "success": true,
+  "message": "Influencer onboarding completed successfully",
   "onboardingStep": "completed",
   "redirectTo": "/dashboard/influencer",
   "profile": {}

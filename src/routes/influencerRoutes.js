@@ -6,6 +6,7 @@ import {
   connectPlatform,
   saveContentPreferences,
   finishProfile,
+  saveFullOnboarding,
   getMyProfile,
   getPlatformOptions,
   getOnboardingOptions,
@@ -21,5 +22,6 @@ router.post("/connect-platform", authMiddleware, connectPlatform);
 router.post("/content-preferences", authMiddleware, saveContentPreferences);
 router.post("/finish-profile", authMiddleware, finishProfile);
 router.post("/complete-profile", authMiddleware, finishProfile);
+router.post("/full-onboarding", authMiddleware, saveFullOnboarding);
 
 export default router;
