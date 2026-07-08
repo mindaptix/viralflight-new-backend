@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     'cms-users': CmsUser;
     'app-users': AppUser;
+    'agency-profiles': AgencyProfile;
     'influencer-profiles': InfluencerProfile;
     'onboarding-settings': OnboardingSetting;
     'payload-kv': PayloadKv;
@@ -84,6 +85,7 @@ export interface Config {
   collectionsSelect: {
     'cms-users': CmsUsersSelect<false> | CmsUsersSelect<true>;
     'app-users': AppUsersSelect<false> | AppUsersSelect<true>;
+    'agency-profiles': AgencyProfilesSelect<false> | AgencyProfilesSelect<true>;
     'influencer-profiles': InfluencerProfilesSelect<false> | InfluencerProfilesSelect<true>;
     'onboarding-settings': OnboardingSettingsSelect<false> | OnboardingSettingsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -258,6 +260,54 @@ export interface InfluencerProfile {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agency-profiles".
+ */
+export interface AgencyProfile {
+  id: string;
+  userId?: (string | null) | AppUser;
+  mobile: string;
+  agencyName?: string | null;
+  contactPerson?: string | null;
+  city?: string | null;
+  agencyType?:
+    | (
+        | 'Talent Management'
+        | 'Influencer Marketing'
+        | 'Creative / Production'
+        | 'PR & Communications'
+        | 'Full-service Agency'
+        | 'Boutique Agency'
+      )
+    | null;
+  teamSize?: ('Solo' | '2-5' | '6-15' | '16-50' | '50+') | null;
+  creatorsManaged?: ('1-10' | '11-25' | '26-50' | '51-100' | '100+') | null;
+  focusAreas?:
+    | (
+        | 'Fashion'
+        | 'Beauty'
+        | 'Lifestyle'
+        | 'Food & Beverage'
+        | 'Tech'
+        | 'Finance'
+        | 'Gaming'
+        | 'Travel'
+        | 'Health & Wellness'
+        | 'Entertainment'
+        | 'Automobile'
+        | 'Real Estate'
+        | 'Education'
+        | 'D2C / E-commerce'
+      )[]
+    | null;
+  website?: string | null;
+  description?: string | null;
+  isProfileComplete?: boolean | null;
+  completedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Edit influencer onboarding options. Keep value as the JSON object used by the app.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -312,6 +362,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'app-users';
         value: string | AppUser;
+      } | null)
+    | ({
+        relationTo: 'agency-profiles';
+        value: string | AgencyProfile;
       } | null)
     | ({
         relationTo: 'influencer-profiles';
@@ -398,6 +452,27 @@ export interface AppUsersSelect<T extends boolean = true> {
   lastOtpRequestedAt?: T;
   lastLoginAt?: T;
   influencerProfile?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agency-profiles_select".
+ */
+export interface AgencyProfilesSelect<T extends boolean = true> {
+  userId?: T;
+  mobile?: T;
+  agencyName?: T;
+  contactPerson?: T;
+  city?: T;
+  agencyType?: T;
+  teamSize?: T;
+  creatorsManaged?: T;
+  focusAreas?: T;
+  website?: T;
+  description?: T;
+  isProfileComplete?: T;
+  completedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

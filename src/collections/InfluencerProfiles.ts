@@ -42,144 +42,114 @@ export const InfluencerProfiles: CollectionConfig = {
     delete: cmsAdmin,
   },
   fields: [
+    { name: 'name', type: 'text', label: 'Full Name' },
     {
-      type: 'tabs',
-      tabs: [
+      name: 'city',
+      type: 'select',
+      label: 'City',
+      options: ALLOWED_CITIES.map((city) => ({
+        label: city,
+        value: city,
+      })),
+    },
+    {
+      name: 'userId',
+      type: 'relationship',
+      relationTo: 'app-users',
+      label: 'Login User',
+    },
+    {
+      name: 'mobile',
+      type: 'text',
+      required: true,
+      unique: true,
+      label: 'Mobile Number',
+    },
+    {
+      name: 'platforms',
+      type: 'array',
+      label: 'Connected Platforms',
+      fields: [
         {
-          label: 'Step 1 — Name & City',
-          fields: [
-            { name: 'name', type: 'text', label: 'Full Name' },
-            {
-              name: 'city',
-              type: 'select',
-              label: 'City',
-              options: ALLOWED_CITIES.map((city) => ({
-                label: city,
-                value: city,
-              })),
-            },
-            {
-              name: 'userId',
-              type: 'relationship',
-              relationTo: 'app-users',
-              label: 'Login User',
-            },
-            {
-              name: 'mobile',
-              type: 'text',
-              required: true,
-              unique: true,
-              label: 'Mobile Number',
-            },
-          ],
+          name: 'platform',
+          type: 'select',
+          required: true,
+          options: platformOptions,
+        },
+        { name: 'username', type: 'text', label: 'Username / Handle' },
+        { name: 'channelName', type: 'text', label: 'Channel Name' },
+        { name: 'followers', type: 'number', min: 0, label: 'Followers' },
+        {
+          name: 'subscribers',
+          type: 'number',
+          min: 0,
+          label: 'Subscribers',
         },
         {
-          label: 'Step 2 — Socials',
-          fields: [
-            {
-              name: 'platforms',
-              type: 'array',
-              label: 'Connected Platforms',
-              fields: [
-                {
-                  name: 'platform',
-                  type: 'select',
-                  required: true,
-                  options: platformOptions,
-                },
-                { name: 'username', type: 'text', label: 'Username / Handle' },
-                { name: 'channelName', type: 'text', label: 'Channel Name' },
-                { name: 'followers', type: 'number', min: 0, label: 'Followers' },
-                {
-                  name: 'subscribers',
-                  type: 'number',
-                  min: 0,
-                  label: 'Subscribers',
-                },
-                {
-                  name: 'engagement',
-                  type: 'number',
-                  min: 0,
-                  max: 100,
-                  required: true,
-                  label: 'Engagement (%)',
-                },
-              ],
-            },
-          ],
-        },
-        {
-          label: 'Step 3 — Niches & Languages',
-          fields: [
-            {
-              name: 'contentCategories',
-              type: 'select',
-              hasMany: true,
-              label: 'Content Categories (5 required)',
-              options: CONTENT_CATEGORIES.map((category) => ({
-                label: category,
-                value: category,
-              })),
-            },
-            {
-              name: 'contentLanguages',
-              type: 'select',
-              hasMany: true,
-              label: 'Content Languages',
-              options: CONTENT_LANGUAGES.map((language) => ({
-                label: language,
-                value: language,
-              })),
-            },
-          ],
-        },
-        {
-          label: 'Step 4 — Bio & Collab',
-          fields: [
-            { name: 'bio', type: 'textarea', label: 'Bio (min 30 chars)' },
-            {
-              name: 'collaborationPreference',
-              type: 'select',
-              label: 'Collaboration Preference',
-              options: COLLABORATION_PREFERENCE_OPTIONS,
-            },
-            {
-              name: 'rateRange',
-              type: 'group',
-              label: 'Rate Range (optional)',
-              fields: [
-                { name: 'min', type: 'number', min: 0, label: 'Min (₹)' },
-                { name: 'max', type: 'number', min: 0, label: 'Max (₹)' },
-                { name: 'currency', type: 'text', defaultValue: 'INR' },
-              ],
-            },
-            {
-              name: 'pastCollaborations',
-              type: 'text',
-              hasMany: true,
-              label: 'Past Collaborations (brand names)',
-            },
-            {
-              name: 'portfolioLink',
-              type: 'text',
-              label: 'Portfolio Link',
-            },
-          ],
-        },
-        {
-          label: 'Status',
-          fields: [
-            {
-              name: 'isProfileComplete',
-              type: 'checkbox',
-              defaultValue: false,
-              label: 'Profile Complete',
-            },
-            { name: 'completedAt', type: 'date', label: 'Completed At' },
-          ],
+          name: 'engagement',
+          type: 'number',
+          min: 0,
+          max: 100,
+          required: true,
+          label: 'Engagement (%)',
         },
       ],
     },
+    {
+      name: 'contentCategories',
+      type: 'select',
+      hasMany: true,
+      label: 'Content Categories (5 required)',
+      options: CONTENT_CATEGORIES.map((category) => ({
+        label: category,
+        value: category,
+      })),
+    },
+    {
+      name: 'contentLanguages',
+      type: 'select',
+      hasMany: true,
+      label: 'Content Languages',
+      options: CONTENT_LANGUAGES.map((language) => ({
+        label: language,
+        value: language,
+      })),
+    },
+    { name: 'bio', type: 'textarea', label: 'Bio (min 30 chars)' },
+    {
+      name: 'collaborationPreference',
+      type: 'select',
+      label: 'Collaboration Preference',
+      options: COLLABORATION_PREFERENCE_OPTIONS,
+    },
+    {
+      name: 'rateRange',
+      type: 'group',
+      label: 'Rate Range (optional)',
+      fields: [
+        { name: 'min', type: 'number', min: 0, label: 'Min (₹)' },
+        { name: 'max', type: 'number', min: 0, label: 'Max (₹)' },
+        { name: 'currency', type: 'text', defaultValue: 'INR' },
+      ],
+    },
+    {
+      name: 'pastCollaborations',
+      type: 'text',
+      hasMany: true,
+      label: 'Past Collaborations (brand names)',
+    },
+    {
+      name: 'portfolioLink',
+      type: 'text',
+      label: 'Portfolio Link',
+    },
+    {
+      name: 'isProfileComplete',
+      type: 'checkbox',
+      defaultValue: false,
+      label: 'Profile Complete',
+    },
+    { name: 'completedAt', type: 'date', label: 'Completed At' },
   ],
   timestamps: true,
 }

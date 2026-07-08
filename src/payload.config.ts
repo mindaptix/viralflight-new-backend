@@ -3,6 +3,7 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { buildConfig } from 'payload'
 import sharp from 'sharp'
 
+import { AgencyProfiles } from './collections/AgencyProfiles'
 import { AppUsers } from './collections/AppUsers'
 import { CMSUsers } from './collections/CMSUsers'
 import { InfluencerProfiles } from './collections/InfluencerProfiles'
@@ -17,6 +18,7 @@ export default buildConfig({
   collections: [
     CMSUsers,
     AppUsers,
+    AgencyProfiles,
     InfluencerProfiles,
     OnboardingSettings,
   ],
