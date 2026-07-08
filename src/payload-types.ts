@@ -70,6 +70,7 @@ export interface Config {
     'cms-users': CmsUser;
     'app-users': AppUser;
     'agency-profiles': AgencyProfile;
+    'brand-profiles': BrandProfile;
     'influencer-profiles': InfluencerProfile;
     'onboarding-settings': OnboardingSetting;
     'payload-kv': PayloadKv;
@@ -86,6 +87,7 @@ export interface Config {
     'cms-users': CmsUsersSelect<false> | CmsUsersSelect<true>;
     'app-users': AppUsersSelect<false> | AppUsersSelect<true>;
     'agency-profiles': AgencyProfilesSelect<false> | AgencyProfilesSelect<true>;
+    'brand-profiles': BrandProfilesSelect<false> | BrandProfilesSelect<true>;
     'influencer-profiles': InfluencerProfilesSelect<false> | InfluencerProfilesSelect<true>;
     'onboarding-settings': OnboardingSettingsSelect<false> | OnboardingSettingsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -310,6 +312,58 @@ export interface AgencyProfile {
   createdAt: string;
 }
 /**
+ * Complete brand profile — all 3 onboarding screens in one schema.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brand-profiles".
+ */
+export interface BrandProfile {
+  id: string;
+  userId?: (string | null) | AppUser;
+  mobile: string;
+  brandName?: string | null;
+  contactPerson?: string | null;
+  city?: string | null;
+  industry?:
+    | (
+        | 'Fashion & Apparel'
+        | 'Beauty & Personal Care'
+        | 'Food & Beverage'
+        | 'Technology'
+        | 'Finance & Fintech'
+        | 'Health & Fitness'
+        | 'Travel & Hospitality'
+        | 'Automobile'
+        | 'Real Estate'
+        | 'Education'
+        | 'Entertainment'
+        | 'D2C / E-commerce'
+        | 'FMCG'
+        | 'Gaming'
+      )
+    | null;
+  website?: string | null;
+  instagramHandle?: string | null;
+  campaignInterests?:
+    | (
+        | 'Influencer posts'
+        | 'Reels & short video'
+        | 'UGC content'
+        | 'Product seeding'
+        | 'Brand ambassador'
+        | 'Event appearances'
+        | 'Affiliate marketing'
+      )[]
+    | null;
+  monthlyCampaignBudget?:
+    ('Under ₹50K' | '₹50K - ₹2L' | '₹2L - ₹10L' | '₹10L - ₹50L' | '₹50L+' | 'Not sure yet') | null;
+  description?: string | null;
+  isProfileComplete?: boolean | null;
+  completedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Edit influencer onboarding options. Keep value as the JSON object used by the app.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -368,6 +422,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'agency-profiles';
         value: string | AgencyProfile;
+      } | null)
+    | ({
+        relationTo: 'brand-profiles';
+        value: string | BrandProfile;
       } | null)
     | ({
         relationTo: 'influencer-profiles';
@@ -472,6 +530,27 @@ export interface AgencyProfilesSelect<T extends boolean = true> {
   creatorsManaged?: T;
   focusAreas?: T;
   website?: T;
+  description?: T;
+  isProfileComplete?: T;
+  completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brand-profiles_select".
+ */
+export interface BrandProfilesSelect<T extends boolean = true> {
+  userId?: T;
+  mobile?: T;
+  brandName?: T;
+  contactPerson?: T;
+  city?: T;
+  industry?: T;
+  website?: T;
+  instagramHandle?: T;
+  campaignInterests?: T;
+  monthlyCampaignBudget?: T;
   description?: T;
   isProfileComplete?: T;
   completedAt?: T;

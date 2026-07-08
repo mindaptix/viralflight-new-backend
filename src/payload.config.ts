@@ -5,6 +5,7 @@ import sharp from 'sharp'
 
 import { AgencyProfiles } from './collections/AgencyProfiles'
 import { AppUsers } from './collections/AppUsers'
+import { BrandProfiles } from './collections/BrandProfiles'
 import { CMSUsers } from './collections/CMSUsers'
 import { InfluencerProfiles } from './collections/InfluencerProfiles'
 import { OnboardingSettings } from './collections/OnboardingSettings'
@@ -19,6 +20,7 @@ export default buildConfig({
     CMSUsers,
     AppUsers,
     AgencyProfiles,
+    BrandProfiles,
     InfluencerProfiles,
     OnboardingSettings,
   ],
