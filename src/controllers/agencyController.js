@@ -33,6 +33,13 @@ const FOCUS_AREAS = [
 const getProfileQuery = (user) =>
   user.userId ? { userId: user.userId } : { mobile: user.mobile };
 
+const normalizeComparableText = (value) =>
+  value
+    .toLowerCase()
+    .replace(/[–—]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+
 const extractOptionValue = (value) => {
   if (typeof value === "string") return value.trim();
   if (value && typeof value === "object") {
@@ -46,9 +53,10 @@ const extractOptionValue = (value) => {
 const normalizeOption = (value, options) => {
   const candidateValue = extractOptionValue(value);
   if (!candidateValue) return null;
+  const comparableCandidate = normalizeComparableText(candidateValue);
 
   return options.find(
-    (option) => option.toLowerCase() === candidateValue.toLowerCase()
+    (option) => normalizeComparableText(option) === comparableCandidate
   );
 };
 
@@ -92,8 +100,18 @@ const getSelectedValues = (body, keys) => {
     }
   }
 
-  return [];
+  return undefined;
 };
+
+const getAgencyBody = (body) => ({
+  ...body,
+  ...(body.data && typeof body.data === "object" ? body.data : {}),
+  ...(body.profile && typeof body.profile === "object" ? body.profile : {}),
+  ...(body.agency && typeof body.agency === "object" ? body.agency : {}),
+  ...(body.agencyProfile && typeof body.agencyProfile === "object"
+    ? body.agencyProfile
+    : {}),
+});
 
 const getAgencyStep = (profile) => {
   if (!profile.agencyName || !profile.contactPerson || !profile.city) {
@@ -133,21 +151,55 @@ const getOrCreateProfile = async (user) => {
 };
 
 const buildAgencyData = (body, { requireComplete = false } = {}) => {
-  const agencyName = normalizeText(body.agencyName);
-  const contactPerson = normalizeText(body.contactPerson ?? body.name);
-  const city = normalizeText(body.city);
-  const agencyType = normalizeOption(body.agencyType, AGENCY_TYPES);
-  const teamSize = normalizeOption(body.teamSize, TEAM_SIZES);
+  const agencyName = normalizeText(
+    getSelectedValues(body, ["agencyName", "agency_name", "name", "companyName"])
+  );
+  const contactPerson = normalizeText(
+    getSelectedValues(body, [
+      "contactPerson",
+      "contact_person",
+      "contactName",
+      "contact_name",
+      "personName",
+      "ownerName",
+    ])
+  );
+  const city = normalizeText(getSelectedValues(body, ["city", "selectedCity", "location"]));
+  const agencyType = normalizeOption(
+    getSelectedValues(body, ["agencyType", "agency_type", "type", "selectedAgencyType"]),
+    AGENCY_TYPES
+  );
+  const teamSize = normalizeOption(
+    getSelectedValues(body, ["teamSize", "team_size", "team", "selectedTeamSize"]),
+    TEAM_SIZES
+  );
   const creatorsManaged = normalizeOption(
-    body.creatorsManaged,
+    getSelectedValues(body, [
+      "creatorsManaged",
+      "creators_managed",
+      "creatorManaged",
+      "creatorCount",
+      "managedCreators",
+      "selectedCreatorsManaged",
+    ]),
     CREATORS_MANAGED_RANGES
   );
   const focusAreas = normalizeSelectedOptions(
-    getSelectedValues(body, ["focusAreas", "services", "clientIndustries", "industries"]),
+    getSelectedValues(body, [
+      "focusAreas",
+      "focus_areas",
+      "services",
+      "clientIndustries",
+      "industries",
+      "categories",
+      "selectedFocusAreas",
+    ]),
     FOCUS_AREAS
   );
-  const website = normalizeText(body.website);
-  const description = normalizeText(body.description ?? body.aboutAgency);
+  const website = normalizeText(getSelectedValues(body, ["website", "websiteUrl", "url"]));
+  const description = normalizeText(
+    getSelectedValues(body, ["description", "aboutAgency", "about_agency", "bio"])
+  );
 
   if (requireComplete) {
     if (!agencyName || agencyName.length < 2) {
@@ -185,17 +237,43 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
     }
   }
 
-  if (body.agencyType !== undefined && body.agencyType !== null && !agencyType) {
+  if (
+    getSelectedValues(body, ["agencyType", "agency_type", "type", "selectedAgencyType"]) !==
+      undefined &&
+    getSelectedValues(body, ["agencyType", "agency_type", "type", "selectedAgencyType"]) !==
+      null &&
+    !agencyType
+  ) {
     return { error: `Valid agency type is required: ${AGENCY_TYPES.join(", ")}` };
   }
 
-  if (body.teamSize !== undefined && body.teamSize !== null && !teamSize) {
+  if (
+    getSelectedValues(body, ["teamSize", "team_size", "team", "selectedTeamSize"]) !==
+      undefined &&
+    getSelectedValues(body, ["teamSize", "team_size", "team", "selectedTeamSize"]) !==
+      null &&
+    !teamSize
+  ) {
     return { error: `Valid team size is required: ${TEAM_SIZES.join(", ")}` };
   }
 
   if (
-    body.creatorsManaged !== undefined &&
-    body.creatorsManaged !== null &&
+    getSelectedValues(body, [
+      "creatorsManaged",
+      "creators_managed",
+      "creatorManaged",
+      "creatorCount",
+      "managedCreators",
+      "selectedCreatorsManaged",
+    ]) !== undefined &&
+    getSelectedValues(body, [
+      "creatorsManaged",
+      "creators_managed",
+      "creatorManaged",
+      "creatorCount",
+      "managedCreators",
+      "selectedCreatorsManaged",
+    ]) !== null &&
     !creatorsManaged
   ) {
     return {
@@ -232,9 +310,23 @@ const applyProfileData = (profile, profileData) => {
 
 export const saveAgencyDetails = async (req, res) => {
   try {
-    const agencyName = normalizeText(req.body.agencyName);
-    const contactPerson = normalizeText(req.body.contactPerson ?? req.body.name);
-    const city = normalizeText(req.body.city);
+    const body = getAgencyBody(req.body);
+    const agencyName = normalizeText(
+      getSelectedValues(body, ["agencyName", "agency_name", "name", "companyName"])
+    );
+    const contactPerson = normalizeText(
+      getSelectedValues(body, [
+        "contactPerson",
+        "contact_person",
+        "contactName",
+        "contact_name",
+        "personName",
+        "ownerName",
+      ])
+    );
+    const city = normalizeText(
+      getSelectedValues(body, ["city", "selectedCity", "location"])
+    );
 
     if (!agencyName || agencyName.length < 2) {
       return res.status(400).json({
@@ -282,10 +374,24 @@ export const saveAgencyDetails = async (req, res) => {
 
 export const saveHowYouOperate = async (req, res) => {
   try {
-    const agencyType = normalizeOption(req.body.agencyType, AGENCY_TYPES);
-    const teamSize = normalizeOption(req.body.teamSize, TEAM_SIZES);
+    const body = getAgencyBody(req.body);
+    const agencyType = normalizeOption(
+      getSelectedValues(body, ["agencyType", "agency_type", "type", "selectedAgencyType"]),
+      AGENCY_TYPES
+    );
+    const teamSize = normalizeOption(
+      getSelectedValues(body, ["teamSize", "team_size", "team", "selectedTeamSize"]),
+      TEAM_SIZES
+    );
     const creatorsManaged = normalizeOption(
-      req.body.creatorsManaged,
+      getSelectedValues(body, [
+        "creatorsManaged",
+        "creators_managed",
+        "creatorManaged",
+        "creatorCount",
+        "managedCreators",
+        "selectedCreatorsManaged",
+      ]),
       CREATORS_MANAGED_RANGES
     );
 
@@ -332,12 +438,23 @@ export const saveHowYouOperate = async (req, res) => {
 
 export const saveFocusServices = async (req, res) => {
   try {
+    const body = getAgencyBody(req.body);
     const focusAreas = normalizeSelectedOptions(
-      getSelectedValues(req.body, ["focusAreas", "services", "clientIndustries", "industries"]),
+      getSelectedValues(body, [
+        "focusAreas",
+        "focus_areas",
+        "services",
+        "clientIndustries",
+        "industries",
+        "categories",
+        "selectedFocusAreas",
+      ]),
       FOCUS_AREAS
     );
-    const website = normalizeText(req.body.website);
-    const description = normalizeText(req.body.description ?? req.body.aboutAgency);
+    const website = normalizeText(getSelectedValues(body, ["website", "websiteUrl", "url"]));
+    const description = normalizeText(
+      getSelectedValues(body, ["description", "aboutAgency", "about_agency", "bio"])
+    );
 
     if (focusAreas.length === 0) {
       return res.status(400).json({
@@ -383,7 +500,7 @@ export const saveFocusServices = async (req, res) => {
 
 export const saveFullOnboarding = async (req, res) => {
   try {
-    const { profileData, error } = buildAgencyData(req.body, {
+    const { profileData, error } = buildAgencyData(getAgencyBody(req.body), {
       requireComplete: true,
     });
 
@@ -417,7 +534,7 @@ export const completeAgencyProfile = async (req, res) => {
     const profile = await getOrCreateProfile(req.user);
     const currentData = profile.toObject();
     const { profileData, error } = buildAgencyData(
-      { ...currentData, ...req.body },
+      { ...currentData, ...getAgencyBody(req.body) },
       { requireComplete: true }
     );
 
@@ -447,7 +564,7 @@ export const completeAgencyProfile = async (req, res) => {
 
 export const savePartialProfile = async (req, res) => {
   try {
-    const { profileData, error } = buildAgencyData(req.body);
+    const { profileData, error } = buildAgencyData(getAgencyBody(req.body));
 
     if (error) {
       return res.status(400).json({ success: false, message: error });
