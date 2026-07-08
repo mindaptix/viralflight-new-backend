@@ -1,5 +1,6 @@
 import twilio from "twilio";
 
+import AgencyProfile from "../models/AgencyProfile.js";
 import User from "../models/User.js";
 import { ALLOWED_ROLES } from "../constants/onboardingConstants.js";
 import { normalizeMobile } from "../utils/mobileUtils.js";
@@ -108,6 +109,17 @@ export const verifyOtp = async (req, res) => {
     user.refreshTokenHash = hashToken(refreshToken);
     user.refreshTokenIssuedAt = new Date();
     await user.save();
+
+    if (user.role === "agency") {
+      await AgencyProfile.findOneAndUpdate(
+        { userId: user._id },
+        {
+          userId: user._id,
+          mobile,
+        },
+        { upsert: true, new: true, runValidators: true }
+      );
+    }
 
     res.json({
       success: true,
