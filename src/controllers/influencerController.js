@@ -6,12 +6,31 @@ import {
 const normalizeCity = (city, cities) => {
   if (!city || typeof city !== "string") return null;
 
-  return cities.find(
+  const allowedCities = normalizeAllowedValues(cities);
+  return allowedCities.find(
     (allowedCity) => allowedCity.toLowerCase() === city.trim().toLowerCase()
   );
 };
 
+const extractOptionValue = (value) => {
+  if (typeof value === "string") return value.trim();
+  if (value && typeof value === "object") {
+    const candidate = value.value ?? value.label ?? value.name;
+    return typeof candidate === "string" ? candidate.trim() : null;
+  }
+  return null;
+};
+
+const normalizeAllowedValues = (allowedValues) => {
+  if (!Array.isArray(allowedValues)) return [];
+
+  return allowedValues
+    .map((value) => extractOptionValue(value))
+    .filter(Boolean);
+};
+
 const normalizeSelectedValues = (values, allowedValues) => {
+  const normalizedAllowedValues = normalizeAllowedValues(allowedValues);
   const normalizedInputValues = Array.isArray(values)
     ? values
     : typeof values === "string"
@@ -27,18 +46,12 @@ const normalizeSelectedValues = (values, allowedValues) => {
     ...new Set(
       normalizedInputValues
         .map((value) => {
-          const candidateValue =
-            typeof value === "string"
-              ? value
-              : value && typeof value === "object"
-                ? (value.value ?? value.label)
-                : null;
+          const candidateValue = extractOptionValue(value);
+          if (!candidateValue) return null;
 
-          if (!candidateValue || typeof candidateValue !== "string") return null;
-
-          return allowedValues.find(
+          return normalizedAllowedValues.find(
             (allowedValue) =>
-              allowedValue.toLowerCase() === candidateValue.trim().toLowerCase()
+              allowedValue.toLowerCase() === candidateValue.toLowerCase()
           );
         })
         .filter(Boolean)
@@ -474,6 +487,7 @@ export const finishProfile = async (req, res) => {
 export const saveFullOnboarding = async (req, res) => {
   try {
     const settings = await getOnboardingSettings();
+    const profile = await getOrCreateProfile(req.user);
     const { name, city } = req.body;
     const selectedCity = normalizeCity(city, settings.cities);
 
@@ -510,7 +524,8 @@ export const saveFullOnboarding = async (req, res) => {
       });
     }
 
-    const contentCategories = normalizeSelectedValues(
+    // Last-step apps often omit categories/languages; reuse values already saved in step 3.
+    let contentCategories = normalizeSelectedValues(
       getSelectedValues(req.body, [
         "contentCategories",
         "contentCategory",
@@ -518,7 +533,7 @@ export const saveFullOnboarding = async (req, res) => {
       ]),
       settings.contentCategories
     );
-    const contentLanguages = normalizeSelectedValues(
+    let contentLanguages = normalizeSelectedValues(
       getSelectedValues(req.body, [
         "contentLanguages",
         "contentLanguage",
@@ -526,6 +541,20 @@ export const saveFullOnboarding = async (req, res) => {
       ]),
       settings.contentLanguages
     );
+
+    if (contentCategories.length === 0) {
+      contentCategories = normalizeSelectedValues(
+        profile.contentCategories,
+        settings.contentCategories
+      );
+    }
+
+    if (contentLanguages.length === 0) {
+      contentLanguages = normalizeSelectedValues(
+        profile.contentLanguages,
+        settings.contentLanguages
+      );
+    }
 
     if (contentCategories.length < 5) {
       return res.status(400).json({
@@ -556,8 +585,6 @@ export const saveFullOnboarding = async (req, res) => {
     if (profileError) {
       return res.status(400).json({ success: false, message: profileError });
     }
-
-    const profile = await getOrCreateProfile(req.user);
 
     profile.userId = req.user.userId;
     profile.mobile = req.user.mobile;
