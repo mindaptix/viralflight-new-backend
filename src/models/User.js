@@ -24,6 +24,15 @@ const userSchema = new mongoose.Schema(
     lastLoginAt: {
       type: Date,
     },
+    refreshTokenHash: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    refreshTokenIssuedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

@@ -24,6 +24,7 @@ POST /api/auth/refresh-token
 GET  /api/influencer/onboarding-options
 GET  /api/influencer/platform-options
 GET  /api/influencer/me
+GET  /api/influencer/profile
 POST /api/influencer/basic-info
 POST /api/influencer/connect-platform
 POST /api/influencer/content-preferences
@@ -166,6 +167,14 @@ GET /api/influencer/me
 ```
 
 Returns saved profile and current onboarding step.
+
+### Get Full Profile
+
+```txt
+GET /api/influencer/profile
+```
+
+Returns full saved influencer profile with logged-in user summary.
 
 Possible steps:
 

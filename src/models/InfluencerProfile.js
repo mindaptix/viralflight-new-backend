@@ -260,8 +260,12 @@ export {
   getDefaultOnboardingSettings,
 };
 
-export default mongoose.model(
-  "InfluencerProfile",
-  influencerProfileSchema,
-  "influencer_profiles"
-);
+const InfluencerProfile =
+  mongoose.models.InfluencerProfile ||
+  mongoose.model(
+    "InfluencerProfile",
+    influencerProfileSchema,
+    "influencer_profiles"
+  );
+
+export default InfluencerProfile;

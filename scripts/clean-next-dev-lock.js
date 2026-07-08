@@ -30,5 +30,11 @@ if (pid) {
   }
 }
 
-fs.unlinkSync(lockPath);
-console.log("Removed stale Next.js dev lock");
+try {
+  fs.unlinkSync(lockPath);
+  console.log("Removed stale Next.js dev lock");
+} catch (error) {
+  if (error?.code !== "ENOENT") {
+    throw error;
+  }
+}

@@ -1,10 +1,13 @@
 import twilio from "twilio";
-import jwt from "jsonwebtoken";
 
 import User from "../models/User.js";
 import { ALLOWED_ROLES } from "../constants/onboardingConstants.js";
 import { normalizeMobile } from "../utils/mobileUtils.js";
-import { createTokens, verifyRefreshToken } from "../utils/tokenUtils.js";
+import {
+  createTokens,
+  verifyRefreshToken,
+  hashToken,
+} from "../utils/tokenUtils.js";
 
 const client = twilio(
   process.env.TWILIO_ACCOUNT_SID,
@@ -102,6 +105,8 @@ export const verifyOtp = async (req, res) => {
 
     user.isMobileVerified = true;
     user.lastLoginAt = new Date();
+    user.refreshTokenHash = hashToken(refreshToken);
+    user.refreshTokenIssuedAt = new Date();
     await user.save();
 
     res.json({
@@ -120,15 +125,15 @@ export const verifyOtp = async (req, res) => {
 
 export const refreshToken = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken: refreshTokenInput } = req.body;
 
-    if (!refreshToken) {
+    if (!refreshTokenInput) {
       return res
         .status(400)
         .json({ success: false, message: "Refresh token is required" });
     }
 
-    const decoded = verifyRefreshToken(refreshToken);
+    const decoded = verifyRefreshToken(refreshTokenInput);
     const { userId, mobile, role } = decoded;
 
     const user = await User.findOne({
@@ -136,26 +141,37 @@ export const refreshToken = async (req, res) => {
       mobile,
       role,
       isMobileVerified: true,
-    });
+    }).select("+refreshTokenHash");
 
-    if (!user) {
+    if (!user || !user.refreshTokenHash) {
       return res
         .status(401)
         .json({ success: false, message: "Invalid refresh token" });
     }
 
-    const accessToken = jwt.sign(
-      { userId: user._id.toString(), mobile, role },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
-      }
-    );
+    const incomingRefreshTokenHash = hashToken(refreshTokenInput);
+
+    if (incomingRefreshTokenHash !== user.refreshTokenHash) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid refresh token" });
+    }
+
+    const { accessToken, refreshToken: newRefreshToken } = createTokens({
+      userId: user._id.toString(),
+      mobile,
+      role,
+    });
+
+    user.refreshTokenHash = hashToken(newRefreshToken);
+    user.refreshTokenIssuedAt = new Date();
+    await user.save();
 
     res.json({
       success: true,
-      message: "Access token refreshed successfully",
+      message: "Tokens refreshed successfully",
       accessToken,
+      refreshToken: newRefreshToken,
     });
   } catch (error) {
     res.status(401).json({ success: false, message: "Invalid refresh token" });

@@ -184,10 +184,10 @@ export interface AppUser {
  */
 export interface InfluencerProfile {
   id: string;
-  userId?: (string | null) | AppUser;
-  mobile: string;
   name?: string | null;
   city?: ('Mumbai' | 'Delhi' | 'Bengaluru' | 'Hyderabad' | 'Chennai' | 'Kolkata') | null;
+  userId?: (string | null) | AppUser;
+  mobile: string;
   platforms?:
     | {
         platform: 'instagram' | 'youtube' | 'tiktok' | 'twitter' | 'facebook' | 'linkedin' | 'snapchat';
@@ -406,10 +406,10 @@ export interface AppUsersSelect<T extends boolean = true> {
  * via the `definition` "influencer-profiles_select".
  */
 export interface InfluencerProfilesSelect<T extends boolean = true> {
-  userId?: T;
-  mobile?: T;
   name?: T;
   city?: T;
+  userId?: T;
+  mobile?: T;
   platforms?:
     | T
     | {

@@ -12,22 +12,48 @@ const normalizeCity = (city, cities) => {
 };
 
 const normalizeSelectedValues = (values, allowedValues) => {
-  if (!Array.isArray(values)) return [];
+  const normalizedInputValues = Array.isArray(values)
+    ? values
+    : typeof values === "string"
+      ? values
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : values && typeof values === "object"
+        ? [values]
+        : [];
 
   return [
     ...new Set(
-      values
+      normalizedInputValues
         .map((value) => {
-          if (!value || typeof value !== "string") return null;
+          const candidateValue =
+            typeof value === "string"
+              ? value
+              : value && typeof value === "object"
+                ? (value.value ?? value.label)
+                : null;
+
+          if (!candidateValue || typeof candidateValue !== "string") return null;
 
           return allowedValues.find(
             (allowedValue) =>
-              allowedValue.toLowerCase() === value.trim().toLowerCase()
+              allowedValue.toLowerCase() === candidateValue.trim().toLowerCase()
           );
         })
         .filter(Boolean)
     ),
   ];
+};
+
+const getSelectedValues = (body, keys) => {
+  for (const key of keys) {
+    if (body[key] !== undefined && body[key] !== null) {
+      return body[key];
+    }
+  }
+
+  return [];
 };
 
 const normalizeStringList = (values) => {
@@ -335,11 +361,19 @@ export const saveContentPreferences = async (req, res) => {
     }
 
     const contentCategories = normalizeSelectedValues(
-      req.body.contentCategories,
+      getSelectedValues(req.body, [
+        "contentCategories",
+        "contentCategory",
+        "categories",
+      ]),
       settings.contentCategories
     );
     const contentLanguages = normalizeSelectedValues(
-      req.body.contentLanguages,
+      getSelectedValues(req.body, [
+        "contentLanguages",
+        "contentLanguage",
+        "languages",
+      ]),
       settings.contentLanguages
     );
 
@@ -428,6 +462,7 @@ export const finishProfile = async (req, res) => {
       success: true,
       message: "Influencer profile completed successfully",
       onboardingStep: "completed",
+      dashboard: "influencer",
       redirectTo: "/dashboard/influencer",
       profile,
     });
@@ -476,11 +511,19 @@ export const saveFullOnboarding = async (req, res) => {
     }
 
     const contentCategories = normalizeSelectedValues(
-      req.body.contentCategories,
+      getSelectedValues(req.body, [
+        "contentCategories",
+        "contentCategory",
+        "categories",
+      ]),
       settings.contentCategories
     );
     const contentLanguages = normalizeSelectedValues(
-      req.body.contentLanguages,
+      getSelectedValues(req.body, [
+        "contentLanguages",
+        "contentLanguage",
+        "languages",
+      ]),
       settings.contentLanguages
     );
 
@@ -537,6 +580,7 @@ export const saveFullOnboarding = async (req, res) => {
       success: true,
       message: "Influencer onboarding completed successfully",
       onboardingStep: "completed",
+      dashboard: "influencer",
       redirectTo: "/dashboard/influencer",
       profile,
     });
@@ -553,6 +597,27 @@ export const getMyProfile = async (req, res) => {
     res.json({
       success: true,
       onboardingStep: getOnboardingStep(profile, settings),
+      profile,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getFullProfile = async (req, res) => {
+  try {
+    const settings = await getOnboardingSettings();
+    const profile = await getOrCreateProfile(req.user);
+
+    res.json({
+      success: true,
+      message: "Influencer profile fetched successfully",
+      onboardingStep: getOnboardingStep(profile, settings),
+      user: {
+        userId: req.user.userId,
+        mobile: req.user.mobile,
+        role: req.user.role,
+      },
       profile,
     });
   } catch (error) {

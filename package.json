@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "node scripts/clean-next-dev-lock.js && nodemon server.js",
+    "cms:dev": "next dev",
     "build": "next build",
     "start": "node server.js",
-    "cms:dev": "next dev",
     "cms:build": "next build",
     "payload": "payload",
     "generate:types": "payload generate:types"

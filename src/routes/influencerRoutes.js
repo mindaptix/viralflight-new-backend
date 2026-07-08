@@ -8,6 +8,7 @@ import {
   finishProfile,
   saveFullOnboarding,
   getMyProfile,
+  getFullProfile,
   getPlatformOptions,
   getOnboardingOptions,
 } from "../controllers/influencerController.js";
@@ -17,6 +18,7 @@ const router = express.Router();
 router.get("/onboarding-options", authMiddleware, getOnboardingOptions);
 router.get("/platform-options", authMiddleware, getPlatformOptions);
 router.get("/me", authMiddleware, getMyProfile);
+router.get("/profile", authMiddleware, getFullProfile);
 router.post("/basic-info", authMiddleware, saveBasicInfo);
 router.post("/connect-platform", authMiddleware, connectPlatform);
 router.post("/content-preferences", authMiddleware, saveContentPreferences);

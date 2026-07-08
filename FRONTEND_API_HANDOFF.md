@@ -226,12 +226,12 @@ Success response:
 }
 ```
 
-## 5. Profile Check - Token chahiye
+## 5. Full Profile Detail - Token chahiye
 
-Submit ke baad profile check karna ho to:
+Submit ke baad complete profile detail leni ho to:
 
 ```txt
-GET https://viralflight-new-backend.onrender.com/api/influencer/me
+GET https://viralflight-new-backend.onrender.com/api/influencer/profile
 ```
 
 Headers:
@@ -252,10 +252,36 @@ Response:
 ```json
 {
   "success": true,
+  "message": "Influencer profile fetched successfully",
   "onboardingStep": "completed",
+  "user": {
+    "userId": "USER_ID",
+    "mobile": "+917018319344",
+    "role": "influencer"
+  },
   "profile": {
+    "_id": "PROFILE_ID",
     "name": "Garry",
     "city": "Mumbai",
+    "platforms": [
+      {
+        "platform": "instagram",
+        "username": "garry_insta",
+        "followers": 50000,
+        "engagement": 4.5
+      }
+    ],
+    "contentCategories": ["Fashion", "Lifestyle", "Beauty", "Fitness", "Travel"],
+    "contentLanguages": ["Hindi", "English"],
+    "bio": "I create lifestyle and fashion content for young urban audiences.",
+    "collaborationPreference": "paid_only",
+    "rateRange": {
+      "min": 5000,
+      "max": 25000,
+      "currency": "INR"
+    },
+    "pastCollaborations": ["Nike", "Boat", "Nykaa"],
+    "portfolioLink": "https://instagram.com/garry_insta",
     "isProfileComplete": true
   }
 }
@@ -286,6 +312,7 @@ Save accessToken
 GET onboarding-options
 Show one full form
 POST full-onboarding with accessToken
+GET profile with accessToken
 Redirect dashboard
 ```
 
