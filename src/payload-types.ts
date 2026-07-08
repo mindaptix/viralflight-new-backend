@@ -260,6 +260,8 @@ export interface InfluencerProfile {
   createdAt: string;
 }
 /**
+ * Complete agency profile — all 3 onboarding screens in one schema.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "agency-profiles".
  */

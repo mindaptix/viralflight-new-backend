@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-const authMiddleware = (req, res, next) => {
+const requireRoles = (allowedRoles = ["influencer"]) => (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -14,10 +14,10 @@ const authMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (decoded.role !== "influencer") {
+    if (!allowedRoles.includes(decoded.role)) {
       return res.status(403).json({
         success: false,
-        message: "Only influencer accounts can access this route",
+        message: `Only ${allowedRoles.join(" or ")} accounts can access this route`,
       });
     }
 
@@ -28,4 +28,7 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
+const authMiddleware = requireRoles(["influencer"]);
+
+export { requireRoles };
 export default authMiddleware;

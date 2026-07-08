@@ -55,7 +55,10 @@ export const AgencyProfiles: CollectionConfig = {
       'city',
       'isProfileComplete',
       'completedAt',
+      'updatedAt',
     ],
+    description:
+      'Complete agency profile — all 3 onboarding screens in one schema.',
   },
   access: {
     create: cmsAdmin,

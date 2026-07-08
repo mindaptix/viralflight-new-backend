@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
+import agencyRoutes from "./routes/agencyRoutes.js";
 import influencerRoutes from "./routes/influencerRoutes.js";
 
 const app = express();
@@ -19,6 +20,7 @@ app.get("/api/health", sendHealth);
 app.get("/health", sendHealth);
 
 app.use("/api/auth", express.json(), authRoutes);
+app.use("/api/agency", express.json(), agencyRoutes);
 app.use("/api/influencer", express.json(), influencerRoutes);
 
 app.get("/", (req, res) => {
