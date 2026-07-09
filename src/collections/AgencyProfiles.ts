@@ -1,42 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
+import {
+  AGENCY_CREATORS_MANAGED_RANGES,
+  AGENCY_FOCUS_AREAS,
+  AGENCY_TEAM_SIZES,
+  AGENCY_TYPES,
+  toPayloadOptions,
+} from '../constants/profileOptions.js'
 import { cmsAdmin } from './access'
 
-const agencyTypeOptions = [
-  'Talent Management',
-  'Influencer Marketing',
-  'Creative / Production',
-  'PR & Communications',
-  'Full-service Agency',
-  'Boutique Agency',
-].map((value) => ({ label: value, value }))
-
-const teamSizeOptions = ['Solo', '2-5', '6-15', '16-50', '50+'].map((value) => ({
-  label: value,
-  value,
-}))
-
-const creatorsManagedOptions = ['1-10', '11-25', '26-50', '51-100', '100+'].map((value) => ({
-  label: value,
-  value,
-}))
-
-const focusAreaOptions = [
-  'Fashion',
-  'Beauty',
-  'Lifestyle',
-  'Food & Beverage',
-  'Tech',
-  'Finance',
-  'Gaming',
-  'Travel',
-  'Health & Wellness',
-  'Entertainment',
-  'Automobile',
-  'Real Estate',
-  'Education',
-  'D2C / E-commerce',
-].map((value) => ({ label: value, value }))
+const agencyTypeOptions = toPayloadOptions(AGENCY_TYPES)
+const teamSizeOptions = toPayloadOptions(AGENCY_TEAM_SIZES)
+const creatorsManagedOptions = toPayloadOptions(AGENCY_CREATORS_MANAGED_RANGES)
+const focusAreaOptions = toPayloadOptions(AGENCY_FOCUS_AREAS)
 
 export const AgencyProfiles: CollectionConfig = {
   slug: 'agency-profiles',

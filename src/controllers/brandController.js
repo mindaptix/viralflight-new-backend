@@ -1,122 +1,22 @@
 import BrandProfile from "../models/BrandProfile.js";
-
-const INDUSTRIES = [
-  "Fashion & Apparel",
-  "Beauty & Personal Care",
-  "Food & Beverage",
-  "Technology",
-  "Finance & Fintech",
-  "Health & Fitness",
-  "Travel & Hospitality",
-  "Automobile",
-  "Real Estate",
-  "Education",
-  "Entertainment",
-  "D2C / E-commerce",
-  "FMCG",
-  "Gaming",
-];
-
-const CAMPAIGN_INTERESTS = [
-  "Influencer posts",
-  "Reels & short video",
-  "UGC content",
-  "Product seeding",
-  "Brand ambassador",
-  "Event appearances",
-  "Affiliate marketing",
-];
-
-const MONTHLY_CAMPAIGN_BUDGETS = [
-  "Under ₹50K",
-  "₹50K - ₹2L",
-  "₹2L - ₹10L",
-  "₹10L - ₹50L",
-  "₹50L+",
-  "Not sure yet",
-];
-
-const getProfileQuery = (user) =>
-  user.userId ? { userId: user.userId } : { mobile: user.mobile };
-
-const normalizeComparableText = (value) =>
-  value
-    .toLowerCase()
-    .replace(/[–—]/g, "-")
-    .replace(/\s+/g, " ")
-    .trim();
-
-const extractOptionValue = (value) => {
-  if (typeof value === "string") return value.trim();
-  if (value && typeof value === "object") {
-    const candidate = value.value ?? value.label ?? value.name;
-    return typeof candidate === "string" ? candidate.trim() : null;
-  }
-
-  return null;
-};
-
-const normalizeOption = (value, options) => {
-  const candidateValue = extractOptionValue(value);
-  if (!candidateValue) return null;
-  const comparableCandidate = normalizeComparableText(candidateValue);
-
-  return options.find(
-    (option) => normalizeComparableText(option) === comparableCandidate
-  );
-};
-
-const normalizeSelectedOptions = (values, options) => {
-  const inputValues = Array.isArray(values)
-    ? values
-    : typeof values === "string"
-      ? values
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean)
-      : values && typeof values === "object"
-        ? [values]
-        : [];
-
-  return [
-    ...new Set(
-      inputValues
-        .map((value) => normalizeOption(value, options))
-        .filter(Boolean)
-    ),
-  ];
-};
-
-const normalizeText = (value) =>
-  typeof value === "string" && value.trim() ? value.trim() : null;
-
-const isValidUrl = (value) => {
-  try {
-    const url = new URL(value);
-    return ["http:", "https:"].includes(url.protocol);
-  } catch (error) {
-    return false;
-  }
-};
-
-const getSelectedValue = (body, keys) => {
-  for (const key of keys) {
-    if (body[key] !== undefined && body[key] !== null) {
-      return body[key];
-    }
-  }
-
-  return undefined;
-};
+import {
+  BRAND_CAMPAIGN_INTERESTS,
+  BRAND_INDUSTRIES,
+  BRAND_MONTHLY_CAMPAIGN_BUDGETS,
+} from "../constants/profileOptions.js";
+import {
+  applyProfileData,
+  getProfileQuery,
+  getSelectedValue,
+  isValidUrl,
+  mergeNestedProfileBody,
+  normalizeOption,
+  normalizeSelectedOptions,
+  normalizeText,
+} from "../utils/profileControllerUtils.js";
 
 const getBrandBody = (body) => ({
-  ...body,
-  ...(body.data && typeof body.data === "object" ? body.data : {}),
-  ...(body.profile && typeof body.profile === "object" ? body.profile : {}),
-  ...(body.brand && typeof body.brand === "object" ? body.brand : {}),
-  ...(body.brandProfile && typeof body.brandProfile === "object"
-    ? body.brandProfile
-    : {}),
+  ...mergeNestedProfileBody(body, ["data", "profile", "brand", "brandProfile"]),
 });
 
 const getBrandStep = (profile) => {
@@ -173,7 +73,7 @@ const buildBrandData = (body, { requireComplete = false } = {}) => {
   const city = normalizeText(getSelectedValue(body, ["city", "selectedCity", "location"]));
   const industry = normalizeOption(
     getSelectedValue(body, ["industry", "category", "brandIndustry", "selectedIndustry"]),
-    INDUSTRIES
+    BRAND_INDUSTRIES
   );
   const website = normalizeText(getSelectedValue(body, ["website", "websiteUrl", "url"]));
   const instagramHandle = normalizeText(
@@ -188,7 +88,7 @@ const buildBrandData = (body, { requireComplete = false } = {}) => {
       "interests",
       "selectedCampaignInterests",
     ]),
-    CAMPAIGN_INTERESTS
+    BRAND_CAMPAIGN_INTERESTS
   );
   const monthlyCampaignBudget = normalizeOption(
     getSelectedValue(body, [
@@ -198,7 +98,7 @@ const buildBrandData = (body, { requireComplete = false } = {}) => {
       "campaignBudget",
       "selectedBudget",
     ]),
-    MONTHLY_CAMPAIGN_BUDGETS
+    BRAND_MONTHLY_CAMPAIGN_BUDGETS
   );
   const description = normalizeText(
     getSelectedValue(body, ["description", "aboutBrand", "about_brand", "bio"])
@@ -218,7 +118,7 @@ const buildBrandData = (body, { requireComplete = false } = {}) => {
     }
 
     if (!industry) {
-      return { error: `Valid industry is required: ${INDUSTRIES.join(", ")}` };
+      return { error: `Valid industry is required: ${BRAND_INDUSTRIES.join(", ")}` };
     }
 
     if (!website) {
@@ -239,7 +139,7 @@ const buildBrandData = (body, { requireComplete = false } = {}) => {
   }
 
   if (industry === null && getSelectedValue(body, ["industry", "category"]) !== undefined) {
-    return { error: `Valid industry is required: ${INDUSTRIES.join(", ")}` };
+    return { error: `Valid industry is required: ${BRAND_INDUSTRIES.join(", ")}` };
   }
 
   if (
@@ -247,7 +147,7 @@ const buildBrandData = (body, { requireComplete = false } = {}) => {
     getSelectedValue(body, ["monthlyCampaignBudget", "budget", "campaignBudget"]) !== undefined
   ) {
     return {
-      error: `Valid monthly campaign budget is required: ${MONTHLY_CAMPAIGN_BUDGETS.join(", ")}`,
+      error: `Valid monthly campaign budget is required: ${BRAND_MONTHLY_CAMPAIGN_BUDGETS.join(", ")}`,
     };
   }
 
@@ -268,14 +168,6 @@ const buildBrandData = (body, { requireComplete = false } = {}) => {
       description,
     },
   };
-};
-
-const applyProfileData = (profile, profileData) => {
-  for (const [key, value] of Object.entries(profileData)) {
-    if (value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0)) {
-      profile[key] = value;
-    }
-  }
 };
 
 export const saveBrandDetails = async (req, res) => {
@@ -343,7 +235,7 @@ export const saveBrandProfile = async (req, res) => {
     if (!profileData.industry) {
       return res.status(400).json({
         success: false,
-        message: `Valid industry is required: ${INDUSTRIES.join(", ")}`,
+        message: `Valid industry is required: ${BRAND_INDUSTRIES.join(", ")}`,
       });
     }
 
@@ -535,9 +427,9 @@ export const getMyProfile = async (req, res) => {
 export const getOnboardingOptions = (req, res) => {
   res.json({
     success: true,
-    industries: INDUSTRIES,
-    campaignInterests: CAMPAIGN_INTERESTS,
-    monthlyCampaignBudgets: MONTHLY_CAMPAIGN_BUDGETS,
+    industries: BRAND_INDUSTRIES,
+    campaignInterests: BRAND_CAMPAIGN_INTERESTS,
+    monthlyCampaignBudgets: BRAND_MONTHLY_CAMPAIGN_BUDGETS,
     validation: {
       brandNameMinLength: 2,
       contactPersonMinLength: 2,

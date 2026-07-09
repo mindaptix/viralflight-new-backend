@@ -18,7 +18,13 @@ const sendHealth = (req, res) => {
 };
 
 app.get("/api/health", sendHealth);
+app.get("/api/v1/health", sendHealth);
 app.get("/health", sendHealth);
+
+app.use("/api/v1/auth", express.json(), authRoutes);
+app.use("/api/v1/agency", express.json(), agencyRoutes);
+app.use("/api/v1/brand", express.json(), brandRoutes);
+app.use("/api/v1/influencer", express.json(), influencerRoutes);
 
 app.use("/api/auth", express.json(), authRoutes);
 app.use("/api/agency", express.json(), agencyRoutes);

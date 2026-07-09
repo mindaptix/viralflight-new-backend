@@ -201,3 +201,24 @@ export const refreshToken = async (req, res) => {
     res.status(401).json({ success: false, message: "Invalid refresh token" });
   }
 };
+
+export const logout = async (req, res) => {
+  try {
+    const { userId, mobile, role } = req.user;
+
+    await User.findOneAndUpdate(
+      { _id: userId, mobile, role },
+      {
+        refreshTokenHash: null,
+        refreshTokenIssuedAt: null,
+      }
+    );
+
+    res.json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

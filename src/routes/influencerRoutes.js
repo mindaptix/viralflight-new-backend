@@ -2,10 +2,6 @@ import express from "express";
 
 import authMiddleware from "../middleware/authMiddleware.js";
 import {
-  saveBasicInfo,
-  connectPlatform,
-  saveContentPreferences,
-  finishProfile,
   saveFullOnboarding,
   getMyProfile,
   getFullProfile,
@@ -19,11 +15,6 @@ router.get("/onboarding-options", authMiddleware, getOnboardingOptions);
 router.get("/platform-options", authMiddleware, getPlatformOptions);
 router.get("/me", authMiddleware, getMyProfile);
 router.get("/profile", authMiddleware, getFullProfile);
-router.post("/basic-info", authMiddleware, saveBasicInfo);
-router.post("/connect-platform", authMiddleware, connectPlatform);
-router.post("/content-preferences", authMiddleware, saveContentPreferences);
-router.post("/finish-profile", authMiddleware, finishProfile);
-router.post("/complete-profile", authMiddleware, finishProfile);
 router.post("/full-onboarding", authMiddleware, saveFullOnboarding);
 
 export default router;

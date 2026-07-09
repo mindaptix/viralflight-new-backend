@@ -1,42 +1,16 @@
 import type { CollectionConfig } from 'payload'
 
+import {
+  BRAND_CAMPAIGN_INTERESTS,
+  BRAND_INDUSTRIES,
+  BRAND_MONTHLY_CAMPAIGN_BUDGETS,
+  toPayloadOptions,
+} from '../constants/profileOptions.js'
 import { cmsAdmin } from './access'
 
-const industryOptions = [
-  'Fashion & Apparel',
-  'Beauty & Personal Care',
-  'Food & Beverage',
-  'Technology',
-  'Finance & Fintech',
-  'Health & Fitness',
-  'Travel & Hospitality',
-  'Automobile',
-  'Real Estate',
-  'Education',
-  'Entertainment',
-  'D2C / E-commerce',
-  'FMCG',
-  'Gaming',
-].map((value) => ({ label: value, value }))
-
-const campaignInterestOptions = [
-  'Influencer posts',
-  'Reels & short video',
-  'UGC content',
-  'Product seeding',
-  'Brand ambassador',
-  'Event appearances',
-  'Affiliate marketing',
-].map((value) => ({ label: value, value }))
-
-const monthlyCampaignBudgetOptions = [
-  'Under ₹50K',
-  '₹50K - ₹2L',
-  '₹2L - ₹10L',
-  '₹10L - ₹50L',
-  '₹50L+',
-  'Not sure yet',
-].map((value) => ({ label: value, value }))
+const industryOptions = toPayloadOptions(BRAND_INDUSTRIES)
+const campaignInterestOptions = toPayloadOptions(BRAND_CAMPAIGN_INTERESTS)
+const monthlyCampaignBudgetOptions = toPayloadOptions(BRAND_MONTHLY_CAMPAIGN_BUDGETS)
 
 export const BrandProfiles: CollectionConfig = {
   slug: 'brand-profiles',

@@ -1,116 +1,23 @@
 import AgencyProfile from "../models/AgencyProfile.js";
-
-const AGENCY_TYPES = [
-  "Talent Management",
-  "Influencer Marketing",
-  "Creative / Production",
-  "PR & Communications",
-  "Full-service Agency",
-  "Boutique Agency",
-];
-
-const TEAM_SIZES = ["Solo", "2-5", "6-15", "16-50", "50+"];
-
-const CREATORS_MANAGED_RANGES = ["1-10", "11-25", "26-50", "51-100", "100+"];
-
-const FOCUS_AREAS = [
-  "Fashion",
-  "Beauty",
-  "Lifestyle",
-  "Food & Beverage",
-  "Tech",
-  "Finance",
-  "Gaming",
-  "Travel",
-  "Health & Wellness",
-  "Entertainment",
-  "Automobile",
-  "Real Estate",
-  "Education",
-  "D2C / E-commerce",
-];
-
-const getProfileQuery = (user) =>
-  user.userId ? { userId: user.userId } : { mobile: user.mobile };
-
-const normalizeComparableText = (value) =>
-  value
-    .toLowerCase()
-    .replace(/[–—]/g, "-")
-    .replace(/\s+/g, " ")
-    .trim();
-
-const extractOptionValue = (value) => {
-  if (typeof value === "string") return value.trim();
-  if (value && typeof value === "object") {
-    const candidate = value.value ?? value.label ?? value.name;
-    return typeof candidate === "string" ? candidate.trim() : null;
-  }
-
-  return null;
-};
-
-const normalizeOption = (value, options) => {
-  const candidateValue = extractOptionValue(value);
-  if (!candidateValue) return null;
-  const comparableCandidate = normalizeComparableText(candidateValue);
-
-  return options.find(
-    (option) => normalizeComparableText(option) === comparableCandidate
-  );
-};
-
-const normalizeSelectedOptions = (values, options) => {
-  const inputValues = Array.isArray(values)
-    ? values
-    : typeof values === "string"
-      ? values
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean)
-      : values && typeof values === "object"
-        ? [values]
-        : [];
-
-  return [
-    ...new Set(
-      inputValues
-        .map((value) => normalizeOption(value, options))
-        .filter(Boolean)
-    ),
-  ];
-};
-
-const normalizeText = (value) =>
-  typeof value === "string" && value.trim() ? value.trim() : null;
-
-const isValidUrl = (value) => {
-  try {
-    const url = new URL(value);
-    return ["http:", "https:"].includes(url.protocol);
-  } catch (error) {
-    return false;
-  }
-};
-
-const getSelectedValues = (body, keys) => {
-  for (const key of keys) {
-    if (body[key] !== undefined && body[key] !== null) {
-      return body[key];
-    }
-  }
-
-  return undefined;
-};
+import {
+  AGENCY_CREATORS_MANAGED_RANGES,
+  AGENCY_FOCUS_AREAS,
+  AGENCY_TEAM_SIZES,
+  AGENCY_TYPES,
+} from "../constants/profileOptions.js";
+import {
+  applyProfileData,
+  getProfileQuery,
+  getSelectedValue as getSelectedValues,
+  isValidUrl,
+  mergeNestedProfileBody,
+  normalizeOption,
+  normalizeSelectedOptions,
+  normalizeText,
+} from "../utils/profileControllerUtils.js";
 
 const getAgencyBody = (body) => ({
-  ...body,
-  ...(body.data && typeof body.data === "object" ? body.data : {}),
-  ...(body.profile && typeof body.profile === "object" ? body.profile : {}),
-  ...(body.agency && typeof body.agency === "object" ? body.agency : {}),
-  ...(body.agencyProfile && typeof body.agencyProfile === "object"
-    ? body.agencyProfile
-    : {}),
+  ...mergeNestedProfileBody(body, ["data", "profile", "agency", "agencyProfile"]),
 });
 
 const getAgencyStep = (profile) => {
@@ -171,7 +78,7 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
   );
   const teamSize = normalizeOption(
     getSelectedValues(body, ["teamSize", "team_size", "team", "selectedTeamSize"]),
-    TEAM_SIZES
+    AGENCY_TEAM_SIZES
   );
   const creatorsManaged = normalizeOption(
     getSelectedValues(body, [
@@ -182,7 +89,7 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
       "managedCreators",
       "selectedCreatorsManaged",
     ]),
-    CREATORS_MANAGED_RANGES
+    AGENCY_CREATORS_MANAGED_RANGES
   );
   const focusAreas = normalizeSelectedOptions(
     getSelectedValues(body, [
@@ -194,7 +101,7 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
       "categories",
       "selectedFocusAreas",
     ]),
-    FOCUS_AREAS
+    AGENCY_FOCUS_AREAS
   );
   const website = normalizeText(getSelectedValues(body, ["website", "websiteUrl", "url"]));
   const description = normalizeText(
@@ -219,12 +126,12 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
     }
 
     if (!teamSize) {
-      return { error: `Valid team size is required: ${TEAM_SIZES.join(", ")}` };
+      return { error: `Valid team size is required: ${AGENCY_TEAM_SIZES.join(", ")}` };
     }
 
     if (!creatorsManaged) {
       return {
-        error: `Valid creators managed range is required: ${CREATORS_MANAGED_RANGES.join(", ")}`,
+        error: `Valid creators managed range is required: ${AGENCY_CREATORS_MANAGED_RANGES.join(", ")}`,
       };
     }
 
@@ -254,7 +161,7 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
       null &&
     !teamSize
   ) {
-    return { error: `Valid team size is required: ${TEAM_SIZES.join(", ")}` };
+    return { error: `Valid team size is required: ${AGENCY_TEAM_SIZES.join(", ")}` };
   }
 
   if (
@@ -277,7 +184,7 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
     !creatorsManaged
   ) {
     return {
-      error: `Valid creators managed range is required: ${CREATORS_MANAGED_RANGES.join(", ")}`,
+      error: `Valid creators managed range is required: ${AGENCY_CREATORS_MANAGED_RANGES.join(", ")}`,
     };
   }
 
@@ -298,14 +205,6 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
       description,
     },
   };
-};
-
-const applyProfileData = (profile, profileData) => {
-  for (const [key, value] of Object.entries(profileData)) {
-    if (value !== null && !(Array.isArray(value) && value.length === 0)) {
-      profile[key] = value;
-    }
-  }
 };
 
 export const saveAgencyDetails = async (req, res) => {
@@ -381,7 +280,7 @@ export const saveHowYouOperate = async (req, res) => {
     );
     const teamSize = normalizeOption(
       getSelectedValues(body, ["teamSize", "team_size", "team", "selectedTeamSize"]),
-      TEAM_SIZES
+      AGENCY_TEAM_SIZES
     );
     const creatorsManaged = normalizeOption(
       getSelectedValues(body, [
@@ -392,7 +291,7 @@ export const saveHowYouOperate = async (req, res) => {
         "managedCreators",
         "selectedCreatorsManaged",
       ]),
-      CREATORS_MANAGED_RANGES
+      AGENCY_CREATORS_MANAGED_RANGES
     );
 
     if (!agencyType) {
@@ -405,14 +304,14 @@ export const saveHowYouOperate = async (req, res) => {
     if (!teamSize) {
       return res.status(400).json({
         success: false,
-        message: `Valid team size is required: ${TEAM_SIZES.join(", ")}`,
+        message: `Valid team size is required: ${AGENCY_TEAM_SIZES.join(", ")}`,
       });
     }
 
     if (!creatorsManaged) {
       return res.status(400).json({
         success: false,
-        message: `Valid creators managed range is required: ${CREATORS_MANAGED_RANGES.join(", ")}`,
+        message: `Valid creators managed range is required: ${AGENCY_CREATORS_MANAGED_RANGES.join(", ")}`,
       });
     }
 
@@ -449,7 +348,7 @@ export const saveFocusServices = async (req, res) => {
         "categories",
         "selectedFocusAreas",
       ]),
-      FOCUS_AREAS
+      AGENCY_FOCUS_AREAS
     );
     const website = normalizeText(getSelectedValues(body, ["website", "websiteUrl", "url"]));
     const description = normalizeText(
@@ -612,9 +511,9 @@ export const getOnboardingOptions = (req, res) => {
   res.json({
     success: true,
     agencyTypes: AGENCY_TYPES,
-    teamSizes: TEAM_SIZES,
-    creatorsManagedRanges: CREATORS_MANAGED_RANGES,
-    focusAreas: FOCUS_AREAS,
+    teamSizes: AGENCY_TEAM_SIZES,
+    creatorsManagedRanges: AGENCY_CREATORS_MANAGED_RANGES,
+    focusAreas: AGENCY_FOCUS_AREAS,
     validation: {
       agencyNameMinLength: 2,
       contactPersonMinLength: 2,
