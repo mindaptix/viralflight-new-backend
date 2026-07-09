@@ -193,8 +193,14 @@ export const getOnboardingOptions = (req, res) => {
   res.json({
     success: true,
     industries: BRAND_INDUSTRIES,
-    campaignInterests: BRAND_CAMPAIGN_INTERESTS,
-    monthlyCampaignBudgets: BRAND_MONTHLY_CAMPAIGN_BUDGETS,
+    campaignInterests: BRAND_CAMPAIGN_INTERESTS.map((value) => ({
+      label: value,
+      value,
+    })),
+    monthlyCampaignBudgets: BRAND_MONTHLY_CAMPAIGN_BUDGETS.map((value) => ({
+      label: value,
+      value,
+    })),
     validation: {
       brandNameMinLength: 2,
       contactPersonMinLength: 2,

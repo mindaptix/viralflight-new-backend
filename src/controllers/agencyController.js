@@ -195,10 +195,13 @@ export const getMyProfile = async (req, res) => {
 export const getOnboardingOptions = (req, res) => {
   res.json({
     success: true,
-    agencyTypes: AGENCY_TYPES,
-    teamSizes: AGENCY_TEAM_SIZES,
-    creatorsManagedRanges: AGENCY_CREATORS_MANAGED_RANGES,
-    focusAreas: AGENCY_FOCUS_AREAS,
+    agencyTypes: AGENCY_TYPES.map((value) => ({ label: value, value })),
+    teamSizes: AGENCY_TEAM_SIZES.map((value) => ({ label: value, value })),
+    creatorsManagedRanges: AGENCY_CREATORS_MANAGED_RANGES.map((value) => ({
+      label: value,
+      value,
+    })),
+    focusAreas: AGENCY_FOCUS_AREAS.map((value) => ({ label: value, value })),
     validation: {
       agencyNameMinLength: 2,
       contactPersonMinLength: 2,

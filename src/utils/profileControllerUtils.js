@@ -83,10 +83,20 @@ const extractOptionValue = (value) => {
   return null;
 };
 
-const normalizeOption = (value, options) => {
-  const candidateValue = extractOptionValue(value);
-  if (!candidateValue) return null;
-  const comparableCandidate = normalizeComparableText(candidateValue);
+const matchOption = (candidateValue, options) => {
+  if (candidateValue === undefined || candidateValue === null || candidateValue === "") {
+    return null;
+  }
+
+  if (typeof candidateValue === "number" && Number.isInteger(candidateValue)) {
+    if (options[candidateValue] !== undefined) {
+      return options[candidateValue];
+    }
+  }
+
+  const comparableCandidate = normalizeComparableText(String(candidateValue));
+  if (!comparableCandidate) return null;
+
   const compactCandidate = comparableCandidate.replace(/[\s/-]+/g, "");
 
   const exactMatch = options.find(
@@ -108,29 +118,81 @@ const normalizeOption = (value, options) => {
   );
 };
 
-const normalizeSelectedOptions = (values, options) => {
+const normalizeOption = (value, options) => {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const candidates = [
+      value.label,
+      value.name,
+      value.title,
+      value.text,
+      value.value,
+      value.key,
+      value.id,
+      value.type,
+      value.code,
+    ];
+
+    for (const candidate of candidates) {
+      const match = matchOption(candidate, options);
+      if (match) return match;
+    }
+
+    return null;
+  }
+
+  return matchOption(extractOptionValue(value), options);
+};
+
+const flattenSelectedInput = (values) => {
   if (values === undefined || values === null) {
     return [];
   }
 
-  const inputValues = Array.isArray(values)
-    ? values
-    : typeof values === "string"
-      ? values
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean)
-      : values && typeof values === "object"
-        ? Object.values(values).some(Array.isArray)
-          ? Object.values(values).flatMap((item) => (Array.isArray(item) ? item : [item]))
-          : [values]
-        : [];
+  if (Array.isArray(values)) {
+    return values;
+  }
+
+  if (typeof values === "string") {
+    const trimmed = values.trim();
+    if (!trimmed) return [];
+
+    if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+      try {
+        return flattenSelectedInput(JSON.parse(trimmed));
+      } catch (error) {
+        // Fall back to comma-separated parsing.
+      }
+    }
+
+    return trimmed
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  if (typeof values === "object") {
+    const entries = Object.entries(values);
+
+    if (entries.length > 0 && entries.every(([, entryValue]) => typeof entryValue === "boolean")) {
+      return entries.filter(([, selected]) => selected).map(([key]) => key);
+    }
+
+    if (Object.values(values).some(Array.isArray)) {
+      return Object.values(values).flatMap((item) => (Array.isArray(item) ? item : [item]));
+    }
+
+    return [values];
+  }
+
+  return [values];
+};
+
+const normalizeSelectedOptions = (values, options) => {
+  const inputValues = flattenSelectedInput(values);
 
   return [
     ...new Set(
-      inputValues
-        .map((value) => normalizeOption(value, options))
-        .filter(Boolean)
+      inputValues.map((value) => normalizeOption(value, options)).filter(Boolean)
     ),
   ];
 };
@@ -158,14 +220,29 @@ const isValidUrl = (value) => {
   }
 };
 
+const isEmptySelectedValue = (value) => {
+  if (value === undefined || value === null) return true;
+  if (typeof value === "string") return value.trim() === "";
+  if (Array.isArray(value)) return value.length === 0;
+  return false;
+};
+
 const getSelectedValue = (body, keys) => {
+  let emptyValue;
+
   for (const key of keys) {
     if (body[key] !== undefined && body[key] !== null) {
-      return body[key];
+      if (!isEmptySelectedValue(body[key])) {
+        return body[key];
+      }
+
+      if (emptyValue === undefined) {
+        emptyValue = body[key];
+      }
     }
   }
 
-  return undefined;
+  return emptyValue;
 };
 
 const mergeNestedProfileBody = (body, nestedKeys) =>
