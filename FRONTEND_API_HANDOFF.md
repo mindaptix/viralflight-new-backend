@@ -22,6 +22,8 @@ Authorization: Bearer ACCESS_TOKEN
 Content-Type: application/json
 ```
 
+Same mobile number can register once as `brand`, once as `agency`, and once as `influencer`. Do not create a second account for the same mobile and same role; login to that existing role instead.
+
 ## 1. Send OTP - Token nahi chahiye
 
 ```txt
@@ -58,6 +60,7 @@ Body:
 ```json
 {
   "mobile": "+917018319344",
+  "role": "influencer",
   "otp": "123456"
 }
 ```

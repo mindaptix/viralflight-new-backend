@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema(
     mobile: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       index: true,
     },
@@ -36,5 +35,7 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.index({ mobile: 1, role: 1 }, { unique: true });
 
 export default mongoose.model("User", userSchema, "users");

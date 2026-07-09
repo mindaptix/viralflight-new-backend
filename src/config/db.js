@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+import User from "../models/User.js";
+
 const connectDB = async () => {
   const databaseURL = process.env.MONGO_URI || process.env.DATABASE_URL;
 
@@ -10,6 +12,7 @@ const connectDB = async () => {
 
   try {
     await mongoose.connect(databaseURL);
+    await User.syncIndexes();
     console.log("MongoDB connected");
   } catch (error) {
     console.error(error.message);

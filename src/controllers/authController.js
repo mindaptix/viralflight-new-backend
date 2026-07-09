@@ -63,15 +63,7 @@ export const sendOtp = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ mobile });
-
-    if (existingUser?.isMobileVerified && existingUser.role !== role) {
-      return res.status(409).json({
-        success: false,
-        message: `This mobile is already registered as ${existingUser.role}. Please login as ${existingUser.role}.`,
-        registeredRole: existingUser.role,
-      });
-    }
+    const existingUser = await User.findOne({ mobile, role });
 
     await client.verify.v2
       .services(process.env.TWILIO_VERIFY_SERVICE_SID)
@@ -81,10 +73,10 @@ export const sendOtp = async (req, res) => {
       });
 
     await User.findOneAndUpdate(
-      { mobile },
+      { mobile, role },
       {
         mobile,
-        role: existingUser?.isMobileVerified ? existingUser.role : role,
+        role,
         isMobileVerified: existingUser?.isMobileVerified ?? false,
         lastOtpRequestedAt: new Date(),
       },
@@ -94,7 +86,7 @@ export const sendOtp = async (req, res) => {
     res.json({
       success: true,
       message: "OTP sent successfully",
-      selectedRole: existingUser?.isMobileVerified ? existingUser.role : role,
+      selectedRole: role,
       mobile,
     });
   } catch (error) {
@@ -104,7 +96,7 @@ export const sendOtp = async (req, res) => {
 
 export const verifyOtp = async (req, res) => {
   try {
-    const { otp } = req.body;
+    const { otp, role } = req.body;
     const mobile = normalizeMobile(req.body.mobile);
 
     if (!mobile || !otp) {
@@ -114,7 +106,17 @@ export const verifyOtp = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ mobile });
+    if (role !== undefined && !ALLOWED_ROLES.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid role is required: agency, influencer, or brand",
+      });
+    }
+
+    const user = await User.findOne({
+      mobile,
+      ...(role ? { role } : {}),
+    }).sort({ lastOtpRequestedAt: -1, updatedAt: -1 });
 
     if (!user) {
       return res.status(400).json({

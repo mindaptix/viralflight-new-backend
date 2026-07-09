@@ -77,6 +77,8 @@ Allowed roles:
 agency, influencer, brand
 ```
 
+Same mobile number can have one account per role. For example, one brand, one agency, and one influencer account are allowed for the same mobile number, but a second account with the same mobile and same role is not created.
+
 Success:
 
 ```json
@@ -98,6 +100,7 @@ Body:
 ```json
 {
   "mobile": "+917018319344",
+  "role": "influencer",
   "otp": "123456"
 }
 ```
