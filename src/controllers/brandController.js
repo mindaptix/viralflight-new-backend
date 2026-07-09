@@ -50,10 +50,14 @@ const buildBrandData = (body, { requireComplete = false } = {}) => {
     getSelectedValue(body, [
       "campaignInterests",
       "campaign_interests",
+      "campaignInterest",
       "campaignTypes",
       "campaigns",
       "interests",
       "selectedCampaignInterests",
+      "selectedInterests",
+      "partnershipTypes",
+      "partnerships",
     ]),
     BRAND_CAMPAIGN_INTERESTS
   );
@@ -97,6 +101,25 @@ const buildBrandData = (body, { requireComplete = false } = {}) => {
     }
 
     if (campaignInterests.length === 0) {
+      const rawCampaignInterests = getSelectedValue(body, [
+        "campaignInterests",
+        "campaign_interests",
+        "campaignInterest",
+        "campaignTypes",
+        "campaigns",
+        "interests",
+        "selectedCampaignInterests",
+        "selectedInterests",
+        "partnershipTypes",
+        "partnerships",
+      ]);
+
+      if (rawCampaignInterests !== undefined && rawCampaignInterests !== null) {
+        return {
+          error: `Invalid campaign interest value. Allowed values: ${BRAND_CAMPAIGN_INTERESTS.join(", ")}`,
+        };
+      }
+
       return { error: "Please select at least 1 campaign interest" };
     }
 

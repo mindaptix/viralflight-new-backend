@@ -55,14 +55,29 @@ const normalizeComparableText = (value) =>
   value
     .toLowerCase()
     .replace(/[–—]/g, "-")
+    .replace(/_/g, " ")
+    .replace(/&/g, "and")
+    .replace(/[^\w\s/-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
 const extractOptionValue = (value) => {
   if (typeof value === "string") return value.trim();
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value).trim();
+  }
   if (value && typeof value === "object") {
-    const candidate = value.value ?? value.label ?? value.name;
-    return typeof candidate === "string" ? candidate.trim() : null;
+    const candidate =
+      value.value ??
+      value.label ??
+      value.name ??
+      value.title ??
+      value.text ??
+      value.key ??
+      value.id;
+    return typeof candidate === "string" || typeof candidate === "number"
+      ? String(candidate).trim()
+      : null;
   }
 
   return null;
@@ -72,13 +87,32 @@ const normalizeOption = (value, options) => {
   const candidateValue = extractOptionValue(value);
   if (!candidateValue) return null;
   const comparableCandidate = normalizeComparableText(candidateValue);
+  const compactCandidate = comparableCandidate.replace(/[\s/-]+/g, "");
 
-  return options.find(
+  const exactMatch = options.find(
     (option) => normalizeComparableText(option) === comparableCandidate
+  );
+  if (exactMatch) return exactMatch;
+
+  return (
+    options.find((option) => {
+      const comparableOption = normalizeComparableText(option);
+      const compactOption = comparableOption.replace(/[\s/-]+/g, "");
+
+      return (
+        compactOption === compactCandidate ||
+        comparableOption.includes(comparableCandidate) ||
+        comparableCandidate.includes(comparableOption)
+      );
+    }) || null
   );
 };
 
 const normalizeSelectedOptions = (values, options) => {
+  if (values === undefined || values === null) {
+    return [];
+  }
+
   const inputValues = Array.isArray(values)
     ? values
     : typeof values === "string"
@@ -87,7 +121,9 @@ const normalizeSelectedOptions = (values, options) => {
           .map((item) => item.trim())
           .filter(Boolean)
       : values && typeof values === "object"
-        ? [values]
+        ? Object.values(values).some(Array.isArray)
+          ? Object.values(values).flatMap((item) => (Array.isArray(item) ? item : [item]))
+          : [values]
         : [];
 
   return [

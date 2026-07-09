@@ -62,11 +62,13 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
     getSelectedValues(body, [
       "focusAreas",
       "focus_areas",
+      "focusArea",
       "services",
       "clientIndustries",
       "industries",
       "categories",
       "selectedFocusAreas",
+      "selectedServices",
     ]),
     AGENCY_FOCUS_AREAS
   );
@@ -103,6 +105,24 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
     }
 
     if (focusAreas.length === 0) {
+      const rawFocusAreas = getSelectedValues(body, [
+        "focusAreas",
+        "focus_areas",
+        "focusArea",
+        "services",
+        "clientIndustries",
+        "industries",
+        "categories",
+        "selectedFocusAreas",
+        "selectedServices",
+      ]);
+
+      if (rawFocusAreas !== undefined && rawFocusAreas !== null) {
+        return {
+          error: `Invalid focus area value. Allowed values: ${AGENCY_FOCUS_AREAS.join(", ")}`,
+        };
+      }
+
       return { error: "Please select at least 1 focus area" };
     }
 
