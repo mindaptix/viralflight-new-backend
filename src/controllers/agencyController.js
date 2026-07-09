@@ -14,6 +14,7 @@ import {
   normalizeOption,
   normalizeSelectedOptions,
   normalizeText,
+  normalizeWebsite,
 } from "../utils/profileControllerUtils.js";
 
 const getAgencyBody = (body) => ({
@@ -103,7 +104,7 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
     ]),
     AGENCY_FOCUS_AREAS
   );
-  const website = normalizeText(getSelectedValues(body, ["website", "websiteUrl", "url"]));
+  const website = normalizeWebsite(getSelectedValues(body, ["website", "websiteUrl", "url"]));
   const description = normalizeText(
     getSelectedValues(body, ["description", "aboutAgency", "about_agency", "bio"])
   );
@@ -350,7 +351,7 @@ export const saveFocusServices = async (req, res) => {
       ]),
       AGENCY_FOCUS_AREAS
     );
-    const website = normalizeText(getSelectedValues(body, ["website", "websiteUrl", "url"]));
+    const website = normalizeWebsite(getSelectedValues(body, ["website", "websiteUrl", "url"]));
     const description = normalizeText(
       getSelectedValues(body, ["description", "aboutAgency", "about_agency", "bio"])
     );
@@ -399,15 +400,16 @@ export const saveFocusServices = async (req, res) => {
 
 export const saveFullOnboarding = async (req, res) => {
   try {
-    const { profileData, error } = buildAgencyData(getAgencyBody(req.body), {
-      requireComplete: true,
-    });
+    const profile = await getOrCreateProfile(req.user);
+    const { profileData, error } = buildAgencyData(
+      { ...profile.toObject(), ...getAgencyBody(req.body) },
+      { requireComplete: true }
+    );
 
     if (error) {
       return res.status(400).json({ success: false, message: error });
     }
 
-    const profile = await getOrCreateProfile(req.user);
     profile.userId = req.user.userId;
     profile.mobile = req.user.mobile;
     applyProfileData(profile, profileData);

@@ -52,6 +52,17 @@ const normalizeSelectedOptions = (values, options) => {
 const normalizeText = (value) =>
   typeof value === "string" && value.trim() ? value.trim() : null;
 
+const normalizeWebsite = (value) => {
+  const text = normalizeText(value);
+  if (!text) return null;
+
+  if (/^https?:\/\//i.test(text)) {
+    return text;
+  }
+
+  return `https://${text}`;
+};
+
 const isValidUrl = (value) => {
   try {
     const url = new URL(value);
@@ -97,4 +108,5 @@ export {
   normalizeOption,
   normalizeSelectedOptions,
   normalizeText,
+  normalizeWebsite,
 };
