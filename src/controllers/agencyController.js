@@ -7,7 +7,7 @@ import {
 } from "../constants/profileOptions.js";
 import {
   applyProfileData,
-  getProfileQuery,
+  getOrCreateRoleProfile,
   getSelectedValue as getSelectedValues,
   isValidUrl,
   mergeNestedProfileBody,
@@ -21,46 +21,11 @@ const getAgencyBody = (body) => ({
   ...mergeNestedProfileBody(body, ["data", "profile", "agency", "agencyProfile"]),
 });
 
-const getAgencyStep = (profile) => {
-  if (!profile.agencyName || !profile.contactPerson || !profile.city) {
-    return "agency-details";
-  }
-
-  if (!profile.agencyType || !profile.teamSize || !profile.creatorsManaged) {
-    return "how-you-operate";
-  }
-
-  if (
-    !profile.focusAreas ||
-    profile.focusAreas.length === 0 ||
-    !profile.description ||
-    profile.description.length < 30
-  ) {
-    return "focus-services";
-  }
-
-  return "completed";
-};
-
-const getOrCreateProfile = async (user) => {
-  let profile = await AgencyProfile.findOne(getProfileQuery(user));
-
-  if (!profile) {
-    profile = await AgencyProfile.create({
-      userId: user.userId,
-      mobile: user.mobile,
-    });
-  } else if (user.userId && !profile.userId) {
-    profile.userId = user.userId;
-    await profile.save();
-  }
-
-  return profile;
-};
+const getOrCreateProfile = (user) => getOrCreateRoleProfile(user, AgencyProfile);
 
 const buildAgencyData = (body, { requireComplete = false } = {}) => {
   const agencyName = normalizeText(
-    getSelectedValues(body, ["agencyName", "agency_name", "name", "companyName"])
+    getSelectedValues(body, ["agencyName", "agency_name", "companyName"])
   );
   const contactPerson = normalizeText(
     getSelectedValues(body, [
@@ -70,6 +35,7 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
       "contact_name",
       "personName",
       "ownerName",
+      "fullName",
     ])
   );
   const city = normalizeText(getSelectedValues(body, ["city", "selectedCity", "location"]));
@@ -145,50 +111,6 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
     }
   }
 
-  if (
-    getSelectedValues(body, ["agencyType", "agency_type", "type", "selectedAgencyType"]) !==
-      undefined &&
-    getSelectedValues(body, ["agencyType", "agency_type", "type", "selectedAgencyType"]) !==
-      null &&
-    !agencyType
-  ) {
-    return { error: `Valid agency type is required: ${AGENCY_TYPES.join(", ")}` };
-  }
-
-  if (
-    getSelectedValues(body, ["teamSize", "team_size", "team", "selectedTeamSize"]) !==
-      undefined &&
-    getSelectedValues(body, ["teamSize", "team_size", "team", "selectedTeamSize"]) !==
-      null &&
-    !teamSize
-  ) {
-    return { error: `Valid team size is required: ${AGENCY_TEAM_SIZES.join(", ")}` };
-  }
-
-  if (
-    getSelectedValues(body, [
-      "creatorsManaged",
-      "creators_managed",
-      "creatorManaged",
-      "creatorCount",
-      "managedCreators",
-      "selectedCreatorsManaged",
-    ]) !== undefined &&
-    getSelectedValues(body, [
-      "creatorsManaged",
-      "creators_managed",
-      "creatorManaged",
-      "creatorCount",
-      "managedCreators",
-      "selectedCreatorsManaged",
-    ]) !== null &&
-    !creatorsManaged
-  ) {
-    return {
-      error: `Valid creators managed range is required: ${AGENCY_CREATORS_MANAGED_RANGES.join(", ")}`,
-    };
-  }
-
   if (website && !isValidUrl(website)) {
     return { error: "Website must be a valid http or https URL" };
   }
@@ -206,196 +128,6 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
       description,
     },
   };
-};
-
-export const saveAgencyDetails = async (req, res) => {
-  try {
-    const body = getAgencyBody(req.body);
-    const agencyName = normalizeText(
-      getSelectedValues(body, ["agencyName", "agency_name", "name", "companyName"])
-    );
-    const contactPerson = normalizeText(
-      getSelectedValues(body, [
-        "contactPerson",
-        "contact_person",
-        "contactName",
-        "contact_name",
-        "personName",
-        "ownerName",
-      ])
-    );
-    const city = normalizeText(
-      getSelectedValues(body, ["city", "selectedCity", "location"])
-    );
-
-    if (!agencyName || agencyName.length < 2) {
-      return res.status(400).json({
-        success: false,
-        message: "Agency name is required and must be at least 2 characters",
-      });
-    }
-
-    if (!contactPerson || contactPerson.length < 2) {
-      return res.status(400).json({
-        success: false,
-        message: "Contact person is required and must be at least 2 characters",
-      });
-    }
-
-    if (!city) {
-      return res.status(400).json({ success: false, message: "City is required" });
-    }
-
-    const profile = await AgencyProfile.findOneAndUpdate(
-      getProfileQuery(req.user),
-      {
-        userId: req.user.userId,
-        mobile: req.user.mobile,
-        agencyName,
-        contactPerson,
-        city,
-        isProfileComplete: false,
-        completedAt: undefined,
-      },
-      { new: true, upsert: true, runValidators: true }
-    );
-
-    res.json({
-      success: true,
-      message: "Agency details saved successfully",
-      onboardingStep: getAgencyStep(profile),
-      nextStep: "how-you-operate",
-      profile,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const saveHowYouOperate = async (req, res) => {
-  try {
-    const body = getAgencyBody(req.body);
-    const agencyType = normalizeOption(
-      getSelectedValues(body, ["agencyType", "agency_type", "type", "selectedAgencyType"]),
-      AGENCY_TYPES
-    );
-    const teamSize = normalizeOption(
-      getSelectedValues(body, ["teamSize", "team_size", "team", "selectedTeamSize"]),
-      AGENCY_TEAM_SIZES
-    );
-    const creatorsManaged = normalizeOption(
-      getSelectedValues(body, [
-        "creatorsManaged",
-        "creators_managed",
-        "creatorManaged",
-        "creatorCount",
-        "managedCreators",
-        "selectedCreatorsManaged",
-      ]),
-      AGENCY_CREATORS_MANAGED_RANGES
-    );
-
-    if (!agencyType) {
-      return res.status(400).json({
-        success: false,
-        message: `Valid agency type is required: ${AGENCY_TYPES.join(", ")}`,
-      });
-    }
-
-    if (!teamSize) {
-      return res.status(400).json({
-        success: false,
-        message: `Valid team size is required: ${AGENCY_TEAM_SIZES.join(", ")}`,
-      });
-    }
-
-    if (!creatorsManaged) {
-      return res.status(400).json({
-        success: false,
-        message: `Valid creators managed range is required: ${AGENCY_CREATORS_MANAGED_RANGES.join(", ")}`,
-      });
-    }
-
-    const profile = await getOrCreateProfile(req.user);
-    profile.agencyType = agencyType;
-    profile.teamSize = teamSize;
-    profile.creatorsManaged = creatorsManaged;
-    profile.isProfileComplete = false;
-    profile.completedAt = undefined;
-    await profile.save();
-
-    res.json({
-      success: true,
-      message: "Agency operating details saved successfully",
-      onboardingStep: getAgencyStep(profile),
-      nextStep: "focus-services",
-      profile,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const saveFocusServices = async (req, res) => {
-  try {
-    const body = getAgencyBody(req.body);
-    const focusAreas = normalizeSelectedOptions(
-      getSelectedValues(body, [
-        "focusAreas",
-        "focus_areas",
-        "services",
-        "clientIndustries",
-        "industries",
-        "categories",
-        "selectedFocusAreas",
-      ]),
-      AGENCY_FOCUS_AREAS
-    );
-    const website = normalizeWebsite(getSelectedValues(body, ["website", "websiteUrl", "url"]));
-    const description = normalizeText(
-      getSelectedValues(body, ["description", "aboutAgency", "about_agency", "bio"])
-    );
-
-    if (focusAreas.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select at least 1 focus area",
-      });
-    }
-
-    if (website && !isValidUrl(website)) {
-      return res.status(400).json({
-        success: false,
-        message: "Website must be a valid http or https URL",
-      });
-    }
-
-    if (!description || description.length < 30) {
-      return res.status(400).json({
-        success: false,
-        message: "About your agency must be at least 30 characters",
-      });
-    }
-
-    const profile = await getOrCreateProfile(req.user);
-    profile.focusAreas = focusAreas;
-    profile.website = website || undefined;
-    profile.description = description;
-    profile.isProfileComplete = true;
-    profile.completedAt = new Date();
-    await profile.save();
-
-    res.json({
-      success: true,
-      message: "Agency profile completed successfully",
-      onboardingStep: "completed",
-      dashboard: "agency",
-      redirectTo: "/dashboard/agency",
-      profile,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
 };
 
 export const saveFullOnboarding = async (req, res) => {
@@ -419,75 +151,7 @@ export const saveFullOnboarding = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Agency onboarding completed successfully",
-      onboardingStep: "completed",
-      dashboard: "agency",
-      redirectTo: "/dashboard/agency",
-      profile,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const completeAgencyProfile = async (req, res) => {
-  try {
-    const profile = await getOrCreateProfile(req.user);
-    const currentData = profile.toObject();
-    const { profileData, error } = buildAgencyData(
-      { ...currentData, ...getAgencyBody(req.body) },
-      { requireComplete: true }
-    );
-
-    if (error) {
-      return res.status(400).json({ success: false, message: error });
-    }
-
-    profile.userId = req.user.userId;
-    profile.mobile = req.user.mobile;
-    applyProfileData(profile, profileData);
-    profile.isProfileComplete = true;
-    profile.completedAt = new Date();
-    await profile.save();
-
-    res.json({
-      success: true,
-      message: "Agency profile completed successfully",
-      onboardingStep: "completed",
-      dashboard: "agency",
-      redirectTo: "/dashboard/agency",
-      profile,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const savePartialProfile = async (req, res) => {
-  try {
-    const { profileData, error } = buildAgencyData(getAgencyBody(req.body));
-
-    if (error) {
-      return res.status(400).json({ success: false, message: error });
-    }
-
-    const profile = await getOrCreateProfile(req.user);
-    applyProfileData(profile, profileData);
-
-    if (getAgencyStep(profile) === "completed") {
-      profile.isProfileComplete = true;
-      profile.completedAt = profile.completedAt || new Date();
-    } else {
-      profile.isProfileComplete = false;
-      profile.completedAt = undefined;
-    }
-
-    await profile.save();
-
-    res.json({
-      success: true,
       message: "Agency profile saved successfully",
-      onboardingStep: getAgencyStep(profile),
       profile,
     });
   } catch (error) {
@@ -501,7 +165,6 @@ export const getMyProfile = async (req, res) => {
 
     res.json({
       success: true,
-      onboardingStep: getAgencyStep(profile),
       profile,
     });
   } catch (error) {
@@ -521,10 +184,5 @@ export const getOnboardingOptions = (req, res) => {
       contactPersonMinLength: 2,
       descriptionMinLength: 30,
     },
-    steps: [
-      { step: 1, key: "agency-details", title: "Set up your agency" },
-      { step: 2, key: "how-you-operate", title: "Tell us how you work" },
-      { step: 3, key: "focus-services", title: "Your focus & services" },
-    ],
   });
 };

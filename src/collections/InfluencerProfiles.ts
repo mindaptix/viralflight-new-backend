@@ -33,7 +33,7 @@ export const InfluencerProfiles: CollectionConfig = {
       'updatedAt',
     ],
     description:
-      'Complete influencer profile — all 4 onboarding screens in one schema.',
+      'Complete influencer profile in one schema.',
   },
   access: {
     create: cmsAdmin,

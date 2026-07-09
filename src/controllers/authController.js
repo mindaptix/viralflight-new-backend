@@ -2,9 +2,11 @@ import twilio from "twilio";
 
 import AgencyProfile from "../models/AgencyProfile.js";
 import BrandProfile from "../models/BrandProfile.js";
+import InfluencerProfile from "../models/InfluencerProfile.js";
 import User from "../models/User.js";
 import { ALLOWED_ROLES } from "../constants/onboardingConstants.js";
 import { normalizeMobile } from "../utils/mobileUtils.js";
+import { getProfileQuery } from "../utils/profileControllerUtils.js";
 import {
   createTokens,
   verifyRefreshToken,
@@ -17,6 +19,29 @@ const client = twilio(
 );
 
 const getDashboardPath = (role) => `/dashboard/${role}`;
+
+const ROLE_PROFILE_MODELS = {
+  agency: AgencyProfile,
+  brand: BrandProfile,
+  influencer: InfluencerProfile,
+};
+
+const ensureRoleProfile = async (user, mobile) => {
+  const Model = ROLE_PROFILE_MODELS[user.role];
+
+  if (!Model) {
+    return null;
+  }
+
+  return Model.findOneAndUpdate(
+    getProfileQuery({ userId: user._id.toString(), mobile }),
+    {
+      userId: user._id,
+      mobile,
+    },
+    { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
+  );
+};
 
 export const sendOtp = async (req, res) => {
   try {
@@ -38,6 +63,16 @@ export const sendOtp = async (req, res) => {
       });
     }
 
+    const existingUser = await User.findOne({ mobile });
+
+    if (existingUser?.isMobileVerified && existingUser.role !== role) {
+      return res.status(409).json({
+        success: false,
+        message: `This mobile is already registered as ${existingUser.role}. Please login as ${existingUser.role}.`,
+        registeredRole: existingUser.role,
+      });
+    }
+
     await client.verify.v2
       .services(process.env.TWILIO_VERIFY_SERVICE_SID)
       .verifications.create({
@@ -49,8 +84,8 @@ export const sendOtp = async (req, res) => {
       { mobile },
       {
         mobile,
-        role,
-        isMobileVerified: false,
+        role: existingUser?.isMobileVerified ? existingUser.role : role,
+        isMobileVerified: existingUser?.isMobileVerified ?? false,
         lastOtpRequestedAt: new Date(),
       },
       { upsert: true, new: true, runValidators: true }
@@ -59,7 +94,7 @@ export const sendOtp = async (req, res) => {
     res.json({
       success: true,
       message: "OTP sent successfully",
-      selectedRole: role,
+      selectedRole: existingUser?.isMobileVerified ? existingUser.role : role,
       mobile,
     });
   } catch (error) {
@@ -111,27 +146,7 @@ export const verifyOtp = async (req, res) => {
     user.refreshTokenIssuedAt = new Date();
     await user.save();
 
-    if (user.role === "agency") {
-      await AgencyProfile.findOneAndUpdate(
-        { userId: user._id },
-        {
-          userId: user._id,
-          mobile,
-        },
-        { upsert: true, new: true, runValidators: true }
-      );
-    }
-
-    if (user.role === "brand") {
-      await BrandProfile.findOneAndUpdate(
-        { userId: user._id },
-        {
-          userId: user._id,
-          mobile,
-        },
-        { upsert: true, new: true, runValidators: true }
-      );
-    }
+    await ensureRoleProfile(user, mobile);
 
     res.json({
       success: true,

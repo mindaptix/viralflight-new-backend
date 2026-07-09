@@ -2,6 +2,10 @@ import InfluencerProfile from "../models/InfluencerProfile.js";
 import {
   getOnboardingSettings,
 } from "../services/onboardingSettingsService.js";
+import {
+  getOrCreateRoleProfile,
+  getProfileQuery,
+} from "../utils/profileControllerUtils.js";
 
 const normalizeCity = (city, cities) => {
   if (!city || typeof city !== "string") return null;
@@ -121,24 +125,7 @@ const getOnboardingStep = (profile, settings) => {
   return "completed";
 };
 
-const getProfileQuery = (user) =>
-  user.userId ? { userId: user.userId } : { mobile: user.mobile };
-
-const getOrCreateProfile = async (user) => {
-  let profile = await InfluencerProfile.findOne(getProfileQuery(user));
-
-  if (!profile) {
-    profile = await InfluencerProfile.create({
-      userId: user.userId,
-      mobile: user.mobile,
-    });
-  } else if (user.userId && !profile.userId) {
-    profile.userId = user.userId;
-    await profile.save();
-  }
-
-  return profile;
-};
+const getOrCreateProfile = (user) => getOrCreateRoleProfile(user, InfluencerProfile);
 
 const buildPlatformData = (body, settings) => {
   const allowedPlatforms = settings.platforms.map((item) => item.platform);
@@ -618,47 +605,15 @@ export const saveFullOnboarding = async (req, res) => {
 
 export const getMyProfile = async (req, res) => {
   try {
-    const settings = await getOnboardingSettings();
     const profile = await getOrCreateProfile(req.user);
 
     res.json({
       success: true,
-      onboardingStep: getOnboardingStep(profile, settings),
       profile,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-};
-
-export const getFullProfile = async (req, res) => {
-  try {
-    const settings = await getOnboardingSettings();
-    const profile = await getOrCreateProfile(req.user);
-
-    res.json({
-      success: true,
-      message: "Influencer profile fetched successfully",
-      onboardingStep: getOnboardingStep(profile, settings),
-      user: {
-        userId: req.user.userId,
-        mobile: req.user.mobile,
-        role: req.user.role,
-      },
-      profile,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const getPlatformOptions = async (req, res) => {
-  const settings = await getOnboardingSettings();
-
-  res.json({
-    success: true,
-    platforms: settings.platforms,
-  });
 };
 
 export const getOnboardingOptions = async (req, res) => {
@@ -674,11 +629,5 @@ export const getOnboardingOptions = async (req, res) => {
     contentLanguages: settings.contentLanguages,
     collaborationPreferences: settings.collaborationPreferenceOptions,
     validation: settings.validation,
-    steps: [
-      { step: 1, key: "basic-info", title: "Enter your name" },
-      { step: 2, key: "connect-platform", title: "Add your socials" },
-      { step: 3, key: "content-preferences", title: "What do you create?" },
-      { step: 4, key: "finish-profile", title: "Finish your profile" },
-    ],
   });
 };

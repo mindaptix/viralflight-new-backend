@@ -31,8 +31,7 @@ export const BrandProfiles: CollectionConfig = {
       'completedAt',
       'updatedAt',
     ],
-    description:
-      'Complete brand profile — all 3 onboarding screens in one schema.',
+    description: 'Complete brand profile in one schema.',
   },
   access: {
     create: cmsAdmin,
@@ -41,6 +40,9 @@ export const BrandProfiles: CollectionConfig = {
     delete: cmsAdmin,
   },
   fields: [
+    { name: 'brandName', type: 'text', label: 'Brand / Company Name' },
+    { name: 'contactPerson', type: 'text', label: 'Contact Person' },
+    { name: 'city', type: 'text', label: 'City' },
     {
       name: 'userId',
       type: 'relationship',
@@ -48,9 +50,6 @@ export const BrandProfiles: CollectionConfig = {
       label: 'Login User',
     },
     { name: 'mobile', type: 'text', required: true, unique: true, label: 'Mobile Number' },
-    { name: 'brandName', type: 'text', label: 'Brand / Company Name' },
-    { name: 'contactPerson', type: 'text', label: 'Contact Person' },
-    { name: 'city', type: 'text', label: 'City' },
     {
       name: 'industry',
       type: 'select',

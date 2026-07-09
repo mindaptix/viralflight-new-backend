@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-// ─── Step 1: Enter your name 
 const ALLOWED_CITIES = [
   "Mumbai",
   "Delhi",
@@ -10,7 +9,6 @@ const ALLOWED_CITIES = [
   "Kolkata",
 ];
 
-// ─── Step 2: Add your socials 
 const PRIMARY_PLATFORMS = ["instagram", "youtube", "tiktok"];
 const SECONDARY_PLATFORMS = ["twitter", "snapchat", "linkedin", "facebook"];
 
@@ -66,7 +64,6 @@ const PLATFORM_REQUIRED_FIELDS = PLATFORM_OPTIONS.reduce((fields, option) => {
   return fields;
 }, {});
 
-// ─── Step 3: What do you create? ───────────────────────────────────────────
 const CONTENT_CATEGORIES = [
   "Fashion",
   "Lifestyle",
@@ -109,7 +106,6 @@ const CONTENT_LANGUAGES = [
   "Odia",
 ];
 
-// ─── Step 4: Finish your profile ───────────────────────────────────────────
 const COLLABORATION_PREFERENCES = [
   "paid_only",
   "barter_product",
@@ -173,14 +169,11 @@ const rateRangeSchema = new mongoose.Schema(
   { _id: false }
 );
 
-// ─── Main Influencer Profile Schema (all 4 screens) ─────────────────────────
 const influencerProfileSchema = new mongoose.Schema(
   {
-    // Step 1 — Enter your name (pehla screen)
     name: { type: String, trim: true },
     city: { type: String, enum: ALLOWED_CITIES, trim: true },
 
-    // System link (login se aata hai)
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -194,10 +187,8 @@ const influencerProfileSchema = new mongoose.Schema(
       index: true,
     },
 
-    // Step 2 — Add your socials
     platforms: { type: [platformSchema], default: [] },
 
-    // Step 3 — What do you create?
     contentCategories: {
       type: [{ type: String, enum: CONTENT_CATEGORIES, trim: true }],
       default: [],
@@ -207,7 +198,6 @@ const influencerProfileSchema = new mongoose.Schema(
       default: [],
     },
 
-    // Step 4 — Finish your profile
     bio: { type: String, trim: true },
     collaborationPreference: {
       type: String,
@@ -221,7 +211,6 @@ const influencerProfileSchema = new mongoose.Schema(
     },
     portfolioLink: { type: String, trim: true },
 
-    // Profile status
     isProfileComplete: { type: Boolean, default: false },
     completedAt: { type: Date },
   },

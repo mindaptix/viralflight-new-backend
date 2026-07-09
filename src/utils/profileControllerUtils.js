@@ -1,5 +1,55 @@
-const getProfileQuery = (user) =>
-  user.userId ? { userId: user.userId } : { mobile: user.mobile };
+const getProfileQuery = (user) => {
+  if (user.userId && user.mobile) {
+    return { $or: [{ userId: user.userId }, { mobile: user.mobile }] };
+  }
+
+  if (user.userId) {
+    return { userId: user.userId };
+  }
+
+  if (user.mobile) {
+    return { mobile: user.mobile };
+  }
+
+  return {};
+};
+
+const getOrCreateRoleProfile = async (user, Model) => {
+  let profile = await Model.findOne(getProfileQuery(user));
+
+  if (!profile) {
+    try {
+      profile = await Model.create({
+        userId: user.userId,
+        mobile: user.mobile,
+      });
+    } catch (error) {
+      if (error.code !== 11000) {
+        throw error;
+      }
+
+      profile = await Model.findOne({ mobile: user.mobile });
+    }
+  }
+
+  if (!profile) {
+    throw new Error("Unable to create or find profile");
+  }
+
+  if (user.userId) {
+    profile.userId = user.userId;
+  }
+
+  if (user.mobile) {
+    profile.mobile = user.mobile;
+  }
+
+  if (profile.isModified()) {
+    await profile.save();
+  }
+
+  return profile;
+};
 
 const normalizeComparableText = (value) =>
   value
@@ -101,6 +151,7 @@ const applyProfileData = (profile, profileData) => {
 
 export {
   applyProfileData,
+  getOrCreateRoleProfile,
   getProfileQuery,
   getSelectedValue,
   isValidUrl,

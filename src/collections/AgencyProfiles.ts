@@ -33,8 +33,7 @@ export const AgencyProfiles: CollectionConfig = {
       'completedAt',
       'updatedAt',
     ],
-    description:
-      'Complete agency profile — all 3 onboarding screens in one schema.',
+    description: 'Complete agency profile in one schema.',
   },
   access: {
     create: cmsAdmin,
@@ -43,6 +42,9 @@ export const AgencyProfiles: CollectionConfig = {
     delete: cmsAdmin,
   },
   fields: [
+    { name: 'agencyName', type: 'text', label: 'Agency Name' },
+    { name: 'contactPerson', type: 'text', label: 'Contact Person' },
+    { name: 'city', type: 'text', label: 'City' },
     {
       name: 'userId',
       type: 'relationship',
@@ -50,9 +52,6 @@ export const AgencyProfiles: CollectionConfig = {
       label: 'Login User',
     },
     { name: 'mobile', type: 'text', required: true, unique: true, label: 'Mobile Number' },
-    { name: 'agencyName', type: 'text', label: 'Agency Name' },
-    { name: 'contactPerson', type: 'text', label: 'Contact Person' },
-    { name: 'city', type: 'text', label: 'City' },
     {
       name: 'agencyType',
       type: 'select',
