@@ -1,3 +1,4 @@
+import AgencyProfile from "../models/AgencyProfile.js";
 import BrandProfile from "../models/BrandProfile.js";
 import Campaign, { CAMPAIGN_STATUSES } from "../models/Campaign.js";
 import InfluencerProfile from "../models/InfluencerProfile.js";
@@ -89,7 +90,10 @@ const toCampaignCard = (campaign, influencerProfile) => {
 
   return {
     id: campaign._id,
-    brandName: campaign.brandName,
+    ownerRole: campaign.ownerRole || "brand",
+    ownerName: campaign.ownerName || campaign.brandName || campaign.agencyName,
+    brandName: campaign.brandName || campaign.ownerName || campaign.agencyName,
+    agencyName: campaign.agencyName,
     title: campaign.title,
     description: campaign.description,
     category: campaign.category,
@@ -105,6 +109,28 @@ const toCampaignCard = (campaign, influencerProfile) => {
     daysLeftText: daysLeft === null ? null : `${daysLeft} days left`,
     matchPercent: calculateMatchPercent(campaign, influencerProfile),
     status: campaign.status,
+  };
+};
+
+const getOwnerProfile = async (user) => {
+  if (user.role === "agency") {
+    const agencyProfile = await AgencyProfile.findOne({
+      $or: [{ userId: user.userId }, { mobile: user.mobile }],
+    });
+
+    return {
+      ownerProfile: agencyProfile,
+      ownerName: normalizeText(agencyProfile?.agencyName),
+    };
+  }
+
+  const brandProfile = await BrandProfile.findOne({
+    $or: [{ userId: user.userId }, { mobile: user.mobile }],
+  });
+
+  return {
+    ownerProfile: brandProfile,
+    ownerName: normalizeText(brandProfile?.brandName),
   };
 };
 
@@ -140,16 +166,34 @@ const buildCampaignData = async (body, user) => {
     };
   }
 
-  const brandProfile = await BrandProfile.findOne({
-    $or: [{ userId: user.userId }, { mobile: user.mobile }],
-  });
+  if (!["brand", "agency"].includes(user.role)) {
+    return { error: "Only brand or agency accounts can create campaigns" };
+  }
+
+  const { ownerProfile, ownerName: profileOwnerName } = await getOwnerProfile(user);
+  const ownerRole = user.role;
+  const requestOwnerName =
+    normalizeText(body.ownerName) ||
+    normalizeText(body.creatorName) ||
+    normalizeText(body.brandName) ||
+    normalizeText(body.agencyName);
+  const ownerName = requestOwnerName || profileOwnerName;
 
   return {
     campaignData: {
-      brandUserId: user.userId,
-      brandProfileId: brandProfile?._id,
-      brandMobile: user.mobile,
-      brandName: normalizeText(body.brandName) || brandProfile?.brandName,
+      ownerRole,
+      ownerUserId: user.userId,
+      ownerProfileId: ownerProfile?._id,
+      ownerMobile: user.mobile,
+      ownerName,
+      brandUserId: ownerRole === "brand" ? user.userId : undefined,
+      brandProfileId: ownerRole === "brand" ? ownerProfile?._id : undefined,
+      brandMobile: ownerRole === "brand" ? user.mobile : undefined,
+      brandName: ownerRole === "brand" ? ownerName : undefined,
+      agencyUserId: ownerRole === "agency" ? user.userId : undefined,
+      agencyProfileId: ownerRole === "agency" ? ownerProfile?._id : undefined,
+      agencyMobile: ownerRole === "agency" ? user.mobile : undefined,
+      agencyName: ownerRole === "agency" ? ownerName : undefined,
       title,
       description,
       category,
@@ -174,8 +218,20 @@ const createBrandCampaign = async (body, user) => {
   return { campaign };
 };
 
+const createAgencyCampaign = async (body, user) => createBrandCampaign(body, user);
+
 const getBrandCampaigns = async (user) =>
-  Campaign.find({ brandUserId: user.userId }).sort({ createdAt: -1 });
+  Campaign.find({
+    $or: [{ brandUserId: user.userId }, { ownerRole: "brand", ownerUserId: user.userId }],
+  }).sort({ createdAt: -1 });
+
+const getAgencyCampaigns = async (user) =>
+  Campaign.find({
+    $or: [
+      { agencyUserId: user.userId },
+      { ownerRole: "agency", ownerUserId: user.userId },
+    ],
+  }).sort({ createdAt: -1 });
 
 const getCampaignsForInfluencer = async (user, { limit = 10 } = {}) => {
   const influencerProfile = await InfluencerProfile.findOne({
@@ -197,7 +253,9 @@ const getCampaignsForInfluencer = async (user, { limit = 10 } = {}) => {
 };
 
 export {
+  createAgencyCampaign,
   createBrandCampaign,
+  getAgencyCampaigns,
   getBrandCampaigns,
   getCampaignsForInfluencer,
   toCampaignCard,

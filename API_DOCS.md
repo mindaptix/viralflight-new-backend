@@ -38,7 +38,9 @@ POST /api/influencer/profile-views
 POST /api/influencer/logout
 GET  /api/agency/onboarding-options
 GET  /api/agency/profile
+GET  /api/agency/campaigns
 POST /api/agency/full-onboarding
+POST /api/agency/campaigns
 POST /api/agency/logout
 GET  /api/brand/onboarding-options
 GET  /api/brand/profile
@@ -673,6 +675,60 @@ Response:
 
 Frontend can render `profileFields` directly in the Profile tab. It includes only fields that have saved values, so empty details are not shown.
 
+### Create Agency Campaign
+
+Use this when a logged-in agency posts a campaign/brief. Active campaigns from here show in influencer `Campaigns for you`.
+
+```txt
+POST /api/agency/campaigns
+```
+
+Headers:
+
+```txt
+Authorization: Bearer AGENCY_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "title": "Creator Launch Campaign",
+  "description": "Create one Instagram reel for a managed client launch.",
+  "category": "Lifestyle",
+  "platforms": ["instagram"],
+  "deliverables": ["1 Reel"],
+  "budgetAmount": 25000,
+  "budgetCurrency": "INR",
+  "coverImageUrl": "https://example.com/campaign.jpg",
+  "location": "Delhi",
+  "applicationDeadline": "2026-07-15",
+  "status": "active"
+}
+```
+
+Optional fields: `ownerName`, `creatorName`, or `agencyName` can override the display name. If omitted, the agency profile name is used.
+
+Success:
+
+```json
+{
+  "success": true,
+  "message": "Agency campaign created successfully",
+  "campaign": {},
+  "campaignCard": {}
+}
+```
+
+### Get Agency Campaigns
+
+```txt
+GET /api/agency/campaigns
+```
+
+Returns campaigns created by the logged-in agency.
+
 ## Brand Onboarding
 
 All APIs below require `Authorization: Bearer ACCESS_TOKEN` for a logged-in `brand` account.
@@ -851,9 +907,11 @@ Campaigns:
 
 ```txt
 Collection: campaigns
-Fields: brandUserId, brandProfileId, brandMobile, brandName, title,
-description, category, platforms, deliverables, budgetAmount,
-budgetCurrency, coverImageUrl, location, applicationDeadline, status
+Fields: ownerRole, ownerUserId, ownerProfileId, ownerMobile, ownerName,
+brandUserId, brandProfileId, brandMobile, brandName, agencyUserId,
+agencyProfileId, agencyMobile, agencyName, title, description, category,
+platforms, deliverables, budgetAmount, budgetCurrency, coverImageUrl,
+location, applicationDeadline, status
 ```
 
 Agency profiles:

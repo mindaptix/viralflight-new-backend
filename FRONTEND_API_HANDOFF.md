@@ -589,6 +589,43 @@ Brand ke campaigns list:
 GET https://viralflight-new-backend.onrender.com/api/brand/campaigns
 ```
 
+Agency side campaign create karne ke liye:
+
+```txt
+POST https://viralflight-new-backend.onrender.com/api/agency/campaigns
+```
+
+Headers:
+
+```txt
+Authorization: Bearer AGENCY_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Body brand campaign jaisa hi hai:
+
+```json
+{
+  "title": "Creator Launch Campaign",
+  "description": "Create one Instagram reel for a managed client launch.",
+  "category": "Lifestyle",
+  "platforms": ["instagram"],
+  "deliverables": ["1 Reel"],
+  "budgetAmount": 25000,
+  "budgetCurrency": "INR",
+  "coverImageUrl": "https://example.com/campaign.jpg",
+  "location": "Delhi",
+  "applicationDeadline": "2026-07-15",
+  "status": "active"
+}
+```
+
+Agency ke campaigns list:
+
+```txt
+GET https://viralflight-new-backend.onrender.com/api/agency/campaigns
+```
+
 ## Agency Profile Tab - Token chahiye
 
 Agency onboarding complete hone ke baad Profile tab me ye API call karo:

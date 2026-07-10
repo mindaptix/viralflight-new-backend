@@ -10,10 +10,32 @@ const CAMPAIGN_STATUSES = [
 
 const campaignSchema = new mongoose.Schema(
   {
+    ownerRole: {
+      type: String,
+      enum: ["brand", "agency"],
+      default: "brand",
+      index: true,
+    },
+    ownerUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      index: true,
+    },
+    ownerProfileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      index: true,
+    },
+    ownerMobile: {
+      type: String,
+      trim: true,
+    },
+    ownerName: {
+      type: String,
+      trim: true,
+    },
     brandUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
       index: true,
     },
     brandProfileId: {
@@ -23,10 +45,27 @@ const campaignSchema = new mongoose.Schema(
     },
     brandMobile: {
       type: String,
-      required: true,
       trim: true,
     },
     brandName: {
+      type: String,
+      trim: true,
+    },
+    agencyUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      index: true,
+    },
+    agencyProfileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AgencyProfile",
+      index: true,
+    },
+    agencyMobile: {
+      type: String,
+      trim: true,
+    },
+    agencyName: {
       type: String,
       trim: true,
     },
@@ -88,6 +127,8 @@ const campaignSchema = new mongoose.Schema(
 
 campaignSchema.index({ status: 1, applicationDeadline: 1, createdAt: -1 });
 campaignSchema.index({ brandUserId: 1, status: 1 });
+campaignSchema.index({ agencyUserId: 1, status: 1 });
+campaignSchema.index({ ownerRole: 1, ownerUserId: 1, status: 1 });
 
 const Campaign =
   mongoose.models.Campaign ||
