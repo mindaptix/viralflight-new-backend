@@ -156,6 +156,12 @@ const isTruthySelected = (value) =>
   value === 1 ||
   (typeof value === "string" && ["true", "1", "yes", "selected"].includes(value.trim().toLowerCase()));
 
+const isOptionObject = (value) =>
+  value &&
+  typeof value === "object" &&
+  !Array.isArray(value) &&
+  ["value", "label", "name", "title", "text", "key", "id"].some((key) => value[key] !== undefined);
+
 const flattenSelectedInput = (values) => {
   if (values === undefined || values === null) {
     return [];
@@ -184,6 +190,10 @@ const flattenSelectedInput = (values) => {
   }
 
   if (typeof values === "object") {
+    if (isOptionObject(values)) {
+      return [values];
+    }
+
     const entries = Object.entries(values);
 
     const selectedKeys = entries
@@ -204,7 +214,7 @@ const flattenSelectedInput = (values) => {
       return Object.values(values).flatMap((item) => (Array.isArray(item) ? item : [item]));
     }
 
-    return [values];
+    return Object.values(values);
   }
 
   return [values];
