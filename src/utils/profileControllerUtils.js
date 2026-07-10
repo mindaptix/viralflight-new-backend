@@ -168,7 +168,7 @@ const flattenSelectedInput = (values) => {
   }
 
   if (Array.isArray(values)) {
-    return values;
+    return values.flatMap((item) => flattenSelectedInput(item));
   }
 
   if (typeof values === "string") {

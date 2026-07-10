@@ -22,6 +22,58 @@ const getAgencyBody = (body) => ({
 });
 
 const getOrCreateProfile = (user) => getOrCreateRoleProfile(user, AgencyProfile);
+const FOCUS_AREA_KEYS = [
+  "focusAreas",
+  "focus_areas",
+  "focusArea",
+  "focus_area",
+  "focus",
+  "services",
+  "clientIndustries",
+  "client_industries",
+  "industries",
+  "industry",
+  "categories",
+  "category",
+  "selectedFocusAreas",
+  "selected_focus_areas",
+  "selectedFocusArea",
+  "selected_focus_area",
+  "selectedServices",
+  "selected_services",
+  "agencyFocusAreas",
+  "agency_focus_areas",
+  "specializations",
+  "specialisations",
+  "specialties",
+  "specialities",
+  "expertise",
+  "niches",
+  "verticals",
+  "targetIndustries",
+  "target_industries",
+  "businessCategories",
+  "business_categories",
+];
+
+const collectFocusAreasFromNestedBody = (value, matches = [], depth = 0) => {
+  if (!value || typeof value !== "object" || depth > 4) {
+    return matches;
+  }
+
+  for (const [key, entryValue] of Object.entries(value)) {
+    if (FOCUS_AREA_KEYS.includes(key)) {
+      matches.push(entryValue);
+      continue;
+    }
+
+    if (entryValue && typeof entryValue === "object") {
+      collectFocusAreasFromNestedBody(entryValue, matches, depth + 1);
+    }
+  }
+
+  return matches;
+};
 
 const buildAgencyData = (body, { requireComplete = false } = {}) => {
   const agencyName = normalizeText(
@@ -58,20 +110,16 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
     ]),
     AGENCY_CREATORS_MANAGED_RANGES
   );
-  const focusAreas = normalizeSelectedOptions(
-    getSelectedValues(body, [
-      "focusAreas",
-      "focus_areas",
-      "focusArea",
-      "services",
-      "clientIndustries",
-      "industries",
-      "categories",
-      "selectedFocusAreas",
-      "selectedServices",
-    ]),
-    AGENCY_FOCUS_AREAS
-  );
+  const directFocusAreaValue = getSelectedValues(body, FOCUS_AREA_KEYS);
+  const directFocusAreas = normalizeSelectedOptions(directFocusAreaValue, AGENCY_FOCUS_AREAS);
+  const nestedFocusAreas =
+    directFocusAreas.length > 0
+      ? []
+      : normalizeSelectedOptions(
+          collectFocusAreasFromNestedBody(body),
+          AGENCY_FOCUS_AREAS
+        );
+  const focusAreas = directFocusAreas.length > 0 ? directFocusAreas : nestedFocusAreas;
   const website = normalizeWebsite(getSelectedValues(body, ["website", "websiteUrl", "url"]));
   const description = normalizeText(
     getSelectedValues(body, ["description", "aboutAgency", "about_agency", "bio"])
@@ -105,17 +153,7 @@ const buildAgencyData = (body, { requireComplete = false } = {}) => {
     }
 
     if (focusAreas.length === 0) {
-      const rawFocusAreas = getSelectedValues(body, [
-        "focusAreas",
-        "focus_areas",
-        "focusArea",
-        "services",
-        "clientIndustries",
-        "industries",
-        "categories",
-        "selectedFocusAreas",
-        "selectedServices",
-      ]);
+      const rawFocusAreas = directFocusAreaValue ?? collectFocusAreasFromNestedBody(body);
 
       if (rawFocusAreas !== undefined && rawFocusAreas !== null) {
         return {
