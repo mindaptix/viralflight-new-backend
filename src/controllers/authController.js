@@ -268,6 +268,8 @@ export const logout = async (req, res) => {
     res.json({
       success: true,
       message: "Logged out successfully",
+      loggedOutRole: role,
+      redirectTo: "/login",
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

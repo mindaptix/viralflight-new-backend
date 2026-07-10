@@ -21,6 +21,7 @@ GET  /api/health
 POST /api/auth/send-otp
 POST /api/auth/verify-otp
 POST /api/auth/refresh-token
+POST /api/auth/logout
 GET  /api/influencer/onboarding-options
 GET  /api/influencer/platform-options
 GET  /api/influencer/me
@@ -31,12 +32,15 @@ POST /api/influencer/content-preferences
 POST /api/influencer/finish-profile
 POST /api/influencer/complete-profile
 POST /api/influencer/full-onboarding
+POST /api/influencer/logout
 GET  /api/agency/onboarding-options
 GET  /api/agency/profile
 POST /api/agency/full-onboarding
+POST /api/agency/logout
 GET  /api/brand/onboarding-options
 GET  /api/brand/profile
 POST /api/brand/full-onboarding
+POST /api/brand/logout
 ```
 
 There are no active custom `/api/admin/*` or campaign APIs right now. Payload CMS admin is available at:
@@ -148,6 +152,48 @@ Success:
   "accessToken": "NEW_ACCESS_TOKEN"
 }
 ```
+
+### Logout
+
+Generic logout API for any logged-in `agency`, `brand`, or `influencer` account:
+
+```txt
+POST /api/auth/logout
+```
+
+Headers:
+
+```txt
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Body:
+
+```txt
+No body
+```
+
+Success:
+
+```json
+{
+  "success": true,
+  "message": "Logged out successfully",
+  "loggedOutRole": "brand",
+  "redirectTo": "/login"
+}
+```
+
+Role-wise logout aliases are also available:
+
+```txt
+POST /api/brand/logout
+POST /api/agency/logout
+POST /api/influencer/logout
+```
+
+Frontend must delete saved `accessToken` and `refreshToken` after logout success. Backend clears the saved refresh token so refresh-token login cannot continue.
 
 ## Influencer Onboarding
 

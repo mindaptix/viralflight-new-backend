@@ -313,6 +313,61 @@ Body:
 }
 ```
 
+## 7. Logout - Token chahiye
+
+Logged-in user ko logout karne ke liye role-wise API call kar sakte ho:
+
+```txt
+Brand:
+POST https://viralflight-new-backend.onrender.com/api/brand/logout
+
+Agency:
+POST https://viralflight-new-backend.onrender.com/api/agency/logout
+
+Influencer:
+POST https://viralflight-new-backend.onrender.com/api/influencer/logout
+```
+
+Generic API bhi available hai:
+
+```txt
+POST https://viralflight-new-backend.onrender.com/api/auth/logout
+```
+
+Headers:
+
+```txt
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Body:
+
+```txt
+No body
+```
+
+Success response:
+
+```json
+{
+  "success": true,
+  "message": "Logged out successfully",
+  "loggedOutRole": "brand",
+  "redirectTo": "/login"
+}
+```
+
+Frontend logout logic:
+
+```txt
+1. Role ke hisaab se logout API call karo.
+2. Success aane ke baad local storage/secure storage se accessToken delete karo.
+3. refreshToken bhi delete karo.
+4. User/session data clear karo.
+5. Login screen par navigate karo.
+```
+
 ## Simple Frontend Flow
 
 ```txt
