@@ -127,6 +127,7 @@ export const verifyOtp = async (req, res) => {
   try {
     const { otp, role } = req.body;
     const mobile = normalizeMobile(req.body.mobile);
+    const selectedRole = typeof role === "string" ? role.trim().toLowerCase() : undefined;
 
     if (!mobile || !otp) {
       return res.status(400).json({
@@ -135,7 +136,7 @@ export const verifyOtp = async (req, res) => {
       });
     }
 
-    if (!ALLOWED_ROLES.includes(role)) {
+    if (selectedRole !== undefined && !ALLOWED_ROLES.includes(selectedRole)) {
       return res.status(400).json({
         success: false,
         message: "Valid role is required: agency, influencer, or brand",
@@ -144,7 +145,7 @@ export const verifyOtp = async (req, res) => {
 
     const user = await User.findOne({
       mobile,
-      role,
+      ...(selectedRole ? { role: selectedRole } : {}),
     }).sort({ lastOtpRequestedAt: -1, updatedAt: -1 });
 
     if (!user) {
