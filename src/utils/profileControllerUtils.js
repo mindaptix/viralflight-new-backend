@@ -53,6 +53,8 @@ const getOrCreateRoleProfile = async (user, Model) => {
 
 const normalizeComparableText = (value) =>
   value
+    .replace(/&amp;/gi, "&")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
     .toLowerCase()
     .replace(/[–—]/g, "-")
     .replace(/_/g, " ")
@@ -88,10 +90,13 @@ const matchOption = (candidateValue, options) => {
     return null;
   }
 
-  if (typeof candidateValue === "number" && Number.isInteger(candidateValue)) {
-    if (options[candidateValue] !== undefined) {
-      return options[candidateValue];
-    }
+  const numericCandidate =
+    typeof candidateValue === "number" || /^\d+$/.test(String(candidateValue).trim())
+      ? Number(candidateValue)
+      : null;
+
+  if (Number.isInteger(numericCandidate) && options[numericCandidate] !== undefined) {
+    return options[numericCandidate];
   }
 
   const comparableCandidate = normalizeComparableText(String(candidateValue));
@@ -146,6 +151,11 @@ const normalizeOption = (value, options) => {
   return matchOption(extractOptionValue(value), options);
 };
 
+const isTruthySelected = (value) =>
+  value === true ||
+  value === 1 ||
+  (typeof value === "string" && ["true", "1", "yes", "selected"].includes(value.trim().toLowerCase()));
+
 const flattenSelectedInput = (values) => {
   if (values === undefined || values === null) {
     return [];
@@ -176,8 +186,18 @@ const flattenSelectedInput = (values) => {
   if (typeof values === "object") {
     const entries = Object.entries(values);
 
-    if (entries.length > 0 && entries.every(([, entryValue]) => typeof entryValue === "boolean")) {
-      return entries.filter(([, selected]) => selected).map(([key]) => key);
+    const selectedKeys = entries
+      .filter(([, entryValue]) => {
+        if (isTruthySelected(entryValue)) return true;
+        if (entryValue && typeof entryValue === "object") {
+          return isTruthySelected(entryValue.selected) || isTruthySelected(entryValue.checked);
+        }
+        return false;
+      })
+      .map(([key]) => key);
+
+    if (selectedKeys.length > 0) {
+      return selectedKeys;
     }
 
     if (Object.values(values).some(Array.isArray)) {
