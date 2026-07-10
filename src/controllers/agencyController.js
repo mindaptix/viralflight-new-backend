@@ -22,6 +22,37 @@ const getAgencyBody = (body) => ({
 });
 
 const getOrCreateProfile = (user) => getOrCreateRoleProfile(user, AgencyProfile);
+
+const AGENCY_PROFILE_DISPLAY_FIELDS = [
+  { key: "agencyName", label: "Agency / Company Name" },
+  { key: "contactPerson", label: "Contact Person" },
+  { key: "city", label: "City" },
+  { key: "agencyType", label: "Agency Type" },
+  { key: "teamSize", label: "Team Size" },
+  { key: "creatorsManaged", label: "Creators Managed" },
+  { key: "focusAreas", label: "Focus Areas" },
+  { key: "website", label: "Website" },
+  { key: "description", label: "About Agency" },
+];
+
+const hasDisplayValue = (value) => {
+  if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === "object") return Object.keys(value).length > 0;
+  return value !== undefined && value !== null && String(value).trim() !== "";
+};
+
+const buildProfileFields = (profile) => {
+  const profileObject = typeof profile.toObject === "function" ? profile.toObject() : profile;
+
+  return AGENCY_PROFILE_DISPLAY_FIELDS
+    .filter(({ key }) => hasDisplayValue(profileObject[key]))
+    .map(({ key, label }) => ({
+      key,
+      label,
+      value: profileObject[key],
+    }));
+};
+
 const FOCUS_AREA_KEYS = [
   "focusAreas",
   "focus_areas",
@@ -222,10 +253,19 @@ export const saveFullOnboarding = async (req, res) => {
 export const getMyProfile = async (req, res) => {
   try {
     const profile = await getOrCreateProfile(req.user);
+    const profileFields = buildProfileFields(profile);
 
     res.json({
       success: true,
+      message: "Agency profile fetched successfully",
+      onboardingStep: profile.isProfileComplete ? "completed" : "agency-details",
+      user: {
+        userId: req.user.userId,
+        mobile: req.user.mobile,
+        role: req.user.role,
+      },
       profile,
+      profileFields,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

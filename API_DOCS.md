@@ -31,9 +31,15 @@ POST /api/influencer/content-preferences
 POST /api/influencer/finish-profile
 POST /api/influencer/complete-profile
 POST /api/influencer/full-onboarding
+GET  /api/agency/onboarding-options
+GET  /api/agency/profile
+POST /api/agency/full-onboarding
+GET  /api/brand/onboarding-options
+GET  /api/brand/profile
+POST /api/brand/full-onboarding
 ```
 
-There are no active custom `/api/admin/*`, brand, or campaign APIs right now. Payload CMS admin is available at:
+There are no active custom `/api/admin/*` or campaign APIs right now. Payload CMS admin is available at:
 
 ```txt
 /admin
@@ -47,7 +53,7 @@ Public APIs:
 Content-Type: application/json
 ```
 
-Protected influencer APIs:
+Protected role APIs:
 
 ```txt
 Authorization: Bearer ACCESS_TOKEN
@@ -177,7 +183,7 @@ Returns saved profile and current onboarding step.
 GET /api/influencer/profile
 ```
 
-Returns full saved influencer profile with logged-in user summary.
+Returns full saved influencer profile with logged-in user summary and `profileFields` for the Profile tab. Frontend can render `profileFields` directly; it includes only fields that have saved values.
 
 Possible steps:
 
@@ -379,6 +385,164 @@ Success:
 }
 ```
 
+## Agency Onboarding
+
+All APIs below require `Authorization: Bearer ACCESS_TOKEN` for a logged-in `agency` account.
+
+### Get Agency Onboarding Options
+
+```txt
+GET /api/agency/onboarding-options
+```
+
+Returns agency type, team size, creators managed, focus area, and validation options.
+
+### Save Agency Full Onboarding
+
+```txt
+POST /api/agency/full-onboarding
+```
+
+Body:
+
+```json
+{
+  "agencyName": "Gaurav Agency",
+  "contactPerson": "Gaurav",
+  "city": "Delhi",
+  "agencyType": "Influencer Marketing",
+  "teamSize": "2-5",
+  "creatorsManaged": "11-25",
+  "focusAreas": ["Fashion", "Lifestyle"],
+  "website": "https://example.com",
+  "description": "We manage influencer campaigns and creator partnerships for growing brands."
+}
+```
+
+### Get Agency Profile
+
+Use this API for the agency Profile tab after dashboard login:
+
+```txt
+GET /api/agency/profile
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Agency profile fetched successfully",
+  "onboardingStep": "completed",
+  "user": {
+    "userId": "USER_ID",
+    "mobile": "+917018319344",
+    "role": "agency"
+  },
+  "profile": {
+    "_id": "PROFILE_ID",
+    "agencyName": "Gaurav Agency",
+    "contactPerson": "Gaurav",
+    "city": "Delhi",
+    "agencyType": "Influencer Marketing",
+    "teamSize": "2-5",
+    "creatorsManaged": "11-25",
+    "focusAreas": ["Fashion", "Lifestyle"],
+    "website": "https://example.com",
+    "description": "We manage influencer campaigns and creator partnerships for growing brands.",
+    "isProfileComplete": true
+  },
+  "profileFields": [
+    {
+      "key": "agencyName",
+      "label": "Agency / Company Name",
+      "value": "Gaurav Agency"
+    }
+  ]
+}
+```
+
+Frontend can render `profileFields` directly in the Profile tab. It includes only fields that have saved values, so empty details are not shown.
+
+## Brand Onboarding
+
+All APIs below require `Authorization: Bearer ACCESS_TOKEN` for a logged-in `brand` account.
+
+### Get Brand Onboarding Options
+
+```txt
+GET /api/brand/onboarding-options
+```
+
+Returns industry, campaign interest, monthly campaign budget, and validation options for the brand form.
+
+### Save Brand Full Onboarding
+
+```txt
+POST /api/brand/full-onboarding
+```
+
+Body:
+
+```json
+{
+  "brandName": "Gaurav-Brand",
+  "contactPerson": "Gaurav",
+  "city": "Delhi",
+  "industry": "Fashion & Apparel",
+  "website": "https://example.com",
+  "instagramHandle": "gaurav_brand",
+  "campaignInterests": ["Influencer posts"],
+  "monthlyCampaignBudget": "Not sure yet",
+  "description": "We create fashion products for young urban customers across India."
+}
+```
+
+### Get Brand Profile
+
+Use this API for the brand Profile tab after dashboard login:
+
+```txt
+GET /api/brand/profile
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Brand profile fetched successfully",
+  "onboardingStep": "completed",
+  "user": {
+    "userId": "USER_ID",
+    "mobile": "+917018319344",
+    "role": "brand"
+  },
+  "profile": {
+    "_id": "PROFILE_ID",
+    "brandName": "Gaurav-Brand",
+    "contactPerson": "Gaurav",
+    "city": "Delhi",
+    "industry": "Fashion & Apparel",
+    "website": "https://example.com",
+    "instagramHandle": "gaurav_brand",
+    "campaignInterests": ["Influencer posts"],
+    "monthlyCampaignBudget": "Not sure yet",
+    "description": "We create fashion products for young urban customers across India.",
+    "isProfileComplete": true
+  },
+  "profileFields": [
+    {
+      "key": "brandName",
+      "label": "Brand / Company Name",
+      "value": "Gaurav-Brand"
+    }
+  ]
+}
+```
+
+Frontend can render `profileFields` directly in the Profile tab. It includes only fields that have saved values, so empty details are not shown.
+
 ## Database Storage
 
 Auth users:
@@ -397,9 +561,27 @@ contentLanguages, bio, collaborationPreference, rateRange,
 pastCollaborations, portfolioLink, isProfileComplete, completedAt
 ```
 
+Agency profiles:
+
+```txt
+Collection: agency_profiles
+Fields: userId, mobile, agencyName, contactPerson, city, agencyType,
+teamSize, creatorsManaged, focusAreas, website, description,
+isProfileComplete, completedAt
+```
+
 Onboarding settings:
 
 ```txt
 Collection: cms_settings
 Key: influencer_onboarding
+```
+
+Brand profiles:
+
+```txt
+Collection: brand_profiles
+Fields: userId, mobile, brandName, contactPerson, city, industry, website,
+instagramHandle, campaignInterests, monthlyCampaignBudget, description,
+isProfileComplete, completedAt
 ```

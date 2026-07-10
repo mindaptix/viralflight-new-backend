@@ -22,6 +22,35 @@ const getBrandBody = (body) => ({
 
 const getOrCreateProfile = (user) => getOrCreateRoleProfile(user, BrandProfile);
 
+const BRAND_PROFILE_DISPLAY_FIELDS = [
+  { key: "brandName", label: "Brand / Company Name" },
+  { key: "contactPerson", label: "Contact Person" },
+  { key: "city", label: "City" },
+  { key: "industry", label: "Industry" },
+  { key: "website", label: "Website" },
+  { key: "instagramHandle", label: "Instagram Handle" },
+  { key: "campaignInterests", label: "Campaign Interests" },
+  { key: "monthlyCampaignBudget", label: "Monthly Campaign Budget" },
+  { key: "description", label: "About Brand" },
+];
+
+const hasDisplayValue = (value) => {
+  if (Array.isArray(value)) return value.length > 0;
+  return value !== undefined && value !== null && String(value).trim() !== "";
+};
+
+const buildProfileFields = (profile) => {
+  const profileObject = typeof profile.toObject === "function" ? profile.toObject() : profile;
+
+  return BRAND_PROFILE_DISPLAY_FIELDS
+    .filter(({ key }) => hasDisplayValue(profileObject[key]))
+    .map(({ key, label }) => ({
+      key,
+      label,
+      value: profileObject[key],
+    }));
+};
+
 const buildBrandData = (body, { requireComplete = false } = {}) => {
   const brandName = normalizeText(
     getSelectedValue(body, ["brandName", "brand_name", "companyName"])
@@ -181,10 +210,19 @@ export const saveFullOnboarding = async (req, res) => {
 export const getMyProfile = async (req, res) => {
   try {
     const profile = await getOrCreateProfile(req.user);
+    const profileFields = buildProfileFields(profile);
 
     res.json({
       success: true,
+      message: "Brand profile fetched successfully",
+      onboardingStep: profile.isProfileComplete ? "completed" : "brand-details",
+      user: {
+        userId: req.user.userId,
+        mobile: req.user.mobile,
+        role: req.user.role,
+      },
       profile,
+      profileFields,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

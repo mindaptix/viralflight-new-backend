@@ -286,7 +286,14 @@ Response:
     "pastCollaborations": ["Nike", "Boat", "Nykaa"],
     "portfolioLink": "https://instagram.com/garry_insta",
     "isProfileComplete": true
-  }
+  },
+  "profileFields": [
+    {
+      "key": "name",
+      "label": "Name",
+      "value": "Garry"
+    }
+  ]
 }
 ```
 
@@ -320,3 +327,121 @@ Redirect dashboard
 ```
 
 Step-wise old APIs abhi bhi available hain, but new frontend ke liye `POST /api/influencer/full-onboarding` use karo.
+
+Influencer Profile tab ke liye `GET /api/influencer/profile` call karo aur `response.profileFields` ko render karo. Isme wahi saved data aayega jo influencer ne onboarding me fill kiya hai.
+
+## Agency Profile Tab - Token chahiye
+
+Agency onboarding complete hone ke baad Profile tab me ye API call karo:
+
+```txt
+GET https://viralflight-new-backend.onrender.com/api/agency/profile
+```
+
+Headers:
+
+```txt
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Agency profile fetched successfully",
+  "onboardingStep": "completed",
+  "user": {
+    "userId": "USER_ID",
+    "mobile": "+917018319344",
+    "role": "agency"
+  },
+  "profile": {
+    "agencyName": "Gaurav Agency",
+    "contactPerson": "Gaurav",
+    "city": "Delhi",
+    "agencyType": "Influencer Marketing",
+    "teamSize": "2-5",
+    "creatorsManaged": "11-25",
+    "focusAreas": ["Fashion", "Lifestyle"],
+    "website": "https://example.com",
+    "description": "We manage influencer campaigns and creator partnerships for growing brands.",
+    "isProfileComplete": true
+  },
+  "profileFields": [
+    {
+      "key": "agencyName",
+      "label": "Agency / Company Name",
+      "value": "Gaurav Agency"
+    }
+  ]
+}
+```
+
+Profile screen ke liye recommended:
+
+```txt
+Agency name header: profile.agencyName
+Sub text: Signed in as profile.agencyName
+Details list: response.profileFields
+Array value jaise focusAreas ko comma se join karke dikhao.
+```
+
+## Brand Profile Tab - Token chahiye
+
+Brand onboarding complete hone ke baad Profile tab me placeholder/Coming soon mat dikhao. Ye API call karo:
+
+```txt
+GET https://viralflight-new-backend.onrender.com/api/brand/profile
+```
+
+Headers:
+
+```txt
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Brand profile fetched successfully",
+  "onboardingStep": "completed",
+  "user": {
+    "userId": "USER_ID",
+    "mobile": "+917018319344",
+    "role": "brand"
+  },
+  "profile": {
+    "brandName": "Gaurav-Brand",
+    "contactPerson": "Gaurav",
+    "city": "Delhi",
+    "industry": "Fashion & Apparel",
+    "website": "https://example.com",
+    "instagramHandle": "gaurav_brand",
+    "campaignInterests": ["Influencer posts"],
+    "monthlyCampaignBudget": "Not sure yet",
+    "description": "We create fashion products for young urban customers across India.",
+    "isProfileComplete": true
+  },
+  "profileFields": [
+    {
+      "key": "brandName",
+      "label": "Brand / Company Name",
+      "value": "Gaurav-Brand"
+    }
+  ]
+}
+```
+
+Profile screen ke liye recommended:
+
+```txt
+Brand name header: profile.brandName
+Sub text: Signed in as profile.brandName
+Details list: response.profileFields
+Array value jaise campaignInterests ko comma se join karke dikhao.
+```

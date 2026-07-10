@@ -127,6 +127,41 @@ const getOnboardingStep = (profile, settings) => {
 
 const getOrCreateProfile = (user) => getOrCreateRoleProfile(user, InfluencerProfile);
 
+const INFLUENCER_PROFILE_DISPLAY_FIELDS = [
+  { key: "name", label: "Name" },
+  { key: "city", label: "City" },
+  { key: "platforms", label: "Platforms" },
+  { key: "contentCategories", label: "Content Categories" },
+  { key: "contentLanguages", label: "Content Languages" },
+  { key: "bio", label: "Bio" },
+  { key: "collaborationPreference", label: "Collaboration Preference" },
+  { key: "rateRange", label: "Rate Range" },
+  { key: "pastCollaborations", label: "Past Collaborations" },
+  { key: "portfolioLink", label: "Portfolio Link" },
+];
+
+const hasDisplayValue = (value) => {
+  if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === "object") {
+    return Object.values(value).some(
+      (item) => item !== undefined && item !== null && String(item).trim() !== ""
+    );
+  }
+  return value !== undefined && value !== null && String(value).trim() !== "";
+};
+
+const buildProfileFields = (profile) => {
+  const profileObject = typeof profile.toObject === "function" ? profile.toObject() : profile;
+
+  return INFLUENCER_PROFILE_DISPLAY_FIELDS
+    .filter(({ key }) => hasDisplayValue(profileObject[key]))
+    .map(({ key, label }) => ({
+      key,
+      label,
+      value: profileObject[key],
+    }));
+};
+
 const buildPlatformData = (body, settings) => {
   const allowedPlatforms = settings.platforms.map((item) => item.platform);
   const platformRequiredFields = getPlatformRequiredFields(settings);
@@ -605,11 +640,21 @@ export const saveFullOnboarding = async (req, res) => {
 
 export const getMyProfile = async (req, res) => {
   try {
+    const settings = await getOnboardingSettings();
     const profile = await getOrCreateProfile(req.user);
+    const profileFields = buildProfileFields(profile);
 
     res.json({
       success: true,
+      message: "Influencer profile fetched successfully",
+      onboardingStep: getOnboardingStep(profile, settings),
+      user: {
+        userId: req.user.userId,
+        mobile: req.user.mobile,
+        role: req.user.role,
+      },
       profile,
+      profileFields,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
