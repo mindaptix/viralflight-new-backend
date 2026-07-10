@@ -19,6 +19,7 @@ const client = twilio(
 );
 
 const getDashboardPath = (role) => `/dashboard/${role}`;
+const getOnboardingPath = (role) => `/onboarding/${role}`;
 const OTP_RESEND_COOLDOWN_MS = Number(process.env.OTP_RESEND_COOLDOWN_MS || 60000);
 
 const ROLE_PROFILE_MODELS = {
@@ -134,7 +135,7 @@ export const verifyOtp = async (req, res) => {
       });
     }
 
-    if (role !== undefined && !ALLOWED_ROLES.includes(role)) {
+    if (!ALLOWED_ROLES.includes(role)) {
       return res.status(400).json({
         success: false,
         message: "Valid role is required: agency, influencer, or brand",
@@ -143,7 +144,7 @@ export const verifyOtp = async (req, res) => {
 
     const user = await User.findOne({
       mobile,
-      ...(role ? { role } : {}),
+      role,
     }).sort({ lastOtpRequestedAt: -1, updatedAt: -1 });
 
     if (!user) {
@@ -176,14 +177,18 @@ export const verifyOtp = async (req, res) => {
     user.refreshTokenIssuedAt = new Date();
     await user.save();
 
-    await ensureRoleProfile(user, mobile);
+    const profile = await ensureRoleProfile(user, mobile);
+    const isProfileComplete = Boolean(profile?.isProfileComplete);
 
     res.json({
       success: true,
       message: "OTP verified successfully",
       selectedRole: user.role,
       dashboard: user.role,
-      redirectTo: getDashboardPath(user.role),
+      isProfileComplete,
+      redirectTo: isProfileComplete
+        ? getDashboardPath(user.role)
+        : getOnboardingPath(user.role),
       accessToken,
       refreshToken,
     });

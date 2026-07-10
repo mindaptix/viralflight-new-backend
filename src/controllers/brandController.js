@@ -169,6 +169,8 @@ export const saveFullOnboarding = async (req, res) => {
     res.json({
       success: true,
       message: "Brand profile saved successfully",
+      isProfileComplete: true,
+      redirectTo: "/dashboard/brand",
       profile,
     });
   } catch (error) {

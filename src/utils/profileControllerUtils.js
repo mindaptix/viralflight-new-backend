@@ -98,6 +98,7 @@ const matchOption = (candidateValue, options) => {
   if (!comparableCandidate) return null;
 
   const compactCandidate = comparableCandidate.replace(/[\s/-]+/g, "");
+  const compactCandidateWithoutAnd = compactCandidate.replace(/and/g, "");
 
   const exactMatch = options.find(
     (option) => normalizeComparableText(option) === comparableCandidate
@@ -108,9 +109,11 @@ const matchOption = (candidateValue, options) => {
     options.find((option) => {
       const comparableOption = normalizeComparableText(option);
       const compactOption = comparableOption.replace(/[\s/-]+/g, "");
+      const compactOptionWithoutAnd = compactOption.replace(/and/g, "");
 
       return (
         compactOption === compactCandidate ||
+        compactOptionWithoutAnd === compactCandidateWithoutAnd ||
         comparableOption.includes(comparableCandidate) ||
         comparableCandidate.includes(comparableOption)
       );
