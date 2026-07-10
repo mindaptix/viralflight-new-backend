@@ -26,12 +26,15 @@ GET  /api/influencer/onboarding-options
 GET  /api/influencer/platform-options
 GET  /api/influencer/me
 GET  /api/influencer/profile
+GET  /api/influencer/dashboard-stats
+GET  /api/influencer/campaigns-for-you
 POST /api/influencer/basic-info
 POST /api/influencer/connect-platform
 POST /api/influencer/content-preferences
 POST /api/influencer/finish-profile
 POST /api/influencer/complete-profile
 POST /api/influencer/full-onboarding
+POST /api/influencer/profile-views
 POST /api/influencer/logout
 GET  /api/agency/onboarding-options
 GET  /api/agency/profile
@@ -39,11 +42,13 @@ POST /api/agency/full-onboarding
 POST /api/agency/logout
 GET  /api/brand/onboarding-options
 GET  /api/brand/profile
+GET  /api/brand/campaigns
 POST /api/brand/full-onboarding
+POST /api/brand/campaigns
 POST /api/brand/logout
 ```
 
-There are no active custom `/api/admin/*` or campaign APIs right now. Payload CMS admin is available at:
+There are no active custom `/api/admin/*` APIs right now. Payload CMS admin is available at:
 
 ```txt
 /admin
@@ -239,6 +244,164 @@ connect-platform
 content-preferences
 finish-profile
 completed
+```
+
+### Get Dashboard Stats
+
+Use this for the influencer dashboard cards: Profile views, Brand invites, Active collabs.
+
+```txt
+GET /api/influencer/dashboard-stats
+```
+
+Headers:
+
+```txt
+Authorization: Bearer INFLUENCER_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Body:
+
+```txt
+No body
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Influencer dashboard stats fetched successfully",
+  "profileId": "INFLUENCER_PROFILE_ID",
+  "stats": {
+    "profileViews": 0,
+    "brandInvites": 0,
+    "activeCollabs": 0
+  },
+  "statCards": [
+    {
+      "key": "profileViews",
+      "label": "Profile views",
+      "value": 0,
+      "displayValue": "0"
+    },
+    {
+      "key": "brandInvites",
+      "label": "Brand invites",
+      "value": 0,
+      "displayValue": "0"
+    },
+    {
+      "key": "activeCollabs",
+      "label": "Active collabs",
+      "value": 0,
+      "displayValue": "0"
+    }
+  ]
+}
+```
+
+If no views/invites/collabs exist yet, all counts return `0`.
+
+### Get Campaigns For You
+
+Use this API for the influencer home section named `Campaigns for you`.
+
+```txt
+GET /api/influencer/campaigns-for-you
+```
+
+Optional query:
+
+```txt
+?limit=10
+```
+
+Headers:
+
+```txt
+Authorization: Bearer INFLUENCER_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Body:
+
+```txt
+No body
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Campaigns for influencer fetched successfully",
+  "count": 1,
+  "campaigns": [
+    {
+      "id": "CAMPAIGN_ID",
+      "brandName": "Glow Co.",
+      "title": "Summer Skincare Reel",
+      "description": "Create one Instagram reel for our skincare launch.",
+      "category": "Beauty",
+      "platforms": ["instagram"],
+      "deliverables": ["1 Reel"],
+      "budgetAmount": 25000,
+      "budgetCurrency": "INR",
+      "budgetDisplay": "₹25,000",
+      "coverImageUrl": "https://example.com/campaign.jpg",
+      "location": "Delhi",
+      "applicationDeadline": "2026-07-15T00:00:00.000Z",
+      "daysLeft": 3,
+      "daysLeftText": "3 days left",
+      "matchPercent": 94,
+      "status": "active"
+    }
+  ]
+}
+```
+
+Only active/running campaigns are returned. Expired campaigns are not shown. If there are no active campaigns, `count` is `0` and `campaigns` is `[]`.
+
+### Record Influencer Profile View
+
+Call this when a logged-in brand or agency opens an influencer profile. It records one unique view per viewer for that influencer.
+
+```txt
+POST /api/influencer/profile-views
+```
+
+Headers:
+
+```txt
+Authorization: Bearer BRAND_OR_AGENCY_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Body, send any one identifier:
+
+```json
+{
+  "influencerProfileId": "INFLUENCER_PROFILE_ID"
+}
+```
+
+Alternative body:
+
+```json
+{
+  "influencerUserId": "INFLUENCER_USER_ID"
+}
+```
+
+Success:
+
+```json
+{
+  "success": true,
+  "message": "Influencer profile view recorded successfully"
+}
 ```
 
 ### Save Basic Info
@@ -544,6 +707,58 @@ Body:
 }
 ```
 
+### Create Brand Campaign
+
+Use this when a logged-in brand posts a campaign/brief. Active campaigns from here show in influencer `Campaigns for you`.
+
+```txt
+POST /api/brand/campaigns
+```
+
+Headers:
+
+```txt
+Authorization: Bearer BRAND_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "title": "Summer Skincare Reel",
+  "description": "Create one Instagram reel for our skincare launch.",
+  "category": "Beauty",
+  "platforms": ["instagram"],
+  "deliverables": ["1 Reel"],
+  "budgetAmount": 25000,
+  "budgetCurrency": "INR",
+  "coverImageUrl": "https://example.com/campaign.jpg",
+  "location": "Delhi",
+  "applicationDeadline": "2026-07-15",
+  "status": "active"
+}
+```
+
+Success:
+
+```json
+{
+  "success": true,
+  "message": "Campaign created successfully",
+  "campaign": {},
+  "campaignCard": {}
+}
+```
+
+### Get Brand Campaigns
+
+```txt
+GET /api/brand/campaigns
+```
+
+Returns campaigns created by the logged-in brand.
+
 ### Get Brand Profile
 
 Use this API for the brand Profile tab after dashboard login:
@@ -605,6 +820,40 @@ Collection: influencer_profiles
 Fields: userId, mobile, name, city, platforms, contentCategories,
 contentLanguages, bio, collaborationPreference, rateRange,
 pastCollaborations, portfolioLink, isProfileComplete, completedAt
+```
+
+Influencer profile views:
+
+```txt
+Collection: influencer_profile_views
+Fields: influencerProfileId, influencerUserId, influencerMobile,
+viewerUserId, viewerMobile, viewerRole, lastViewedAt
+```
+
+Brand invites:
+
+```txt
+Collection: brand_invites
+Fields: influencerProfileId, influencerUserId, influencerMobile,
+brandUserId, brandMobile, campaignId, message, status, respondedAt
+```
+
+Collaborations:
+
+```txt
+Collection: collaborations
+Fields: influencerProfileId, influencerUserId, influencerMobile,
+brandUserId, brandMobile, inviteId, campaignId, title, status,
+startedAt, endedAt
+```
+
+Campaigns:
+
+```txt
+Collection: campaigns
+Fields: brandUserId, brandProfileId, brandMobile, brandName, title,
+description, category, platforms, deliverables, budgetAmount,
+budgetCurrency, coverImageUrl, location, applicationDeadline, status
 ```
 
 Agency profiles:

@@ -385,6 +385,210 @@ Step-wise old APIs abhi bhi available hain, but new frontend ke liye `POST /api/
 
 Influencer Profile tab ke liye `GET /api/influencer/profile` call karo aur `response.profileFields` ko render karo. Isme wahi saved data aayega jo influencer ne onboarding me fill kiya hai.
 
+## Influencer Dashboard Stats - Token chahiye
+
+Influencer home/dashboard cards ke liye ye API call karo:
+
+```txt
+GET https://viralflight-new-backend.onrender.com/api/influencer/dashboard-stats
+```
+
+Headers:
+
+```txt
+Authorization: Bearer INFLUENCER_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Body:
+
+```txt
+No body
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Influencer dashboard stats fetched successfully",
+  "profileId": "INFLUENCER_PROFILE_ID",
+  "stats": {
+    "profileViews": 0,
+    "brandInvites": 0,
+    "activeCollabs": 0
+  },
+  "statCards": [
+    {
+      "key": "profileViews",
+      "label": "Profile views",
+      "value": 0,
+      "displayValue": "0"
+    },
+    {
+      "key": "brandInvites",
+      "label": "Brand invites",
+      "value": 0,
+      "displayValue": "0"
+    },
+    {
+      "key": "activeCollabs",
+      "label": "Active collabs",
+      "value": 0,
+      "displayValue": "0"
+    }
+  ]
+}
+```
+
+Frontend mapping:
+
+```txt
+Profile Views card: stats.profileViews ya statCards key profileViews
+Brand Invites card: stats.brandInvites ya statCards key brandInvites
+Active Collabs card: stats.activeCollabs ya statCards key activeCollabs
+No data ho to API 0 return karegi.
+```
+
+Brand/agency jab influencer profile open kare, tab view count ke liye ye API call karo:
+
+```txt
+POST https://viralflight-new-backend.onrender.com/api/influencer/profile-views
+```
+
+Headers:
+
+```txt
+Authorization: Bearer BRAND_OR_AGENCY_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "influencerProfileId": "INFLUENCER_PROFILE_ID"
+}
+```
+
+Success:
+
+```json
+{
+  "success": true,
+  "message": "Influencer profile view recorded successfully"
+}
+```
+
+## Influencer Campaigns For You - Token chahiye
+
+Influencer home/dashboard me `Campaigns for you` section ke liye ye API call karo:
+
+```txt
+GET https://viralflight-new-backend.onrender.com/api/influencer/campaigns-for-you
+```
+
+Optional limit:
+
+```txt
+GET https://viralflight-new-backend.onrender.com/api/influencer/campaigns-for-you?limit=10
+```
+
+Headers:
+
+```txt
+Authorization: Bearer INFLUENCER_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Body:
+
+```txt
+No body
+```
+
+Success response:
+
+```json
+{
+  "success": true,
+  "message": "Campaigns for influencer fetched successfully",
+  "count": 1,
+  "campaigns": [
+    {
+      "id": "CAMPAIGN_ID",
+      "brandName": "Glow Co.",
+      "title": "Summer Skincare Reel",
+      "description": "Create one Instagram reel for our skincare launch.",
+      "category": "Beauty",
+      "platforms": ["instagram"],
+      "deliverables": ["1 Reel"],
+      "budgetAmount": 25000,
+      "budgetCurrency": "INR",
+      "budgetDisplay": "₹25,000",
+      "coverImageUrl": "https://example.com/campaign.jpg",
+      "location": "Delhi",
+      "applicationDeadline": "2026-07-15T00:00:00.000Z",
+      "daysLeft": 3,
+      "daysLeftText": "3 days left",
+      "matchPercent": 94,
+      "status": "active"
+    }
+  ]
+}
+```
+
+Frontend mapping:
+
+```txt
+Brand text: campaign.brandName
+Title: campaign.title
+Category chip: campaign.category
+Budget: campaign.budgetDisplay
+Image: campaign.coverImageUrl
+Match badge: campaign.matchPercent + "% match"
+Deadline text: campaign.daysLeftText
+Apply button: campaign.id pass karke next apply flow me use karo
+No campaigns ho to empty state dikhana, API count 0 and campaigns [] bhejegi.
+```
+
+Brand side campaign create karne ke liye:
+
+```txt
+POST https://viralflight-new-backend.onrender.com/api/brand/campaigns
+```
+
+Headers:
+
+```txt
+Authorization: Bearer BRAND_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "title": "Summer Skincare Reel",
+  "description": "Create one Instagram reel for our skincare launch.",
+  "category": "Beauty",
+  "platforms": ["instagram"],
+  "deliverables": ["1 Reel"],
+  "budgetAmount": 25000,
+  "budgetCurrency": "INR",
+  "coverImageUrl": "https://example.com/campaign.jpg",
+  "location": "Delhi",
+  "applicationDeadline": "2026-07-15",
+  "status": "active"
+}
+```
+
+Brand ke campaigns list:
+
+```txt
+GET https://viralflight-new-backend.onrender.com/api/brand/campaigns
+```
+
 ## Agency Profile Tab - Token chahiye
 
 Agency onboarding complete hone ke baad Profile tab me ye API call karo:
