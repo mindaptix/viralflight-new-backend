@@ -19,6 +19,7 @@ const client = twilio(
 );
 
 const getDashboardPath = (role) => `/dashboard/${role}`;
+const OTP_RESEND_COOLDOWN_MS = Number(process.env.OTP_RESEND_COOLDOWN_MS || 60000);
 
 const ROLE_PROFILE_MODELS = {
   agency: AgencyProfile,
@@ -64,6 +65,26 @@ export const sendOtp = async (req, res) => {
     }
 
     const existingUser = await User.findOne({ mobile, role });
+    const lastOtpUser = await User.findOne({ mobile }).sort({
+      lastOtpRequestedAt: -1,
+      updatedAt: -1,
+    });
+
+    if (lastOtpUser?.lastOtpRequestedAt) {
+      const retryAfterMs =
+        OTP_RESEND_COOLDOWN_MS -
+        (Date.now() - new Date(lastOtpUser.lastOtpRequestedAt).getTime());
+
+      if (retryAfterMs > 0) {
+        const retryAfterSeconds = Math.ceil(retryAfterMs / 1000);
+
+        return res.status(429).json({
+          success: false,
+          message: `Please wait ${retryAfterSeconds} seconds before requesting another OTP`,
+          retryAfterSeconds,
+        });
+      }
+    }
 
     await client.verify.v2
       .services(process.env.TWILIO_VERIFY_SERVICE_SID)
@@ -90,6 +111,13 @@ export const sendOtp = async (req, res) => {
       mobile,
     });
   } catch (error) {
+    if (error.status === 429 || error.code === 20429) {
+      return res.status(429).json({
+        success: false,
+        message: "Too many OTP requests. Please wait a few minutes and try again.",
+      });
+    }
+
     res.status(500).json({ success: false, message: error.message });
   }
 };
