@@ -144,6 +144,45 @@ export const InfluencerProfiles: CollectionConfig = {
       label: 'Portfolio Link',
     },
     {
+      name: 'instagram',
+      type: 'group',
+      label: 'Official Instagram Data',
+      admin: {
+        description:
+          'Synced from Meta Instagram Graph API. Token payload is intentionally hidden from CMS.',
+      },
+      fields: [
+        { name: 'handle', type: 'text', label: 'Handle' },
+        { name: 'instagramUserId', type: 'text', label: 'Instagram User ID' },
+        { name: 'facebookPageId', type: 'text', label: 'Facebook Page ID' },
+        { name: 'accountType', type: 'text', label: 'Account Type' },
+        { name: 'followers', type: 'number', min: 0, label: 'Followers' },
+        { name: 'follows', type: 'number', min: 0, label: 'Following' },
+        { name: 'mediaCount', type: 'number', min: 0, label: 'Media Count' },
+        {
+          name: 'engagementRate',
+          type: 'number',
+          min: 0,
+          max: 100,
+          label: 'Engagement Rate (%)',
+        },
+        { name: 'profilePictureUrl', type: 'text', label: 'Profile Picture URL' },
+        { name: 'lastSyncedAt', type: 'date', label: 'Last Synced At' },
+        { name: 'connectedAt', type: 'date', label: 'Connected At' },
+        { name: 'isConnected', type: 'checkbox', label: 'Connected' },
+        {
+          name: 'syncError',
+          type: 'group',
+          label: 'Last Sync Error',
+          fields: [
+            { name: 'message', type: 'text', label: 'Message' },
+            { name: 'code', type: 'text', label: 'Code' },
+            { name: 'occurredAt', type: 'date', label: 'Occurred At' },
+          ],
+        },
+      ],
+    },
+    {
       name: 'isProfileComplete',
       type: 'checkbox',
       defaultValue: false,

@@ -28,6 +28,10 @@ GET  /api/influencer/me
 GET  /api/influencer/profile
 GET  /api/influencer/dashboard-stats
 GET  /api/influencer/campaigns-for-you
+GET  /api/influencer/instagram/connect-url
+GET  /api/influencer/instagram/callback
+GET  /api/influencer/instagram/stats
+POST /api/influencer/instagram/sync
 POST /api/influencer/basic-info
 POST /api/influencer/connect-platform
 POST /api/influencer/content-preferences
@@ -365,6 +369,104 @@ Response:
 ```
 
 Only active/running campaigns are returned. Expired campaigns are not shown. If there are no active campaigns, `count` is `0` and `campaigns` is `[]`.
+
+### Instagram Hybrid Connect
+
+Recommended flow:
+
+```txt
+1. Save manual Instagram username during onboarding with POST /api/influencer/connect-platform or /full-onboarding.
+2. Show "Connect Instagram" CTA in dashboard/profile.
+3. Call GET /api/influencer/instagram/connect-url and redirect the user to `connectUrl`.
+4. Meta redirects back to GET /api/influencer/instagram/callback.
+5. Frontend reads verified metrics with GET /api/influencer/instagram/stats.
+```
+
+Required backend env:
+
+```txt
+INSTAGRAM_APP_ID
+INSTAGRAM_APP_SECRET
+INSTAGRAM_REDIRECT_URI
+INSTAGRAM_GRAPH_API_VERSION
+INSTAGRAM_TOKEN_ENCRYPTION_KEY
+INSTAGRAM_OAUTH_SUCCESS_REDIRECT
+INSTAGRAM_OAUTH_ERROR_REDIRECT
+```
+
+Meta app setup required outside this repo:
+
+```txt
+Create Meta Developer App, add Facebook Login and Instagram Graph API, configure the exact redirect URI, connect a Facebook Page to the creator/business Instagram account, and submit permissions for app review before Live mode.
+```
+
+Scopes requested:
+
+```txt
+instagram_basic, pages_show_list, pages_read_engagement, instagram_manage_insights
+```
+
+#### Get Instagram Connect URL
+
+```txt
+GET /api/influencer/instagram/connect-url
+```
+
+Success:
+
+```json
+{
+  "success": true,
+  "message": "Instagram connect URL generated successfully",
+  "connectUrl": "https://www.facebook.com/v23.0/dialog/oauth?...",
+  "expiresInSeconds": 600
+}
+```
+
+#### Instagram Callback
+
+```txt
+GET /api/influencer/instagram/callback?code=...&state=...
+```
+
+This is called by Meta. If `INSTAGRAM_OAUTH_SUCCESS_REDIRECT` is set, backend redirects the browser there with `instagramConnected=1`. Without redirect env, it returns JSON.
+
+#### Sync Instagram
+
+```txt
+POST /api/influencer/instagram/sync
+```
+
+Uses the encrypted stored token to refresh followers, media count, and engagement. Run this manually from the dashboard or from a future cron/queue every 24 hours.
+
+Success:
+
+```json
+{
+  "success": true,
+  "message": "Instagram synced successfully",
+  "instagram": {
+    "handle": "ananya.creates",
+    "instagramUserId": "1784140...",
+    "followers": 812000,
+    "followersDisplay": "812K",
+    "follows": 710,
+    "mediaCount": 420,
+    "engagementRate": 4.2,
+    "lastSyncedAt": "2026-07-13T10:00:00.000Z",
+    "accountType": "CREATOR",
+    "isConnected": true
+  }
+}
+```
+
+#### Get Instagram Stats
+
+```txt
+GET /api/influencer/instagram/stats
+```
+
+Returns official connected data when available. Before OAuth connect, it falls back to manual onboarding values for `handle`, `followers`, and `engagementRate`.
 
 ### Record Influencer Profile View
 
@@ -875,7 +977,10 @@ Influencer profiles:
 Collection: influencer_profiles
 Fields: userId, mobile, name, city, platforms, contentCategories,
 contentLanguages, bio, collaborationPreference, rateRange,
-pastCollaborations, portfolioLink, isProfileComplete, completedAt
+pastCollaborations, portfolioLink, instagram, isProfileComplete, completedAt
+instagram stores official connected handle, instagramUserId, facebookPageId,
+followers, follows, mediaCount, engagementRate, accountType, lastSyncedAt,
+encrypted token payload, and syncError.
 ```
 
 Influencer profile views:

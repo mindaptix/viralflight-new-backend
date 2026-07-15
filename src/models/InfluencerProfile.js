@@ -169,6 +169,40 @@ const rateRangeSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const instagramTokenSchema = new mongoose.Schema(
+  {
+    iv: { type: String, select: false },
+    tag: { type: String, select: false },
+    value: { type: String, select: false },
+    expiresAt: { type: Date },
+  },
+  { _id: false }
+);
+
+const instagramConnectionSchema = new mongoose.Schema(
+  {
+    handle: { type: String, trim: true, lowercase: true },
+    instagramUserId: { type: String, trim: true, index: true },
+    facebookPageId: { type: String, trim: true },
+    accountType: { type: String, trim: true, uppercase: true },
+    followers: { type: Number, min: 0 },
+    follows: { type: Number, min: 0 },
+    mediaCount: { type: Number, min: 0 },
+    engagementRate: { type: Number, min: 0, max: 100 },
+    profilePictureUrl: { type: String, trim: true },
+    lastSyncedAt: { type: Date },
+    connectedAt: { type: Date },
+    isConnected: { type: Boolean, default: false },
+    token: instagramTokenSchema,
+    syncError: {
+      message: { type: String, trim: true },
+      code: { type: String, trim: true },
+      occurredAt: { type: Date },
+    },
+  },
+  { _id: false }
+);
+
 const influencerProfileSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true },
@@ -188,6 +222,7 @@ const influencerProfileSchema = new mongoose.Schema(
     },
 
     platforms: { type: [platformSchema], default: [] },
+    instagram: { type: instagramConnectionSchema, default: () => ({}) },
 
     contentCategories: {
       type: [{ type: String, enum: CONTENT_CATEGORIES, trim: true }],
