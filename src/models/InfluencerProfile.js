@@ -135,7 +135,7 @@ const COLLABORATION_PREFERENCE_OPTIONS = [
 const ONBOARDING_VALIDATION = {
   nameMinLength: 2,
   bioMinLength: 30,
-  contentCategoriesMin: 5,
+  contentCategoriesMin: 1,
   contentCategoriesMax: 5,
   contentLanguagesMin: 1,
   engagementMin: 0,

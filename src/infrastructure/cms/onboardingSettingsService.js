@@ -14,16 +14,40 @@ const getOnboardingSettings = async () => {
     });
   }
 
-  const stored = setting.value && typeof setting.value === "object" ? setting.value : {};
-  const storedCities = Array.isArray(stored.cities) ? stored.cities : [];
-  const cities = Array.from(
-    new Set([...(defaults.cities || []), ...storedCities])
-  );
+  const stored =
+    setting.value && typeof setting.value === "object" ? setting.value : {};
+
+  const mergeLists = (defaultList = [], storedList = []) =>
+    Array.from(
+      new Set(
+        [...(Array.isArray(defaultList) ? defaultList : []), ...(Array.isArray(storedList) ? storedList : [])]
+          .map((item) =>
+            typeof item === "string"
+              ? item.trim()
+              : item && typeof item === "object"
+                ? String(item.value ?? item.label ?? item.name ?? "").trim()
+                : ""
+          )
+          .filter(Boolean)
+      )
+    );
 
   return {
     ...defaults,
     ...stored,
-    cities,
+    cities: mergeLists(defaults.cities, stored.cities),
+    contentCategories: mergeLists(
+      defaults.contentCategories,
+      stored.contentCategories
+    ),
+    contentLanguages: mergeLists(
+      defaults.contentLanguages,
+      stored.contentLanguages
+    ),
+    collaborationPreferences: mergeLists(
+      defaults.collaborationPreferences,
+      stored.collaborationPreferences
+    ),
   };
 };
 

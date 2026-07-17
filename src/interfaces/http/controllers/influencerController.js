@@ -56,6 +56,16 @@ const normalizeAllowedValues = (allowedValues) => {
     .filter(Boolean);
 };
 
+const COLLABORATION_ALIASES = {
+  barter: "barter_product",
+  barter_product: "barter_product",
+  paid_and_barter: "paid_and_barter",
+  paid_barter: "paid_and_barter",
+  both: "paid_and_barter",
+  paid: "paid_only",
+  paid_only: "paid_only",
+};
+
 const normalizeSelectedValues = (values, allowedValues) => {
   const normalizedAllowedValues = normalizeAllowedValues(allowedValues);
   const normalizedInputValues = Array.isArray(values)
@@ -76,8 +86,13 @@ const normalizeSelectedValues = (values, allowedValues) => {
           const candidateValue = extractOptionValue(value);
           if (!candidateValue) return null;
 
+          const aliased =
+            COLLABORATION_ALIASES[candidateValue.toLowerCase()] ||
+            candidateValue;
+
           return normalizedAllowedValues.find(
             (allowedValue) =>
+              allowedValue.toLowerCase() === aliased.toLowerCase() ||
               allowedValue.toLowerCase() === candidateValue.toLowerCase()
           );
         })
@@ -136,8 +151,7 @@ const getOnboardingStep = (profile, settings) => {
   }
   if (
     !profile.contentCategories ||
-    profile.contentCategories.length < 5 ||
-    profile.contentCategories.length > 5 ||
+    profile.contentCategories.length < 1 ||
     !profile.contentLanguages ||
     profile.contentLanguages.length === 0
   ) {
@@ -238,12 +252,30 @@ const buildPlatformData = (body, settings) => {
 
 const buildFinishProfileData = (body, settings) => {
   const bio = typeof body.bio === "string" ? body.bio.trim() : "";
+  const rawCollaborationValues = Array.isArray(body.collaborationPreferences)
+    ? body.collaborationPreferences
+    : body.collaborationPreference
+      ? [body.collaborationPreference]
+      : [];
+
+  // App may send ["paid_only", "barter"] for "both" — map to single enum value.
+  const hasPaid = rawCollaborationValues.some((value) =>
+    ["paid_only", "paid"].includes(String(value).toLowerCase())
+  );
+  const hasBarter = rawCollaborationValues.some((value) =>
+    ["barter", "barter_product"].includes(String(value).toLowerCase())
+  );
+  const normalizedCollaborationInput =
+    hasPaid && hasBarter
+      ? ["paid_and_barter"]
+      : hasBarter
+        ? ["barter_product"]
+        : hasPaid
+          ? ["paid_only"]
+          : rawCollaborationValues;
+
   const collaborationPreference = normalizeSelectedValues(
-    Array.isArray(body.collaborationPreferences)
-      ? body.collaborationPreferences
-      : body.collaborationPreference
-        ? [body.collaborationPreference]
-        : [],
+    normalizedCollaborationInput,
     settings.collaborationPreferences
   )[0];
 
@@ -435,10 +467,10 @@ export const saveContentPreferences = async (req, res) => {
       settings.contentLanguages
     );
 
-    if (contentCategories.length < 5) {
+    if (contentCategories.length < 1) {
       return res.status(400).json({
         success: false,
-        message: "Please select exactly 5 content categories",
+        message: "Please select at least 1 content category",
       });
     }
 
@@ -601,10 +633,10 @@ export const saveFullOnboarding = async (req, res) => {
       );
     }
 
-    if (contentCategories.length < 5) {
+    if (contentCategories.length < 1) {
       return res.status(400).json({
         success: false,
-        message: "Please select exactly 5 content categories",
+        message: "Please select at least 1 content category",
       });
     }
 
