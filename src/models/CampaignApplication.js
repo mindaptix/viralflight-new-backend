@@ -1,12 +1,5 @@
 import mongoose from "mongoose";
-
-const APPLICATION_STATUSES = [
-  "applied",
-  "shortlisted",
-  "accepted",
-  "rejected",
-  "withdrawn",
-];
+import { APPLICATION_STATUSES } from "../domain/campaigns/CampaignConstants.js";
 
 const campaignApplicationSchema = new mongoose.Schema(
   {

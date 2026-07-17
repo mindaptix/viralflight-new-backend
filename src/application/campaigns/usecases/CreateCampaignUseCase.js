@@ -1,4 +1,4 @@
-import { CAMPAIGN_STATUSES } from "../../../models/Campaign.js";
+import { CAMPAIGN_STATUSES } from "../../../domain/campaigns/CampaignConstants.js";
 import {
   normalizeBudgetAmount,
   normalizeDate,

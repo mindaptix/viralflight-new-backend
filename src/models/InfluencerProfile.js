@@ -7,6 +7,20 @@ const ALLOWED_CITIES = [
   "Hyderabad",
   "Chennai",
   "Kolkata",
+  "Pune",
+  "Ahmedabad",
+  "Jaipur",
+  "Lucknow",
+  "Chandigarh",
+  "Kochi",
+  "Indore",
+  "Bhopal",
+  "Nagpur",
+  "Surat",
+  "Goa",
+  "Dehradun",
+  "Patna",
+  "Guwahati",
 ];
 
 const PRIMARY_PLATFORMS = ["instagram", "youtube", "tiktok"];

@@ -1,10 +1,12 @@
 import express from "express";
 import cors from "cors";
-import authRoutes from "./routes/authRoutes.js";
-import agencyRoutes from "./routes/agencyRoutes.js";
-import brandRoutes from "./routes/brandRoutes.js";
-import influencerRoutes from "./routes/influencerRoutes.js";
-import campaignApplicationRoutes from "./routes/campaignApplicationRoutes.js";
+
+import authRoutes from "./interfaces/http/routes/authRoutes.js";
+import agencyRoutes from "./interfaces/http/routes/agencyRoutes.js";
+import brandRoutes from "./interfaces/http/routes/brandRoutes.js";
+import influencerRoutes from "./interfaces/http/routes/influencerRoutes.js";
+import campaignApplicationRoutes from "./interfaces/http/routes/campaignApplicationRoutes.js";
+import { errorMiddleware } from "./shared/http/errorMiddleware.js";
 
 const app = express();
 
@@ -34,5 +36,7 @@ app.use(
 app.get("/", (req, res) => {
   res.send("Viral Flight API running");
 });
+
+app.use(errorMiddleware);
 
 export default app;

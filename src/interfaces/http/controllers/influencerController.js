@@ -1,18 +1,41 @@
-import InfluencerProfile from "../models/InfluencerProfile.js";
+import InfluencerProfile from "../../../models/InfluencerProfile.js";
 import {
   getOnboardingSettings,
-} from "../services/onboardingSettingsService.js";
+} from "../../../infrastructure/cms/onboardingSettingsService.js";
 import {
   getOrCreateRoleProfile,
   getProfileQuery,
-} from "../utils/profileControllerUtils.js";
+} from "../../../utils/profileControllerUtils.js";
+
+const CITY_ALIASES = {
+  bangalore: "Bengaluru",
+  bengalooru: "Bengaluru",
+  "new delhi": "Delhi",
+  "delhi ncr": "Delhi",
+  ncr: "Delhi",
+  gurgaon: "Delhi",
+  gurugram: "Delhi",
+  noida: "Delhi",
+  bombay: "Mumbai",
+  madras: "Chennai",
+  calcutta: "Kolkata",
+  poona: "Pune",
+};
 
 const normalizeCity = (city, cities) => {
   if (!city || typeof city !== "string") return null;
 
+  const trimmed = city.trim();
+  if (!trimmed) return null;
+
   const allowedCities = normalizeAllowedValues(cities);
-  return allowedCities.find(
-    (allowedCity) => allowedCity.toLowerCase() === city.trim().toLowerCase()
+  const alias = CITY_ALIASES[trimmed.toLowerCase()];
+  const candidate = alias || trimmed;
+
+  return (
+    allowedCities.find(
+      (allowedCity) => allowedCity.toLowerCase() === candidate.toLowerCase()
+    ) || null
   );
 };
 

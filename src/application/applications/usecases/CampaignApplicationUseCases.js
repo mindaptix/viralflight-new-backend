@@ -1,4 +1,4 @@
-import { APPLICATION_STATUSES } from "../../../models/CampaignApplication.js";
+import { APPLICATION_STATUSES } from "../../../domain/campaigns/CampaignConstants.js";
 import {
   isCampaignOpen,
   isCampaignOwner,

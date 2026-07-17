@@ -7,6 +7,10 @@ export class InfluencerProfileRepository {
     });
   }
 
+  async findOneByQuery(query) {
+    return InfluencerProfile.findOne(query);
+  }
+
   async search({ query, limit = 30 }) {
     return InfluencerProfile.find(query)
       .sort({ updatedAt: -1 })

@@ -1,9 +1,9 @@
-import BrandProfile from "../models/BrandProfile.js";
+import BrandProfile from "../../../models/BrandProfile.js";
 import {
   BRAND_CAMPAIGN_INTERESTS,
   BRAND_INDUSTRIES,
   BRAND_MONTHLY_CAMPAIGN_BUDGETS,
-} from "../constants/profileOptions.js";
+} from "../../../constants/profileOptions.js";
 import {
   applyProfileData,
   getOrCreateRoleProfile,
@@ -14,7 +14,7 @@ import {
   normalizeSelectedOptions,
   normalizeText,
   normalizeWebsite,
-} from "../utils/profileControllerUtils.js";
+} from "../../../utils/profileControllerUtils.js";
 
 const getBrandBody = (body) => ({
   ...mergeNestedProfileBody(body, ["data", "profile", "brand", "brandProfile"]),

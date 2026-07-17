@@ -1,4 +1,4 @@
-import Campaign from "../../models/Campaign.js";
+import Campaign from "../../../../models/Campaign.js";
 
 export class CampaignRepository {
   async create(data) {

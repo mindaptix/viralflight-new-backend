@@ -1,12 +1,5 @@
 import mongoose from "mongoose";
-
-const CAMPAIGN_STATUSES = [
-  "draft",
-  "active",
-  "paused",
-  "completed",
-  "cancelled",
-];
+import { CAMPAIGN_STATUSES } from "../domain/campaigns/CampaignConstants.js";
 
 const campaignSchema = new mongoose.Schema(
   {

@@ -1,10 +1,10 @@
-import AgencyProfile from "../models/AgencyProfile.js";
+import AgencyProfile from "../../../models/AgencyProfile.js";
 import {
   AGENCY_CREATORS_MANAGED_RANGES,
   AGENCY_FOCUS_AREAS,
   AGENCY_TEAM_SIZES,
   AGENCY_TYPES,
-} from "../constants/profileOptions.js";
+} from "../../../constants/profileOptions.js";
 import {
   applyProfileData,
   getOrCreateRoleProfile,
@@ -15,7 +15,7 @@ import {
   normalizeSelectedOptions,
   normalizeText,
   normalizeWebsite,
-} from "../utils/profileControllerUtils.js";
+} from "../../../utils/profileControllerUtils.js";
 
 const getAgencyBody = (body) => ({
   ...mergeNestedProfileBody(body, ["data", "profile", "agency", "agencyProfile"]),

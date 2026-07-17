@@ -6,10 +6,17 @@ export const errorMiddleware = (error, req, res, next) => {
   }
 
   if (error instanceof AppError) {
+    const extra =
+      error.details && typeof error.details === "object" && !Array.isArray(error.details)
+        ? error.details
+        : error.details
+          ? { details: error.details }
+          : {};
+
     return res.status(error.statusCode).json({
       success: false,
       message: error.message,
-      ...(error.details ? { details: error.details } : {}),
+      ...extra,
     });
   }
 

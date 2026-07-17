@@ -1,4 +1,4 @@
-import InfluencerProfile from "../models/InfluencerProfile.js";
+import InfluencerProfile from "../../../models/InfluencerProfile.js";
 import {
   InstagramApiError,
   InstagramConfigError,
@@ -7,11 +7,11 @@ import {
   normalizeHandle,
   syncWithStoredToken,
   verifyStateToken,
-} from "../services/instagramGraphService.js";
+} from "../../../infrastructure/external/instagram/InstagramGraphService.js";
 import {
   getOrCreateRoleProfile,
   getProfileQuery,
-} from "../utils/profileControllerUtils.js";
+} from "../../../utils/profileControllerUtils.js";
 
 const formatCount = (value) => {
   const number = Number(value || 0);

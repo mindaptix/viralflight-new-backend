@@ -22,12 +22,14 @@ export class ProfileRepository {
     const Model = PROFILE_MODELS[user.role];
     if (!Model) return null;
 
+    const userId = user.userId ?? user._id;
+
     return Model.findOneAndUpdate(
       {
-        $or: [{ userId: user.userId }, { mobile }],
+        $or: [{ userId }, { mobile }],
       },
       {
-        userId: user.userId ?? user._id,
+        userId,
         mobile,
       },
       { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
