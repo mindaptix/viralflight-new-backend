@@ -1,4 +1,4 @@
-import mongoose, { type Filter } from 'mongoose'
+import mongoose from 'mongoose'
 
 export type RoleFilter = 'all' | 'influencer' | 'brand' | 'agency'
 export type CompletionFilter = 'all' | 'complete' | 'incomplete'
@@ -202,7 +202,7 @@ export async function getDashboardData(
       selected.map(async (config) => {
         const docs = await db
           .collection(config.collection)
-          .find(match as Filter<Record<string, unknown>>)
+          .find(match as object)
           .sort({ createdAt: -1 })
           .limit(12)
           .toArray()
