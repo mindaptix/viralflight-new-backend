@@ -35,10 +35,6 @@ app.use(
 );
 app.use("/api/profiles", express.json(), profileRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Viral Flight API running");
-});
-
 app.use(errorMiddleware);
 
 export default app;
