@@ -23,6 +23,7 @@ import {
   handleInstagramCallback,
   syncInstagram,
 } from "../controllers/instagramController.js";
+import { listAgencyInfluencers } from "../controllers/discoveryController.js";
 import { requireRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -32,6 +33,7 @@ router.get("/onboarding-options", authMiddleware, getOnboardingOptions);
 router.get("/profile", authMiddleware, getMyProfile);
 router.get("/dashboard-stats", authMiddleware, getDashboardStats);
 router.get("/campaigns-for-you", authMiddleware, listCampaignsForInfluencer);
+router.get("/creators", authMiddleware, listAgencyInfluencers);
 router.get("/applications", authMiddleware, listMyApplicationsController);
 router.post(
   "/campaigns/:campaignId/apply",

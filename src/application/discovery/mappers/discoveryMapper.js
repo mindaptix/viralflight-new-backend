@@ -49,6 +49,14 @@ export const toDiscoveryCreatorDto = (profile) => {
       "",
     contentCategories: profile.contentCategories || [],
     verified: profile.isProfileComplete === true,
+    mobile: profile.mobile || "",
+    platforms: (profile.platforms || []).map((item) => ({
+      platform: item.platform,
+      username: item.username || item.channelName || "",
+      handle: item.username || item.channelName || "",
+      followers: item.followers ?? item.subscribers ?? 0,
+      engagement: item.engagement ?? item.engagementRate ?? 0,
+    })),
   };
 };
 
