@@ -183,6 +183,55 @@ const rateRangeSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const rateCardItemSchema = new mongoose.Schema(
+  {
+    platform: { type: String, trim: true, lowercase: true },
+    deliverable: { type: String, trim: true, lowercase: true },
+    price: { type: Number, min: 0 },
+  },
+  { _id: false }
+);
+
+const rateCardSchema = new mongoose.Schema(
+  {
+    currency: { type: String, default: "INR", trim: true, uppercase: true },
+    items: { type: [rateCardItemSchema], default: [] },
+  },
+  { _id: false }
+);
+
+const mediaKitCaseStudySchema = new mongoose.Schema(
+  {
+    brand: { type: String, trim: true },
+    title: { type: String, trim: true },
+    result: { type: String, trim: true },
+    url: { type: String, trim: true },
+  },
+  { _id: false }
+);
+
+const mediaKitAudienceSchema = new mongoose.Schema(
+  {
+    ageGroups: { type: [{ type: String, trim: true }], default: [] },
+    topCities: { type: [{ type: String, trim: true }], default: [] },
+    genderSplit: {
+      female: { type: Number, min: 0, max: 100, default: 50 },
+      male: { type: Number, min: 0, max: 100, default: 50 },
+    },
+  },
+  { _id: false }
+);
+
+const mediaKitSchema = new mongoose.Schema(
+  {
+    about: { type: String, trim: true },
+    audience: { type: mediaKitAudienceSchema, default: () => ({}) },
+    caseStudies: { type: [mediaKitCaseStudySchema], default: [] },
+    portfolioImages: { type: [{ type: String, trim: true }], default: [] },
+  },
+  { _id: false }
+);
+
 const instagramTokenSchema = new mongoose.Schema(
   {
     iv: { type: String, select: false },
@@ -254,6 +303,8 @@ const influencerProfileSchema = new mongoose.Schema(
       trim: true,
     },
     rateRange: rateRangeSchema,
+    rateCard: { type: rateCardSchema, default: () => ({}) },
+    mediaKit: { type: mediaKitSchema, default: () => ({}) },
     pastCollaborations: {
       type: [{ type: String, trim: true }],
       default: [],
@@ -294,6 +345,8 @@ export {
   ONBOARDING_STEPS,
   platformSchema,
   rateRangeSchema,
+  rateCardSchema,
+  mediaKitSchema,
   influencerProfileSchema,
   getDefaultOnboardingSettings,
 };

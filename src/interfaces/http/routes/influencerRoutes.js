@@ -23,6 +23,13 @@ import {
   handleInstagramCallback,
   syncInstagram,
 } from "../controllers/instagramController.js";
+import {
+  getMediaKit,
+  getRateCard,
+  listBrandInvites,
+  updateMediaKit,
+  updateRateCard,
+} from "../controllers/influencerAssetsController.js";
 import { listAgencyInfluencers } from "../controllers/discoveryController.js";
 import { requireRoles } from "../middleware/authMiddleware.js";
 
@@ -32,6 +39,11 @@ const profileViewerAuth = requireRoles(["agency", "brand"]);
 router.get("/onboarding-options", authMiddleware, getOnboardingOptions);
 router.get("/profile", authMiddleware, getMyProfile);
 router.get("/dashboard-stats", authMiddleware, getDashboardStats);
+router.get("/brand-invites", authMiddleware, listBrandInvites);
+router.get("/rate-card", authMiddleware, getRateCard);
+router.put("/rate-card", authMiddleware, updateRateCard);
+router.get("/media-kit", authMiddleware, getMediaKit);
+router.put("/media-kit", authMiddleware, updateMediaKit);
 router.get("/campaigns-for-you", authMiddleware, listCampaignsForInfluencer);
 router.get("/creators", authMiddleware, listAgencyInfluencers);
 router.get("/applications", authMiddleware, listMyApplicationsController);

@@ -10,7 +10,10 @@
     "start": "node server.js",
     "cms:build": "next build",
     "payload": "payload",
-    "generate:types": "payload generate:types"
+    "generate:types": "payload generate:types",
+    "seed:communities": "node scripts/seed-communities.js",
+    "seed:demo": "node scripts/seed-demo-data.js",
+    "seed:all": "node scripts/seed-communities.js && node scripts/seed-demo-data.js"
   },
   "keywords": [],
   "author": "",

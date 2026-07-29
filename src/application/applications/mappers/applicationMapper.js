@@ -2,6 +2,7 @@ export const toApplicationDto = (application) => ({
   id: application._id,
   _id: application._id,
   campaignId: application.campaignId,
+  influencerUserId: application.influencerUserId,
   influencerProfileId: application.influencerProfileId,
   influencerName: application.influencerName,
   status: application.status,

@@ -7,6 +7,7 @@ import { AgencyProfiles } from './collections/AgencyProfiles'
 import { AppUsers } from './collections/AppUsers'
 import { BrandProfiles } from './collections/BrandProfiles'
 import { CMSUsers } from './collections/CMSUsers'
+import { Communities } from './collections/Communities'
 import { InfluencerProfiles } from './collections/InfluencerProfiles'
 import { OnboardingSettings } from './collections/OnboardingSettings'
 
@@ -22,6 +23,7 @@ export default buildConfig({
     AgencyProfiles,
     BrandProfiles,
     InfluencerProfiles,
+    Communities,
     OnboardingSettings,
   ],
   db: mongooseAdapter({
