@@ -312,6 +312,7 @@ const influencerProfileSchema = new mongoose.Schema(
     portfolioLink: { type: String, trim: true },
 
     isProfileComplete: { type: Boolean, default: false },
+    workModeEnabled: { type: Boolean, default: true, index: true },
     completedAt: { type: Date },
   },
   { timestamps: true }

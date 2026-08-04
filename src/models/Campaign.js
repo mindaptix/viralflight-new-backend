@@ -114,6 +114,11 @@ const campaignSchema = new mongoose.Schema(
       default: "active",
       index: true,
     },
+    viewCount: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

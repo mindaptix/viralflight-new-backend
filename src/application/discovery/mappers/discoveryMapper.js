@@ -61,7 +61,10 @@ export const toDiscoveryCreatorDto = (profile) => {
 };
 
 export const buildDiscoveryQuery = ({ search, niche, city }) => {
-  const query = { isProfileComplete: true };
+  const query = {
+    isProfileComplete: true,
+    workModeEnabled: { $ne: false },
+  };
 
   if (city && city !== "All") {
     query.city = city;

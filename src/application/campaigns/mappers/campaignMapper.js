@@ -17,9 +17,19 @@ const getDaysLeft = (deadline) => {
   return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 };
 
-export const toCampaignCard = (campaign, influencerProfile) => {
+export const toCampaignCard = (
+  campaign,
+  influencerProfile,
+  { viewCount, applicantCount } = {}
+) => {
   const daysLeft = getDaysLeft(campaign.applicationDeadline);
   const budgetDisplay = formatBudget(campaign.budgetAmount, campaign.budgetCurrency);
+  const resolvedViews =
+    typeof viewCount === "number"
+      ? viewCount
+      : Number(campaign.viewCount) || 0;
+  const resolvedApplicants =
+    typeof applicantCount === "number" ? applicantCount : 0;
 
   return {
     id: campaign._id,
@@ -42,5 +52,9 @@ export const toCampaignCard = (campaign, influencerProfile) => {
     daysLeftText: daysLeft === null ? null : `${daysLeft} days left`,
     matchPercent: calculateMatchPercent(campaign, influencerProfile),
     status: campaign.status,
+    viewCount: resolvedViews,
+    views: resolvedViews,
+    applicantCount: resolvedApplicants,
+    applicationCount: resolvedApplicants,
   };
 };
