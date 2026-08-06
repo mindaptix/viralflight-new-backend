@@ -63,6 +63,18 @@ const brandProfileSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    bio: {
+      type: String,
+      trim: true,
+    },
+    profileImageUrl: {
+      type: String,
+      trim: true,
+    },
+    contactName: {
+      type: String,
+      trim: true,
+    },
     isProfileComplete: {
       type: Boolean,
       default: false,

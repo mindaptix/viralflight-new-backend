@@ -311,6 +311,12 @@ const influencerProfileSchema = new mongoose.Schema(
     },
     portfolioLink: { type: String, trim: true },
 
+    profileImageUrl: { type: String, trim: true },
+    profession: { type: String, trim: true },
+    managerName: { type: String, trim: true },
+    managerMobile: { type: String, trim: true },
+    youtubeHandle: { type: String, trim: true },
+
     isProfileComplete: { type: Boolean, default: false },
     workModeEnabled: { type: Boolean, default: true, index: true },
     completedAt: { type: Date },

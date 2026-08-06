@@ -6,6 +6,7 @@ import {
   getOrCreateRoleProfile,
   getProfileQuery,
 } from "../../../utils/profileControllerUtils.js";
+import { enrichRoleProfileDocument, buildRoleProfileFields } from "../../../application/profiles/mappers/roleProfileMapper.js";
 
 const CITY_ALIASES = {
   bangalore: "Bengaluru",
@@ -697,7 +698,7 @@ export const getMyProfile = async (req, res) => {
   try {
     const settings = await getOnboardingSettings();
     const profile = await getOrCreateProfile(req.user);
-    const profileFields = buildProfileFields(profile);
+    const enriched = enrichRoleProfileDocument(profile, "influencer");
 
     res.json({
       success: true,
@@ -708,8 +709,8 @@ export const getMyProfile = async (req, res) => {
         mobile: req.user.mobile,
         role: req.user.role,
       },
-      profile,
-      profileFields,
+      profile: enriched,
+      profileFields: buildRoleProfileFields(enriched, "influencer"),
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

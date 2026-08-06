@@ -65,6 +65,22 @@ const agencyProfileSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    bio: {
+      type: String,
+      trim: true,
+    },
+    profileImageUrl: {
+      type: String,
+      trim: true,
+    },
+    contactName: {
+      type: String,
+      trim: true,
+    },
+    niches: {
+      type: [{ type: String, trim: true }],
+      default: [],
+    },
     isProfileComplete: {
       type: Boolean,
       default: false,
