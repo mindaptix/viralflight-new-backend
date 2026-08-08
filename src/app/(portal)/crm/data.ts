@@ -213,7 +213,7 @@ export async function addCrmNote(input: {
   await db().collection('crm_records').updateOne(
     { profileId: input.profileId, role: input.role },
     {
-      $push: { notes: { $each: [note], $position: 0 } },
+      $push: { notes: { $each: [note], $position: 0 } } as never,
       $set: { updatedAt: now },
       $setOnInsert: {
         profileId: input.profileId,
@@ -224,7 +224,7 @@ export async function addCrmNote(input: {
         assigneeName: '',
         createdAt: now,
       },
-    },
+    } as never,
     { upsert: true },
   )
 }

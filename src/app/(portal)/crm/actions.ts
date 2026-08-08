@@ -19,7 +19,7 @@ function asStatus(value: FormDataEntryValue | null): CrmStatus | null {
 }
 
 export async function saveCrmMetaAction(formData: FormData) {
-  const user = await requireSuperAdmin()
+  await requireSuperAdmin()
   const profileId = String(formData.get('profileId') || '')
   const role = String(formData.get('role') || '') as CrmRole
   const status = asStatus(formData.get('status'))
@@ -48,7 +48,6 @@ export async function saveCrmMetaAction(formData: FormData) {
 
   revalidatePath(`/${role === 'influencer' ? 'influencers' : 'agencies'}/${profileId}`)
   revalidatePath(`/${role === 'influencer' ? 'influencers' : 'agencies'}`)
-  return { ok: true, actor: user.email }
 }
 
 export async function addNoteAction(formData: FormData) {
@@ -70,5 +69,4 @@ export async function addNoteAction(formData: FormData) {
   })
 
   revalidatePath(`/${role === 'influencer' ? 'influencers' : 'agencies'}/${profileId}`)
-  return { ok: true }
 }
