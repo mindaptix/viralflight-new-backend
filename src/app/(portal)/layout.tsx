@@ -4,8 +4,8 @@ import type { ReactNode } from 'react'
 import './portal.css'
 
 export const metadata: Metadata = {
-  title: 'Super Admin | Viral Flight',
-  description: 'Viral Flight onboarding and operations dashboard',
+  title: 'Viral Flight · Company CRM',
+  description: 'Viral Flight company workspace for influencers, agencies and AI search',
 }
 
 export default function PortalLayout({ children }: { children: ReactNode }) {

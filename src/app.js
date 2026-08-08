@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import authRoutes from "./interfaces/http/routes/authRoutes.js";
 import agencyRoutes from "./interfaces/http/routes/agencyRoutes.js";
@@ -12,6 +14,10 @@ import engagementRoutes from "./interfaces/http/routes/engagementRoutes.js";
 import profileRoutes from "./interfaces/http/routes/profileRoutes.js";
 import uploadRoutes, { uploadsRoot } from "./interfaces/http/routes/uploadRoutes.js";
 import { errorMiddleware } from "./shared/http/errorMiddleware.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicDir = path.resolve(__dirname, "../public");
 
 const app = express();
 
@@ -28,6 +34,11 @@ const sendHealth = (req, res) => {
 app.get("/api/health", sendHealth);
 app.get("/health", sendHealth);
 
+app.get(["/privacy", "/privacy/"], (_req, res) => {
+  res.sendFile(path.join(publicDir, "privacy.html"));
+});
+
+app.use(express.static(publicDir));
 app.use("/uploads", express.static(uploadsRoot));
 
 app.use("/api/auth", express.json(), authRoutes);
