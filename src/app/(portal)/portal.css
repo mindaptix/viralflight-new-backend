@@ -1206,6 +1206,48 @@ a.clear-button {
   border-radius: var(--radius-md);
 }
 
+.settings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 16px;
+}
+
+.settings-form {
+  padding-bottom: 20px;
+}
+
+.settings-help {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.settings-actions .primary-button {
+  margin-top: 0;
+  height: 48px;
+  padding: 0 18px;
+}
+
+.settings-actions .clear-button {
+  height: 48px;
+  padding: 0 16px;
+  align-self: center;
+}
+
+@media (max-width: 900px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 980px) {
   .crm-shell {
     grid-template-columns: 1fr;

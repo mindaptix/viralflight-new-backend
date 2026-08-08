@@ -1,3 +1,4 @@
+import { getOpenAiRuntimeConfig } from '../crm/settings'
 import type { AgentResultCard, AgentTurnResult, ChatMessage } from './types'
 import { AGENT_TOOL_DEFINITIONS, runAgentTool } from './tools'
 
@@ -29,14 +30,6 @@ Cities: normalize aliases (Bangalore->Bengaluru, Bombay->Mumbai, NCR->Delhi).
 If a query is vague, ask one short clarifying question OR run a reasonable broad search.
 After tools return, write a useful answer with bullet points for the top results (name, city, niche, followers, rate range).
 Do not mention internal tool names unless asked.`
-
-function getApiKey() {
-  return process.env.OPENAI_API_KEY || ''
-}
-
-function getModel() {
-  return process.env.OPENAI_MODEL || 'gpt-4o-mini'
-}
 
 function cardsFromToolPayload(name: string, payload: unknown): AgentResultCard[] {
   if (!payload || typeof payload !== 'object') return []
@@ -88,20 +81,24 @@ function cardsFromToolPayload(name: string, payload: unknown): AgentResultCard[]
   })
 }
 
-async function openAiChat(messages: OpenAIMessage[]) {
-  const apiKey = getApiKey()
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is missing. Add it to the server .env file.')
+async function openAiChat(
+  messages: OpenAIMessage[],
+  config: { apiKey: string; model: string },
+) {
+  if (!config.apiKey) {
+    throw new Error(
+      'OpenAI API key is missing. Add it in CRM → Settings, or set OPENAI_API_KEY in server .env.',
+    )
   }
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${config.apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: getModel(),
+      model: config.model,
       temperature: 0.2,
       messages,
       tools: AGENT_TOOL_DEFINITIONS,
@@ -130,6 +127,7 @@ export async function runAgentTurn(
   const trimmed = userMessage.trim()
   if (!trimmed) return { reply: 'Please ask a question about influencers or agencies.', cards: [] }
 
+  const config = await getOpenAiRuntimeConfig()
   const messages: OpenAIMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT },
     ...history
@@ -143,7 +141,7 @@ export async function runAgentTurn(
   ]
 
   const cards: AgentResultCard[] = []
-  let assistant = await openAiChat(messages)
+  let assistant = await openAiChat(messages, config)
 
   for (let round = 0; round < 4; round += 1) {
     const toolCalls = assistant.tool_calls || []
@@ -177,7 +175,7 @@ export async function runAgentTurn(
       })
     }
 
-    assistant = await openAiChat(messages)
+    assistant = await openAiChat(messages, config)
   }
 
   return {

@@ -9,6 +9,7 @@ const navItems = [
   { href: '/agent', label: 'AI Agent', hint: 'Ask in plain English' },
   { href: '/influencers', label: 'Influencers', hint: 'Creator CRM' },
   { href: '/agencies', label: 'Agencies', hint: 'Partner directory' },
+  { href: '/settings', label: 'Settings', hint: 'OpenAI & CRM config' },
 ]
 
 const titles: Record<string, { eyebrow: string; title: string }> = {
@@ -28,6 +29,10 @@ const titles: Record<string, { eyebrow: string; title: string }> = {
     eyebrow: 'Partner CRM',
     title: 'Agencies',
   },
+  settings: {
+    eyebrow: 'Company CRM',
+    title: 'Settings',
+  },
 }
 
 export function Brand() {
@@ -45,7 +50,7 @@ export function PortalShell({
   children,
 }: {
   user: PortalUser
-  active: 'overview' | 'agent' | 'influencers' | 'agencies'
+  active: 'overview' | 'agent' | 'influencers' | 'agencies' | 'settings'
   children: ReactNode
 }) {
   const heading = titles[active] || titles.overview
