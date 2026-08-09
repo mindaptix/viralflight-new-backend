@@ -4,25 +4,23 @@ import { listInfluencers } from '../../crm/data'
 
 export const dynamic = 'force-dynamic'
 
-type RouteProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>
-}
-
-export async function GET(_request: Request, context: RouteProps) {
+export async function GET(request: Request) {
   await requireSuperAdmin()
-  const params = await context.searchParams
+  const url = new URL(request.url)
+  const get = (key: string) => firstParam(url.searchParams.get(key) ?? undefined)
+
   const data = await listInfluencers({
-    q: firstParam(params.q),
-    city: firstParam(params.city),
-    niche: firstParam(params.niche),
-    completion: (['complete', 'incomplete'].includes(firstParam(params.completion))
-      ? firstParam(params.completion)
+    q: get('q'),
+    city: get('city'),
+    niche: get('niche'),
+    completion: (['complete', 'incomplete'].includes(get('completion'))
+      ? get('completion')
       : 'all') as 'all' | 'complete' | 'incomplete',
-    instagram: (['connected', 'not_connected'].includes(firstParam(params.instagram))
-      ? firstParam(params.instagram)
+    instagram: (['connected', 'not_connected'].includes(get('instagram'))
+      ? get('instagram')
       : 'all') as 'all' | 'connected' | 'not_connected',
-    status: firstParam(params.status),
-    assigneeId: firstParam(params.assigneeId),
+    status: get('status'),
+    assigneeId: get('assigneeId'),
     page: 1,
     pageSize: 5000,
   })

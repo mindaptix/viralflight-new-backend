@@ -4,22 +4,20 @@ import { listAgencies } from '../../crm/data'
 
 export const dynamic = 'force-dynamic'
 
-type RouteProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>
-}
-
-export async function GET(_request: Request, context: RouteProps) {
+export async function GET(request: Request) {
   await requireSuperAdmin()
-  const params = await context.searchParams
+  const url = new URL(request.url)
+  const get = (key: string) => firstParam(url.searchParams.get(key) ?? undefined)
+
   const data = await listAgencies({
-    q: firstParam(params.q),
-    city: firstParam(params.city),
-    agencyType: firstParam(params.agencyType),
-    completion: (['complete', 'incomplete'].includes(firstParam(params.completion))
-      ? firstParam(params.completion)
+    q: get('q'),
+    city: get('city'),
+    agencyType: get('agencyType'),
+    completion: (['complete', 'incomplete'].includes(get('completion'))
+      ? get('completion')
       : 'all') as 'all' | 'complete' | 'incomplete',
-    status: firstParam(params.status),
-    assigneeId: firstParam(params.assigneeId),
+    status: get('status'),
+    assigneeId: get('assigneeId'),
     page: 1,
     pageSize: 5000,
   })
