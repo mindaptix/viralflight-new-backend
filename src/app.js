@@ -41,6 +41,20 @@ app.get(["/privacy", "/privacy/"], (_req, res) => {
 app.use(express.static(publicDir));
 app.use("/uploads", express.static(uploadsRoot));
 
+// Never run express.json() on Payload CMS routes — it consumes the body stream
+// and breaks Next/Payload login with "Response body object should not be disturbed".
+const jsonForMobileApi = (req, res, next) => {
+  const url = req.originalUrl || req.url || "";
+  if (
+    url.startsWith("/api/cms-users") ||
+    url.startsWith("/api/graphql") ||
+    url.startsWith("/api/payload")
+  ) {
+    return next();
+  }
+  return express.json()(req, res, next);
+};
+
 app.use("/api/auth", express.json(), authRoutes);
 app.use("/api/agency", express.json(), agencyRoutes);
 app.use("/api/brand", express.json(), brandRoutes);
@@ -49,8 +63,9 @@ app.use("/api/campaign-applications", express.json(), campaignApplicationRoutes)
 app.use("/api/campaigns", express.json(), campaignRoutes);
 app.use("/api/profiles", express.json(), profileRoutes);
 app.use("/api/uploads", uploadRoutes);
-app.use("/api", express.json(), discoveryRoutes);
-app.use("/api", express.json(), engagementRoutes);
+// Discovery is GET-only — no JSON body parser needed.
+app.use("/api", discoveryRoutes);
+app.use("/api", jsonForMobileApi, engagementRoutes);
 
 app.use(errorMiddleware);
 
