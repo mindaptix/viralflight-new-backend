@@ -13,7 +13,7 @@ export default async function NewCampaignPage() {
         <div>
           <p className="eyebrow">New campaign</p>
           <h1>Create a Viral Flight campaign</h1>
-          <p>Ask Claude or OpenAI to draft copy, then edit and save.</p>
+          <p>Use AI to draft copy, then edit and save.</p>
         </div>
       </div>
       <CampaignEditor action={createCampaignAction} submitLabel="Create campaign" />

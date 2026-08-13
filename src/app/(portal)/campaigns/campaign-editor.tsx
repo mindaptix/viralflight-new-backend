@@ -50,21 +50,19 @@ export function CampaignEditor({
   const [draft, setDraft] = useState<Draft>({ ...empty, ...initial })
   const [prompt, setPrompt] = useState('')
   const [error, setError] = useState('')
-  const [providerUsed, setProviderUsed] = useState('')
   const [pending, startTransition] = useTransition()
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
     setDraft((prev) => ({ ...prev, [key]: value }))
   }
 
-  function suggest(provider: 'claude' | 'openai' | 'auto') {
+  function suggest() {
     const formData = new FormData()
     formData.set(
       'prompt',
       prompt ||
         `Client ${draft.clientName || 'a brand'}, ${draft.slotsNeeded} ${draft.deliverable}s, city ${draft.location || 'India'}. ${draft.brief}`,
     )
-    formData.set('provider', provider)
     startTransition(async () => {
       setError('')
       const result = await suggestCampaignAction(formData)
@@ -72,7 +70,6 @@ export function CampaignEditor({
         setError(result.error)
         return
       }
-      setProviderUsed(result.provider)
       setDraft((prev) => ({
         ...prev,
         title: result.title || prev.title,
@@ -90,7 +87,7 @@ export function CampaignEditor({
       <article className="panel">
         <div className="panel-header">
           <h2>AI assist</h2>
-          <span>{providerUsed ? `Last: ${providerUsed}` : 'Claude or OpenAI'}</span>
+          <span>Drafts copy for this campaign</span>
         </div>
         <div className="crm-form settings-form">
           <label>
@@ -103,14 +100,8 @@ export function CampaignEditor({
             />
           </label>
           <div className="settings-actions">
-            <button className="filter-button" disabled={pending} onClick={() => suggest('claude')} type="button">
-              Suggest with Claude
-            </button>
-            <button className="clear-button" disabled={pending} onClick={() => suggest('openai')} type="button">
-              Suggest with OpenAI
-            </button>
-            <button className="clear-button" disabled={pending} onClick={() => suggest('auto')} type="button">
-              Auto
+            <button className="filter-button" disabled={pending} onClick={suggest} type="button">
+              {pending ? 'Writing…' : 'Generate with AI'}
             </button>
           </div>
           {error ? <p className="form-error">{error}</p> : null}

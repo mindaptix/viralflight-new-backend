@@ -192,6 +192,40 @@ export async function listVfCampaigns() {
   return docs.map((doc) => mapCampaign(doc as Record<string, unknown>))
 }
 
+export async function listVfWorkForInfluencer(influencerId: string) {
+  const docs = await db()
+    .collection('vf_campaign_creators')
+    .find({ influencerId })
+    .sort({ updatedAt: -1 })
+    .toArray()
+  const campaignIds = [
+    ...new Set(docs.map((doc) => String(doc.campaignId || '')).filter(Boolean)),
+  ]
+  const objectIds = campaignIds.map(toObjectId).filter((id): id is ObjectId => Boolean(id))
+  const campaigns = objectIds.length
+    ? await db()
+        .collection('vf_campaigns')
+        .find({ _id: { $in: objectIds } })
+        .toArray()
+    : []
+  const campaignMap = new Map(
+    campaigns.map((doc) => [String(doc._id), mapCampaign(doc as Record<string, unknown>)]),
+  )
+  return docs.map((doc) => {
+    const assignment = mapAssignment(doc as Record<string, unknown>)
+    const campaign = campaignMap.get(assignment.campaignId)
+    return {
+      assignmentId: assignment.id,
+      campaignId: assignment.campaignId,
+      campaignTitle: campaign?.title || 'Campaign',
+      clientName: campaign?.clientName || campaign?.brandName || 'Viral Flight client',
+      status: assignment.status,
+      instagramUrl: assignment.instagramUrl,
+      href: campaign ? `/campaigns/${campaign.id}` : '/campaigns',
+    }
+  })
+}
+
 export async function getVfCampaign(id: string) {
   const objectId = toObjectId(id)
   if (!objectId) return null

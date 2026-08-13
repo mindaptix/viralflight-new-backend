@@ -1,4 +1,5 @@
 import "dotenv/config";
+import crypto from "crypto";
 import mongoose from "mongoose";
 
 import User from "../src/models/User.js";
@@ -18,6 +19,158 @@ const daysFromNow = (days) => {
   date.setHours(23, 59, 59, 999);
   return date;
 };
+
+const inviteToken = () => crypto.randomBytes(18).toString("hex");
+
+const vfCrmCampaigns = [
+  {
+    seedKey: "vf-glow-co-summer-reels",
+    title: "Glow Co Summer Reels",
+    clientName: "Glow Co",
+    brandName: "Glow Co",
+    category: "Beauty",
+    deliverable: "reel",
+    slotsNeeded: 4,
+    budgetAmount: 180000,
+    location: "Mumbai",
+    status: "live",
+    videoDeadlineDays: 14,
+    description:
+      "Summer sunscreen and glow routine reels for Glow Co's monsoon-to-summer transition drop.",
+    brief:
+      "Honest GRWM + outdoor heat shots. Show texture, SPF application, and a 3-step routine. No competitor brands in frame.",
+    scriptGuidelines:
+      "Hook in first 2 seconds. Mention Glow Co SPF 50. End with a CTA to the live client link.",
+    creators: [
+      {
+        mobile: "+919000000001",
+        status: "live",
+        scriptText: "Hook: Humidity ruined my makeup until this SPF. Cut to Glow Co routine.",
+        instagramUrl: "https://www.instagram.com/reel/glowco-ananya/",
+        stats: { views: 1280000, likes: 64000, comments: 2100, reach: 910000, engagementRate: 5.2 },
+      },
+      {
+        mobile: "+919000000007",
+        status: "script_submitted",
+        scriptText: "Morning balcony GRWM, then commute-proof glow check at 6pm.",
+      },
+      {
+        mobile: "+919000000011",
+        status: "video_approved",
+        scriptText: "Beach-to-cafe transition with Glow Co sunscreen as the hero.",
+        videoUrl: "https://drive.google.com/demo-tara-glowco",
+      },
+      {
+        mobile: "+919000000005",
+        status: "invited",
+      },
+    ],
+  },
+  {
+    seedKey: "vf-soundz-launch",
+    title: "SoundZ Launch",
+    clientName: "SoundZ",
+    brandName: "SoundZ",
+    category: "Music",
+    deliverable: "reel",
+    slotsNeeded: 3,
+    budgetAmount: 220000,
+    location: "Delhi",
+    status: "in_review",
+    videoDeadlineDays: 10,
+    description: "Launch films for SoundZ wireless earbuds — studio, commute, and night-drive cuts.",
+    brief: "Audio-first storytelling. Show noise isolation, battery life, and a music-drop moment.",
+    scriptGuidelines: "Start with silence vs SoundZ contrast. Product name on screen by second 4.",
+    creators: [
+      {
+        mobile: "+919000000008",
+        status: "video_submitted",
+        scriptText: "Studio session: I couldn't hear the metro until I took these off.",
+        videoUrl: "https://drive.google.com/demo-arjun-soundz",
+      },
+      {
+        mobile: "+919000000006",
+        status: "script_approved",
+        scriptText: "Gaming setup tour with SoundZ low-latency mode.",
+      },
+      {
+        mobile: "+919000000010",
+        status: "invited",
+      },
+    ],
+  },
+  {
+    seedKey: "vf-fitlife-challenge",
+    title: "FitLife Challenge",
+    clientName: "FitLife",
+    brandName: "FitLife",
+    category: "Fitness",
+    deliverable: "reel",
+    slotsNeeded: 3,
+    budgetAmount: 150000,
+    location: "Pune",
+    status: "active",
+    videoDeadlineDays: 8,
+    description: "7-day FitLife protein challenge — workout + shake + recovery reels.",
+    brief: "Before/after energy, gym form, and a simple chocolate shake recipe. Keep claims realistic.",
+    scriptGuidelines: "Show scoop, shake, first sip. Mention 24g protein. No medical claims.",
+    creators: [
+      {
+        mobile: "+919000000002",
+        status: "live",
+        scriptText: "Leg day, then FitLife shake. Same energy at 7pm client call.",
+        instagramUrl: "https://www.instagram.com/reel/fitlife-rohit/",
+        stats: { views: 640000, likes: 28000, comments: 860, reach: 480000, engagementRate: 4.5 },
+      },
+      {
+        mobile: "+919000000009",
+        status: "video_submitted",
+        scriptText: "30-day challenge check-in with FitLife as the daily non-negotiable.",
+        videoUrl: "https://drive.google.com/demo-riya-fitlife",
+      },
+      {
+        mobile: "+919000000003",
+        status: "invited",
+      },
+    ],
+  },
+  {
+    seedKey: "vf-stylemint-festive",
+    title: "StyleMint Festive Drop",
+    clientName: "StyleMint",
+    brandName: "StyleMint",
+    category: "Fashion",
+    deliverable: "reel",
+    slotsNeeded: 3,
+    budgetAmount: 260000,
+    location: "Delhi",
+    status: "completed",
+    videoDeadlineDays: -4,
+    description: "Festive lookbook for StyleMint's Diwali-ready drop — 3 outfits, 1 city.",
+    brief: "Golden hour street style + indoor mirror shot. Mix ethnic and fusion.",
+    scriptGuidelines: "Outfit change on beat. Tag StyleMint. No fast-fashion comparisons.",
+    creators: [
+      {
+        mobile: "+919000000007",
+        status: "live",
+        scriptText: "Three festive looks, one auto ride across CP.",
+        instagramUrl: "https://www.instagram.com/reel/stylemint-megha/",
+        stats: { views: 890000, likes: 51000, comments: 1540, reach: 720000, engagementRate: 5.9 },
+      },
+      {
+        mobile: "+919000000011",
+        status: "live",
+        scriptText: "Goa evening lookbook with StyleMint fusion sets.",
+        instagramUrl: "https://www.instagram.com/reel/stylemint-tara/",
+        stats: { views: 410000, likes: 19000, comments: 420, reach: 330000, engagementRate: 4.7 },
+      },
+      {
+        mobile: "+919000000004",
+        status: "dropped",
+      },
+    ],
+  },
+];
 
 const influencers = [
   {
@@ -587,6 +740,108 @@ async function seedCampaign(template, brandMap, agencyMap) {
   );
 }
 
+async function seedVfCrmCampaigns(influencerRecords) {
+  const db = mongoose.connection.db;
+  const campaignsCol = db.collection("vf_campaigns");
+  const creatorsCol = db.collection("vf_campaign_creators");
+  const byMobile = new Map(
+    influencerRecords.map((entry) => [entry.profile.mobile, entry.profile]),
+  );
+
+  for (const item of vfCrmCampaigns) {
+    const now = new Date();
+    const existing = await campaignsCol.findOne({ seedKey: item.seedKey });
+    const clientToken = existing?.clientToken || inviteToken();
+    await campaignsCol.updateOne(
+      { seedKey: item.seedKey },
+      {
+        $set: {
+          seedKey: item.seedKey,
+          title: item.title,
+          clientName: item.clientName,
+          brandName: item.brandName,
+          description: item.description,
+          brief: item.brief,
+          category: item.category,
+          platforms: ["instagram"],
+          deliverable: item.deliverable,
+          slotsNeeded: item.slotsNeeded,
+          budgetAmount: item.budgetAmount,
+          location: item.location,
+          scriptGuidelines: item.scriptGuidelines,
+          scriptDeadline: daysFromNow(Math.max(1, item.videoDeadlineDays - 6)),
+          videoDeadline: daysFromNow(item.videoDeadlineDays),
+          status: item.status,
+          clientToken,
+          createdBy: "seed",
+          updatedAt: now,
+        },
+        $setOnInsert: { createdAt: now },
+      },
+      { upsert: true },
+    );
+
+    const campaign = await campaignsCol.findOne({ seedKey: item.seedKey });
+    const campaignId = String(campaign._id);
+
+    for (const creator of item.creators) {
+      const profile = byMobile.get(creator.mobile);
+      if (!profile) continue;
+      const found = await creatorsCol.findOne({
+        campaignId,
+        influencerId: String(profile._id),
+      });
+      const token = found?.inviteToken || inviteToken();
+      const stats = creator.stats
+        ? {
+            ...creator.stats,
+            fetchedAt: now,
+            source: "seed",
+            note: "Demo performance",
+          }
+        : null;
+
+      await creatorsCol.updateOne(
+        { campaignId, influencerId: String(profile._id) },
+        {
+          $set: {
+            campaignId,
+            influencerId: String(profile._id),
+            name: profile.name,
+            mobile: profile.mobile,
+            city: profile.city || "",
+            inviteEmail: "",
+            inviteToken: token,
+            status: creator.status,
+            scriptText: creator.scriptText || "",
+            scriptFeedback: "",
+            videoUrl: creator.videoUrl || "",
+            videoFeedback: "",
+            videoDeadline: daysFromNow(item.videoDeadlineDays),
+            instagramUrl: creator.instagramUrl || "",
+            stats,
+            updatedAt: now,
+          },
+          $setOnInsert: {
+            createdAt: now,
+            history: [
+              {
+                at: now,
+                actor: "Viral Flight",
+                action: creator.status,
+                note: `Seeded for ${item.clientName}`,
+              },
+            ],
+          },
+        },
+        { upsert: true },
+      );
+    }
+  }
+
+  return vfCrmCampaigns.length;
+}
+
 async function main() {
   const mongoUri = process.env.MONGO_URI || process.env.DATABASE_URL;
   if (!mongoUri) {
@@ -749,11 +1004,14 @@ async function main() {
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
+  const vfCount = await seedVfCrmCampaigns(influencerRecords);
+
   console.log("Demo data seeded successfully");
   console.log(`Influencers: ${influencerRecords.length}`);
   console.log(`Brands: ${brandRecords.length}`);
   console.log(`Agencies: ${agencyRecords.length}`);
-  console.log(`Campaigns: ${campaigns.length}`);
+  console.log(`App campaigns: ${campaigns.length}`);
+  console.log(`VF CRM campaigns: ${vfCount} (Glow Co, SoundZ, FitLife, StyleMint)`);
   console.log("");
   console.log("Test logins (OTP via Twilio):");
   console.log("  Primary influencer: +919000000001 (Ananya Sharma)");

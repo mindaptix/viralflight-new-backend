@@ -141,16 +141,13 @@ export async function suggestCampaignAction(formData: FormData): Promise<{
   category: string
   scriptGuidelines: string
   deliverable: string
-  provider: string
   error?: string
 }> {
   await requireSuperAdmin()
   const prompt = String(formData.get('prompt') || '')
-  const providerRaw = String(formData.get('provider') || 'auto')
-  const provider = providerRaw === 'claude' || providerRaw === 'openai' ? providerRaw : 'auto'
   try {
-    const result = await suggestCampaignCopy({ prompt, provider })
-    return { ...result.draft, provider: result.provider }
+    const draft = await suggestCampaignCopy({ prompt })
+    return { ...draft }
   } catch (error) {
     return {
       title: '',
@@ -159,7 +156,6 @@ export async function suggestCampaignAction(formData: FormData): Promise<{
       category: '',
       scriptGuidelines: '',
       deliverable: 'reel',
-      provider,
       error: error instanceof Error ? error.message : 'AI failed',
     }
   }

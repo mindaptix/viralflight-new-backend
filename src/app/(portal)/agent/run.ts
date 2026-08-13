@@ -88,9 +88,7 @@ async function openAiChat(
   config: { apiKey: string; model: string },
 ) {
   if (!config.apiKey) {
-    throw new Error(
-      'OpenAI API key is missing. Add it in CRM → Settings, or set OPENAI_API_KEY in server .env.',
-    )
+    throw new Error('AI is not configured. Add keys in Settings.')
   }
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -114,11 +112,11 @@ async function openAiChat(
   }
 
   if (!response.ok) {
-    throw new Error(json.error?.message || `OpenAI error (${response.status})`)
+    throw new Error(json.error?.message || `AI error (${response.status})`)
   }
 
   const message = json.choices?.[0]?.message
-  if (!message) throw new Error('OpenAI returned an empty response')
+  if (!message) throw new Error('AI returned an empty response')
   return message
 }
 
@@ -130,6 +128,7 @@ export async function runAgentTurn(
   if (!trimmed) return { reply: 'Please ask a question about influencers or agencies.', cards: [] }
 
   const config = await getOpenAiRuntimeConfig()
+  const logicConfig = { ...config, model: 'gpt-4o' }
   const messages: OpenAIMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT },
     ...history
@@ -143,7 +142,7 @@ export async function runAgentTurn(
   ]
 
   const cards: AgentResultCard[] = []
-  let assistant = await openAiChat(messages, config)
+  let assistant = await openAiChat(messages, logicConfig)
 
   for (let round = 0; round < 4; round += 1) {
     const toolCalls = assistant.tool_calls || []
@@ -177,7 +176,7 @@ export async function runAgentTurn(
       })
     }
 
-    assistant = await openAiChat(messages, config)
+    assistant = await openAiChat(messages, logicConfig)
   }
 
   return {

@@ -5,6 +5,7 @@ import { getPayload } from 'payload'
 
 import { LoginForm, LogoutButton } from './auth-controls'
 import { Avatar } from './components/avatar'
+import { InsightCharts } from './components/insight-charts'
 import { PortalShell, Brand } from './components/portal-shell'
 import { getAgencyDashboard } from './dashboard-home'
 import { formatNumber } from './lib/format'
@@ -73,7 +74,7 @@ export default async function Page() {
   if (user.role !== 'super_admin') {
     return (
       <main className="restricted">
-        <img alt="Viral Flight" className="vf-logo" src="/logo-viral-flight.png" />
+        <Brand />
         <p className="eyebrow">Access restricted</p>
         <h1>Super admin access required</h1>
         <p>This account can use Payload Admin, but it cannot open the operations portal.</p>
@@ -113,6 +114,13 @@ export default async function Page() {
           <strong>{formatNumber(data.metrics.clientLinks)}</strong>
         </article>
       </section>
+
+      <InsightCharts
+        pipeline={data.insights.pipeline}
+        campaignViews={data.insights.campaignViews}
+        cities={data.insights.cities}
+        niches={data.insights.niches}
+      />
 
       <div className="dash-grid">
         <article className="dash-card">
@@ -206,7 +214,7 @@ export default async function Page() {
 
           <article className="dash-card assistant-card">
             <div className="dash-card-head">
-              <h2>Claude + OpenAI Assistant</h2>
+              <h2>AI Assistant</h2>
             </div>
             <div className="assist-prompts">
               <Link href={`/agent?q=${encodeURIComponent(`Generate a creative brief for ${firstCampaign}`)}`}>
@@ -225,7 +233,7 @@ export default async function Page() {
                 →
               </button>
             </form>
-            <p className="assist-foot">Powered by Claude & GPT</p>
+            <p className="assist-foot">Powered by AI</p>
           </article>
         </aside>
       </div>

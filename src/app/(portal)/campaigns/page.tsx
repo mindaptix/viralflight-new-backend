@@ -26,9 +26,14 @@ export default async function CampaignsPage() {
           <h1>In-house campaigns</h1>
           <p>Create VF-owned campaigns, pick creators, review scripts/videos, share a live client link.</p>
         </div>
-        <Link className="filter-button" href="/campaigns/new">
-          New campaign
-        </Link>
+        <div className="heading-actions">
+          <Link className="filter-button" href="/campaigns/new">
+            New campaign
+          </Link>
+          <Link className="clear-button" href="/decks">
+            Client PPT
+          </Link>
+        </div>
       </div>
 
       <article className="panel">

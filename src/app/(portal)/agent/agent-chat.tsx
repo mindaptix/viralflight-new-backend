@@ -85,7 +85,7 @@ export function AgentChat({ initialPrompt = '' }: { initialPrompt?: string }) {
       <div className="agent-chat panel">
         <div className="panel-header">
           <h2>Conversation</h2>
-          <span>Live database · OpenAI</span>
+          <span>Live database · AI</span>
         </div>
 
         <div className="agent-messages">

@@ -53,6 +53,9 @@ export default async function CampaignDetailPage({ params }: PageProps) {
           <Link className="filter-button" href={`/campaigns/${campaign.id}/creators`}>
             Select influencers
           </Link>
+          <Link className="clear-button" href={`/decks?campaignId=${campaign.id}`}>
+            Client PPT
+          </Link>
           <a className="clear-button" href={campaign.clientUrl} rel="noreferrer" target="_blank">
             Client live link
           </a>

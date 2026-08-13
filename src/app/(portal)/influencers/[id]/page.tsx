@@ -3,8 +3,11 @@ import { notFound } from 'next/navigation'
 
 import { Avatar } from '../../components/avatar'
 import { PortalShell } from '../../components/portal-shell'
+import { BrandWorkPanel } from '../../crm/brand-work-panel'
 import { addNoteAction, saveCrmMetaAction } from '../../crm/actions'
 import { getInfluencerDetail, listStaffMembers } from '../../crm/data'
+import { getInfluencerIntel } from '../../crm/intel'
+import { listVfWorkForInfluencer } from '../../campaigns/data'
 import { requireSuperAdmin } from '../../lib/auth'
 import { CRM_STATUSES, formatDate, formatDateTime, formatNumber } from '../../lib/format'
 
@@ -17,9 +20,11 @@ type PageProps = {
 export default async function InfluencerDetailPage({ params }: PageProps) {
   const user = await requireSuperAdmin()
   const { id } = await params
-  const [profile, staff] = await Promise.all([
+  const [profile, staff, intel, vfWork] = await Promise.all([
     getInfluencerDetail(id),
     listStaffMembers(),
+    getInfluencerIntel(id),
+    listVfWorkForInfluencer(id),
   ])
   if (!profile) notFound()
 
@@ -87,6 +92,8 @@ export default async function InfluencerDetailPage({ params }: PageProps) {
               ))}
             </div>
           </article>
+
+          <BrandWorkPanel intel={intel} profileId={profile.id} vfWork={vfWork} />
 
           <article className="panel">
             <div className="panel-header">

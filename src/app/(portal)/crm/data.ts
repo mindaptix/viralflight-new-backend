@@ -396,6 +396,38 @@ export async function listInfluencers(filters: InfluencerListFilters) {
   }
 }
 
+export async function getCreatorInsightBuckets() {
+  const collection = db().collection('influencer_profiles')
+  const [cities, niches] = await Promise.all([
+    collection
+      .aggregate([
+        { $match: { city: { $nin: [null, ''] } } },
+        { $group: { _id: '$city', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 6 },
+      ])
+      .toArray(),
+    collection
+      .aggregate([
+        { $unwind: '$contentCategories' },
+        { $group: { _id: '$contentCategories', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 6 },
+      ])
+      .toArray(),
+  ])
+  return {
+    cities: cities.map((row) => ({
+      label: String(row._id || 'Unknown'),
+      value: Number(row.count || 0),
+    })),
+    niches: niches.map((row) => ({
+      label: String(row._id || 'Other'),
+      value: Number(row.count || 0),
+    })),
+  }
+}
+
 export async function getInfluencerDetail(id: string) {
   const objectId = toObjectId(id)
   if (!objectId) return null
@@ -431,6 +463,13 @@ export async function getInfluencerDetail(id: string) {
     createdAt: asIso(doc.createdAt),
     updatedAt: asIso(doc.updatedAt),
     crm,
+    pastCollaborations: Array.isArray(doc.pastCollaborations)
+      ? doc.pastCollaborations.map(String)
+      : [],
+    mediaKit:
+      doc.mediaKit && typeof doc.mediaKit === 'object'
+        ? (doc.mediaKit as Record<string, unknown>)
+        : {},
   }
 }
 

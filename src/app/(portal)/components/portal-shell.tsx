@@ -11,6 +11,7 @@ const navItems = [
   { href: '/approvals', key: 'approvals', label: 'Approvals' },
   { href: '/links', key: 'links', label: 'Client Links' },
   { href: '/reports', key: 'reports', label: 'Reports' },
+  { href: '/decks', key: 'decks', label: 'Client PPT' },
   { href: '/agent', key: 'agent', label: 'AI Studio' },
 ]
 
@@ -21,6 +22,7 @@ const titles: Record<string, string> = {
   approvals: 'Approvals',
   links: 'Client Links',
   reports: 'Reports',
+  decks: 'Client PPT',
   agent: 'AI Studio',
   agencies: 'Agencies',
   settings: 'Settings',
@@ -36,11 +38,21 @@ export type ShellActive =
   | 'approvals'
   | 'links'
   | 'reports'
+  | 'decks'
 
 export function Brand() {
   return (
     <Link className="brand-lockup vf-brand" href="/">
-      <img alt="" className="vf-logo" src="/logo-viral-flight.png" />
+      <span className="vf-mark" aria-hidden>
+        <svg fill="none" viewBox="0 0 72 44">
+          <g transform="translate(36 22) rotate(-18)">
+            <rect fill="#F7921D" height="9" rx="1" width="64" x="-32" y="-11" />
+            <rect fill="#21B011" height="9" rx="1" width="64" x="-32" y="2" />
+          </g>
+          <circle cx="36" cy="22" fill="#000" r="10" />
+          <circle cx="36" cy="22" fill="#fff" r="2.6" />
+        </svg>
+      </span>
       <span>
         Viral Flight <em>CRM</em>
       </span>
@@ -85,8 +97,8 @@ export function PortalShell({
             </div>
           </div>
           <p className="vf-tip">
-            Viral Flight Tip: Use AI Studio to generate creative briefs, outreach emails and
-            analyze performance faster.
+            Viral Flight Tip: Use Client PPT to generate a branded deck with AI, then share it with
+            the brand.
           </p>
           <div className="vf-side-links">
             <Link href="/settings">Settings</Link>

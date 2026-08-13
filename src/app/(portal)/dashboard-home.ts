@@ -1,4 +1,4 @@
-import { listInfluencers } from './crm/data'
+import { getCreatorInsightBuckets, listInfluencers } from './crm/data'
 import { formatDate } from './lib/format'
 import { listAssignments, listVfCampaigns } from './campaigns/data'
 import { type CreatorStatus } from './campaigns/constants'
@@ -26,7 +26,7 @@ function timeAgo(iso: string) {
 }
 
 export async function getAgencyDashboard() {
-  const [campaigns, influencers] = await Promise.all([
+  const [campaigns, influencers, buckets] = await Promise.all([
     listVfCampaigns(),
     listInfluencers({
       q: '',
@@ -39,6 +39,7 @@ export async function getAgencyDashboard() {
       page: 1,
       pageSize: 8,
     }),
+    getCreatorInsightBuckets(),
   ])
 
   const assignmentGroups = await Promise.all(
@@ -127,6 +128,21 @@ export async function getAgencyDashboard() {
       ? Number((((totals.likes + totals.comments) / totals.views) * 100).toFixed(2))
       : 0
 
+  const pipelineSteps = [
+    ['invited', 'Invited'],
+    ['script_submitted', 'Script in'],
+    ['script_approved', 'Script OK'],
+    ['video_submitted', 'Video in'],
+    ['video_approved', 'Ready'],
+    ['live', 'Live'],
+  ] as const
+  const pipelineCounts = Object.fromEntries(pipelineSteps.map(([key]) => [key, 0]))
+  for (const group of assignmentGroups) {
+    for (const row of group.rows) {
+      if (row.status in pipelineCounts) pipelineCounts[row.status] += 1
+    }
+  }
+
   return {
     metrics: {
       liveCampaigns,
@@ -154,6 +170,21 @@ export async function getAgencyDashboard() {
     performance: {
       ...totals,
       engagement,
+    },
+    insights: {
+      pipeline: pipelineSteps.map(([key, label]) => ({
+        label,
+        value: pipelineCounts[key] || 0,
+      })),
+      campaignViews: table
+        .map((row) => ({
+          label: row.title,
+          value: row.stats.views,
+        }))
+        .filter((row) => row.value > 0)
+        .slice(0, 6),
+      cities: buckets.cities,
+      niches: buckets.niches,
     },
   }
 }
