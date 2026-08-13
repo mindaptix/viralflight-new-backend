@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { Avatar } from '../components/avatar'
 import { PortalShell } from '../components/portal-shell'
 import { requireSuperAdmin } from '../lib/auth'
 import {
@@ -168,8 +169,13 @@ export default async function InfluencersPage({ searchParams }: PageProps) {
               {data.rows.map((row) => (
                 <tr key={row.id}>
                   <td className="person-cell">
-                    <strong>{row.name}</strong>
-                    <span>{row.mobile || 'No mobile'}</span>
+                    <Avatar name={row.name} src={row.photoUrl} />
+                    <div>
+                      <strong>{row.name}</strong>
+                      <span>
+                        {row.handle ? `@${row.handle}` : row.mobile || 'No mobile'}
+                      </span>
+                    </div>
                   </td>
                   <td>{row.city || '—'}</td>
                   <td>{row.niches.slice(0, 2).join(', ') || '—'}</td>

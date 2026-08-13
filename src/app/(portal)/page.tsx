@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getPayload } from 'payload'
 
 import { LoginForm, LogoutButton } from './auth-controls'
+import { Avatar } from './components/avatar'
 import { PortalShell, Brand } from './components/portal-shell'
 import { getAgencyDashboard } from './dashboard-home'
 import { formatNumber } from './lib/format'
@@ -72,7 +73,7 @@ export default async function Page() {
   if (user.role !== 'super_admin') {
     return (
       <main className="restricted">
-        <span className="brand-mark">VF</span>
+        <img alt="Viral Flight" className="vf-logo" src="/logo-viral-flight.png" />
         <p className="eyebrow">Access restricted</p>
         <h1>Super admin access required</h1>
         <p>This account can use Payload Admin, but it cannot open the operations portal.</p>
@@ -185,11 +186,12 @@ export default async function Page() {
               {data.shortlist.map((person) => (
                 <li key={person.id}>
                   <Link href={`/influencers/${person.id}`}>
-                    <span className="vf-avatar">{person.name.slice(0, 1).toUpperCase()}</span>
+                    <Avatar name={person.name} src={person.photoUrl} />
                     <span>
                       <strong>{person.name}</strong>
                       <em>
-                        {person.city || 'India'} · {compact(person.followers)} · {person.niche}
+                        {person.handle ? `@${person.handle}` : person.city || 'India'} ·{' '}
+                        {compact(person.followers)} · {person.niche}
                       </em>
                     </span>
                     <b>{person.match} Match</b>

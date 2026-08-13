@@ -147,6 +147,8 @@ export async function getAgencyDashboard() {
       city: row.city,
       followers: row.followers,
       niche: row.niches[0] || 'Creator',
+      handle: row.handle,
+      photoUrl: row.photoUrl,
       match: Math.min(99, 70 + Math.round((row.followers || 0) / 50000)),
     })),
     performance: {

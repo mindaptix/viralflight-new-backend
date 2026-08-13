@@ -96,6 +96,9 @@ export function AgentChat({ initialPrompt = '' }: { initialPrompt?: string }) {
                 <div className="agent-cards">
                   {message.cards.map((card) => (
                     <Link className="agent-card" href={card.href} key={card.href}>
+                      {card.imageUrl ? (
+                        <img alt="" className="vf-avatar" src={card.imageUrl} />
+                      ) : null}
                       <strong>{card.title}</strong>
                       <span>{card.subtitle}</span>
                       <em>{card.meta}</em>

@@ -50,6 +50,7 @@ function cardsFromToolPayload(name: string, payload: unknown): AgentResultCard[]
         subtitle: `${p.city || 'City n/a'} · ${Array.isArray(p.niches) ? p.niches.slice(0, 2).join(', ') : '—'}`,
         meta: `${Number(p.followers || 0).toLocaleString('en-IN')} followers · ${rateMin}–${rateMax}`,
         href: String(p.href || `/influencers/${p.id}`),
+        imageUrl: String(p.photoUrl || ''),
       },
     ]
   }
@@ -77,6 +78,7 @@ function cardsFromToolPayload(name: string, payload: unknown): AgentResultCard[]
       subtitle: `${row.city || 'City n/a'} · ${niches}`,
       meta: `${Number(row.followers || 0).toLocaleString('en-IN')} followers · ${rateMin}–${rateMax}`,
       href: String(row.href || `/influencers/${row.id}`),
+      imageUrl: String(row.photoUrl || ''),
     }
   })
 }

@@ -40,17 +40,7 @@ export type ShellActive =
 export function Brand() {
   return (
     <Link className="brand-lockup vf-brand" href="/">
-      <span className="vf-plane" aria-hidden>
-        <svg fill="none" height="18" viewBox="0 0 24 24" width="18">
-          <path
-            d="M3 11.5 21 3l-7.2 18-2.9-6.6L3 11.5Z"
-            fill="white"
-            stroke="white"
-            strokeLinejoin="round"
-            strokeWidth="1.4"
-          />
-        </svg>
-      </span>
+      <img alt="" className="vf-logo" src="/logo-viral-flight.png" />
       <span>
         Viral Flight <em>CRM</em>
       </span>

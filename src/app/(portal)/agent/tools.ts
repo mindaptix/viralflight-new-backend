@@ -13,6 +13,14 @@ function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+function photoFromDoc(doc: Record<string, unknown>) {
+  const ig =
+    doc.instagram && typeof doc.instagram === 'object'
+      ? (doc.instagram as Record<string, unknown>)
+      : null
+  return String(doc.profileImageUrl || ig?.profilePictureUrl || '')
+}
+
 function followersFromDoc(doc: Record<string, unknown>) {
   const platforms = Array.isArray(doc.platforms) ? doc.platforms : []
   let max = 0
@@ -87,6 +95,7 @@ export type InfluencerAgentResult = {
   instagramConnected: boolean
   managerName: string
   href: string
+  photoUrl: string
 }
 
 export async function searchInfluencersTool(
@@ -191,6 +200,7 @@ export async function searchInfluencersTool(
       ),
       managerName: String(doc.managerName || ''),
       href: `/influencers/${String(doc._id)}`,
+      photoUrl: photoFromDoc(doc as Record<string, unknown>),
     }
   })
 
@@ -337,6 +347,7 @@ export async function getInfluencerByIdTool(id: string) {
       complete: doc.isProfileComplete === true,
       createdAt: asIso(doc.createdAt),
       href: `/influencers/${String(doc._id)}`,
+      photoUrl: photoFromDoc(doc as Record<string, unknown>),
     },
   }
 }

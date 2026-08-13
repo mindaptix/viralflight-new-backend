@@ -34,8 +34,9 @@ const influencers = [
       engagement: 5.2,
     },
     rateRange: { min: 15000, max: 45000, currency: "INR" },
+    profession: 'Beauty creator',
     imageUrl:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80",
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&h=400&q=80",
   },
   {
     mobile: "+919000000002",
@@ -51,8 +52,9 @@ const influencers = [
       engagement: 4.1,
     },
     rateRange: { min: 8000, max: 25000, currency: "INR" },
+    profession: 'Fitness coach',
     imageUrl:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&h=400&q=80",
   },
   {
     mobile: "+919000000003",
@@ -68,8 +70,9 @@ const influencers = [
       engagement: 3.8,
     },
     rateRange: { min: 20000, max: 60000, currency: "INR" },
+    profession: 'Tech reviewer',
     imageUrl:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80",
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=400&h=400&q=80",
   },
   {
     mobile: "+919000000004",
@@ -85,8 +88,9 @@ const influencers = [
       engagement: 4.6,
     },
     rateRange: { min: 12000, max: 35000, currency: "INR" },
+    profession: 'Travel vlogger',
     imageUrl:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&h=400&q=80",
   },
   {
     mobile: "+919000000005",
@@ -102,8 +106,9 @@ const influencers = [
       engagement: 6.1,
     },
     rateRange: { min: 6000, max: 18000, currency: "INR" },
+    profession: 'Food creator',
     imageUrl:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80",
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&h=400&q=80",
   },
   {
     mobile: "+919000000006",
@@ -119,8 +124,117 @@ const influencers = [
       engagement: 4.9,
     },
     rateRange: { min: 25000, max: 75000, currency: "INR" },
+    profession: 'Gaming streamer',
     imageUrl:
-      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80",
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&h=400&q=80",
+  },
+  {
+    mobile: "+919000000007",
+    name: "Megha Sharma",
+    city: "Mumbai",
+    bio: "Lifestyle creator known for GRWM reels, apartment tours, and weekend city diaries from Bandra.",
+    contentCategories: ["Lifestyle", "Fashion", "Beauty"],
+    contentLanguages: ["Hindi", "English"],
+    platform: {
+      platform: "instagram",
+      username: "megha.sharma",
+      followers: 428000,
+      engagement: 5.8,
+    },
+    rateRange: { min: 18000, max: 42000, currency: "INR" },
+    profession: "Lifestyle creator",
+    imageUrl:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400&q=80",
+  },
+  {
+    mobile: "+919000000008",
+    name: "Arjun Verma",
+    city: "Delhi",
+    bio: "Music and culture creator covering indie gigs, headphones, and late-night studio sessions.",
+    contentCategories: ["Music", "Lifestyle"],
+    contentLanguages: ["Hindi", "English"],
+    platform: {
+      platform: "instagram",
+      username: "arjun.verma",
+      followers: 196000,
+      engagement: 4.4,
+    },
+    rateRange: { min: 9000, max: 28000, currency: "INR" },
+    profession: "Music creator",
+    imageUrl:
+      "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?auto=format&fit=crop&w=400&h=400&q=80",
+  },
+  {
+    mobile: "+919000000009",
+    name: "Riya Malhotra",
+    city: "Chandigarh",
+    bio: "Fitness and wellness creator running 30-day challenges, meal prep reels, and gym form breakdowns.",
+    contentCategories: ["Fitness", "Health & Wellness", "Food"],
+    contentLanguages: ["Hindi", "English"],
+    platform: {
+      platform: "instagram",
+      username: "riya.moves",
+      followers: 312000,
+      engagement: 6.4,
+    },
+    rateRange: { min: 14000, max: 38000, currency: "INR" },
+    profession: "Fitness creator",
+    imageUrl:
+      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&h=400&q=80",
+  },
+  {
+    mobile: "+919000000010",
+    name: "Ishaan Kapoor",
+    city: "Lucknow",
+    bio: "Comedy sketches on Indian family life, campus humour, and relatable office bits.",
+    contentCategories: ["Comedy", "Lifestyle"],
+    contentLanguages: ["Hindi", "English"],
+    platform: {
+      platform: "instagram",
+      username: "ishaan.kapoor",
+      followers: 540000,
+      engagement: 7.1,
+    },
+    rateRange: { min: 20000, max: 55000, currency: "INR" },
+    profession: "Comedy creator",
+    imageUrl:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&h=400&q=80",
+  },
+  {
+    mobile: "+919000000011",
+    name: "Tara Joshi",
+    city: "Goa",
+    bio: "Beauty and travel creator shooting beach makeup looks, monsoon fashion, and boutique stay reviews.",
+    contentCategories: ["Beauty", "Travel", "Fashion"],
+    contentLanguages: ["English", "Hindi"],
+    platform: {
+      platform: "instagram",
+      username: "tara.joshi",
+      followers: 267000,
+      engagement: 5.5,
+    },
+    rateRange: { min: 11000, max: 32000, currency: "INR" },
+    profession: "Beauty creator",
+    imageUrl:
+      "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=400&h=400&q=80",
+  },
+  {
+    mobile: "+919000000012",
+    name: "Neel Patel",
+    city: "Ahmedabad",
+    bio: "Personal finance explainers for first-time investors, UPI habits, and D2C money stories.",
+    contentCategories: ["Finance", "Education"],
+    contentLanguages: ["Gujarati", "Hindi", "English"],
+    platform: {
+      platform: "youtube",
+      channelName: "Neel Money",
+      subscribers: 410000,
+      engagement: 3.6,
+    },
+    rateRange: { min: 16000, max: 48000, currency: "INR" },
+    profession: "Finance creator",
+    imageUrl:
+      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&h=400&q=80",
   },
 ];
 
@@ -369,12 +483,16 @@ async function seedInfluencer(data) {
         ],
         portfolioImages: [data.imageUrl],
       },
+      profileImageUrl: data.imageUrl,
+      profession: data.profession || data.contentCategories[0] || 'Creator',
       instagram: {
         handle: data.platform.username || data.platform.channelName,
         followers: data.platform.followers || data.platform.subscribers,
         engagementRate: data.platform.engagement,
         profilePictureUrl: data.imageUrl,
-        isConnected: false,
+        isConnected: true,
+        connectedAt: new Date(),
+        lastSyncedAt: new Date(),
       },
       isProfileComplete: true,
       completedAt: new Date(),

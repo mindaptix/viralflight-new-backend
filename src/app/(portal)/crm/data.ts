@@ -252,8 +252,43 @@ export type InfluencerListItem = {
   followers: number
   managerName: string
   managerMobile: string
+  photoUrl: string
+  handle: string
   createdAt: string
   crm: CrmRecord
+}
+
+function photoFromDoc(doc: Record<string, unknown>) {
+  const ig =
+    doc.instagram && typeof doc.instagram === 'object'
+      ? (doc.instagram as Record<string, unknown>)
+      : null
+  const mediaKit =
+    doc.mediaKit && typeof doc.mediaKit === 'object'
+      ? (doc.mediaKit as Record<string, unknown>)
+      : null
+  const portfolio = Array.isArray(mediaKit?.portfolioImages)
+    ? mediaKit.portfolioImages
+    : []
+  return String(
+    doc.profileImageUrl || ig?.profilePictureUrl || portfolio[0] || '',
+  )
+}
+
+function handleFromDoc(doc: Record<string, unknown>) {
+  const ig =
+    doc.instagram && typeof doc.instagram === 'object'
+      ? (doc.instagram as Record<string, unknown>)
+      : null
+  if (ig?.handle) return String(ig.handle)
+  const platforms = Array.isArray(doc.platforms) ? doc.platforms : []
+  for (const platform of platforms) {
+    if (!platform || typeof platform !== 'object') continue
+    const item = platform as Record<string, unknown>
+    const handle = String(item.username || item.channelName || '')
+    if (handle) return handle
+  }
+  return ''
 }
 
 function followersFromDoc(doc: Record<string, unknown>) {
@@ -346,6 +381,8 @@ export async function listInfluencers(filters: InfluencerListFilters) {
       followers: followersFromDoc(doc as Record<string, unknown>),
       managerName: String(doc.managerName || ''),
       managerMobile: String(doc.managerMobile || ''),
+      photoUrl: photoFromDoc(doc as Record<string, unknown>),
+      handle: handleFromDoc(doc as Record<string, unknown>),
       createdAt: asIso(doc.createdAt),
       crm,
     }
@@ -387,7 +424,7 @@ export async function getInfluencerDetail(id: string) {
     managerName: String(doc.managerName || ''),
     managerMobile: String(doc.managerMobile || ''),
     youtubeHandle: String(doc.youtubeHandle || ''),
-    profileImageUrl: String(doc.profileImageUrl || instagram.profilePictureUrl || ''),
+    profileImageUrl: photoFromDoc(doc as Record<string, unknown>),
     instagram,
     platforms,
     followers: followersFromDoc(doc as Record<string, unknown>),

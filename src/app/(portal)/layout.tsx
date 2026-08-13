@@ -6,6 +6,10 @@ import './portal.css'
 export const metadata: Metadata = {
   title: 'Viral Flight · Company CRM',
   description: 'Viral Flight company workspace for influencers, agencies and AI search',
+  icons: {
+    icon: '/logo-mark.png',
+    apple: '/logo-mark.png',
+  },
 }
 
 export default function PortalLayout({ children }: { children: ReactNode }) {

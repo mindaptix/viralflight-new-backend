@@ -10,6 +10,7 @@ export type AgentResultCard = {
   subtitle: string
   meta: string
   href: string
+  imageUrl?: string
 }
 
 export type AgentTurnResult = {

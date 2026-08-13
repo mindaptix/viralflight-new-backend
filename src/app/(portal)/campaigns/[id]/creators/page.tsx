@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { Avatar } from '../../../components/avatar'
 import { PortalShell } from '../../../components/portal-shell'
 import { listInfluencers } from '../../../crm/data'
 import { requireSuperAdmin } from '../../../lib/auth'
@@ -106,8 +107,11 @@ export default async function SelectCreatorsPage({ params, searchParams }: PageP
                         <input disabled={taken} name="influencerId" type="checkbox" value={row.id} />
                       </td>
                       <td className="person-cell">
-                        <strong>{row.name}</strong>
-                        <span>{taken ? 'Already added' : row.mobile || '—'}</span>
+                        <Avatar name={row.name} src={row.photoUrl} />
+                        <div>
+                          <strong>{row.name}</strong>
+                          <span>{taken ? 'Already added' : row.handle ? `@${row.handle}` : row.mobile || '—'}</span>
+                        </div>
                       </td>
                       <td>{row.city || '—'}</td>
                       <td>{row.niches.slice(0, 2).join(', ') || '—'}</td>
