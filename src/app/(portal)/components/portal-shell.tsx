@@ -6,10 +6,11 @@ import type { PortalUser } from '../lib/auth'
 
 const navItems = [
   { href: '/', label: 'Overview', hint: 'Network pulse' },
+  { href: '/campaigns', label: 'Campaigns', hint: 'VF in-house work' },
   { href: '/agent', label: 'AI Agent', hint: 'Ask in plain English' },
   { href: '/influencers', label: 'Influencers', hint: 'Creator CRM' },
   { href: '/agencies', label: 'Agencies', hint: 'Partner directory' },
-  { href: '/settings', label: 'Settings', hint: 'OpenAI & CRM config' },
+  { href: '/settings', label: 'Settings', hint: 'OpenAI, Claude & CRM' },
 ]
 
 const titles: Record<string, { eyebrow: string; title: string }> = {
@@ -28,6 +29,10 @@ const titles: Record<string, { eyebrow: string; title: string }> = {
   agencies: {
     eyebrow: 'Partner CRM',
     title: 'Agencies',
+  },
+  campaigns: {
+    eyebrow: 'Viral Flight campaigns',
+    title: 'In-house campaigns',
   },
   settings: {
     eyebrow: 'Company CRM',
@@ -50,7 +55,7 @@ export function PortalShell({
   children,
 }: {
   user: PortalUser
-  active: 'overview' | 'agent' | 'influencers' | 'agencies' | 'settings'
+  active: 'overview' | 'agent' | 'influencers' | 'agencies' | 'settings' | 'campaigns'
   children: ReactNode
 }) {
   const heading = titles[active] || titles.overview

@@ -169,7 +169,10 @@ export default async function Page({ searchParams }: PageProps) {
           <p>CRM for influencers & agencies, plus onboarding and campaign signals.</p>
         </div>
         <div className="heading-actions">
-          <Link className="filter-button" href="/agent">
+          <Link className="filter-button" href="/campaigns">
+            Campaigns
+          </Link>
+          <Link className="clear-button" href="/agent">
             Ask AI Agent
           </Link>
           <Link className="clear-button" href="/influencers">

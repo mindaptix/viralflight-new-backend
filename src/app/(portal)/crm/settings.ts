@@ -7,12 +7,21 @@ export type CrmSettingsPublic = {
   hasOpenAiKey: boolean
   openaiKeyHint: string
   openaiModel: string
+  hasClaudeKey: boolean
+  claudeKeyHint: string
+  claudeModel: string
   updatedAt: string
   updatedBy: string
   source: 'crm' | 'env' | 'none'
 }
 
 export type OpenAiRuntimeConfig = {
+  apiKey: string
+  model: string
+  source: 'crm' | 'env' | 'none'
+}
+
+export type ClaudeRuntimeConfig = {
   apiKey: string
   model: string
   source: 'crm' | 'env' | 'none'
@@ -95,9 +104,42 @@ export async function getOpenAiRuntimeConfig(): Promise<OpenAiRuntimeConfig> {
   }
 }
 
+export async function getClaudeRuntimeConfig(): Promise<ClaudeRuntimeConfig> {
+  const doc = await readSettingsDoc()
+  const encrypted = String(doc?.claudeApiKeyEncrypted || '')
+  if (encrypted) {
+    try {
+      const apiKey = decryptSecret(encrypted).trim()
+      if (apiKey) {
+        return {
+          apiKey,
+          model: String(doc?.claudeModel || process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5'),
+          source: 'crm',
+        }
+      }
+    } catch {
+      // fall through
+    }
+  }
+  const envKey = String(process.env.ANTHROPIC_API_KEY || '').trim()
+  if (envKey) {
+    return {
+      apiKey: envKey,
+      model: String(process.env.ANTHROPIC_MODEL || doc?.claudeModel || 'claude-sonnet-4-5'),
+      source: 'env',
+    }
+  }
+  return {
+    apiKey: '',
+    model: String(doc?.claudeModel || process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5'),
+    source: 'none',
+  }
+}
+
 export async function getCrmSettingsPublic(): Promise<CrmSettingsPublic> {
   const doc = await readSettingsDoc()
   const runtime = await getOpenAiRuntimeConfig()
+  const claude = await getClaudeRuntimeConfig()
   const hintFromDoc = String(doc?.openaiKeyHint || '')
   const hint =
     runtime.source === 'crm'
@@ -105,11 +147,21 @@ export async function getCrmSettingsPublic(): Promise<CrmSettingsPublic> {
       : runtime.source === 'env'
         ? `${maskKey(runtime.apiKey)} (from server .env)`
         : ''
+  const claudeHintFromDoc = String(doc?.claudeKeyHint || '')
+  const claudeHint =
+    claude.source === 'crm'
+      ? claudeHintFromDoc || maskKey(claude.apiKey)
+      : claude.source === 'env'
+        ? `${maskKey(claude.apiKey)} (from server .env)`
+        : ''
 
   return {
     hasOpenAiKey: Boolean(runtime.apiKey),
     openaiKeyHint: hint,
     openaiModel: runtime.model,
+    hasClaudeKey: Boolean(claude.apiKey),
+    claudeKeyHint: claudeHint,
+    claudeModel: claude.model,
     updatedAt: doc?.updatedAt ? new Date(String(doc.updatedAt)).toISOString() : '',
     updatedBy: String(doc?.updatedBy || ''),
     source: runtime.source,
@@ -120,6 +172,9 @@ export async function saveCrmAiSettings(input: {
   openaiApiKey?: string
   openaiModel?: string
   clearKey?: boolean
+  claudeApiKey?: string
+  claudeModel?: string
+  clearClaudeKey?: boolean
   updatedBy: string
 }) {
   const now = new Date()
@@ -131,6 +186,8 @@ export async function saveCrmAiSettings(input: {
 
   const model = String(input.openaiModel || '').trim() || 'gpt-4o-mini'
   $set.openaiModel = model.slice(0, 80)
+  const claudeModel = String(input.claudeModel || '').trim() || 'claude-sonnet-4-5'
+  $set.claudeModel = claudeModel.slice(0, 80)
 
   if (input.clearKey) {
     $set.openaiApiKeyEncrypted = ''
@@ -139,6 +196,15 @@ export async function saveCrmAiSettings(input: {
     const key = input.openaiApiKey.trim()
     $set.openaiApiKeyEncrypted = encryptSecret(key)
     $set.openaiKeyHint = maskKey(key)
+  }
+
+  if (input.clearClaudeKey) {
+    $set.claudeApiKeyEncrypted = ''
+    $set.claudeKeyHint = ''
+  } else if (input.claudeApiKey && input.claudeApiKey.trim()) {
+    const key = input.claudeApiKey.trim()
+    $set.claudeApiKeyEncrypted = encryptSecret(key)
+    $set.claudeKeyHint = maskKey(key)
   }
 
   await db().collection('crm_settings').updateOne(

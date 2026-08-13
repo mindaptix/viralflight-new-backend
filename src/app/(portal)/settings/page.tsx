@@ -20,19 +20,59 @@ export default async function SettingsPage() {
           <h1>Settings</h1>
           <p>Manage AI agent credentials used across the Viral Flight company portal.</p>
         </div>
-        <span className={`status-badge ${settings.hasOpenAiKey ? 'complete' : 'incomplete'}`}>
-          {settings.hasOpenAiKey ? `Key ready · ${settings.source}` : 'No API key'}
+        <span className={`status-badge ${settings.hasOpenAiKey || settings.hasClaudeKey ? 'complete' : 'incomplete'}`}>
+          {settings.hasClaudeKey || settings.hasOpenAiKey ? 'AI keys ready' : 'No API key'}
         </span>
       </div>
 
       <section className="settings-grid">
         <article className="panel">
           <div className="panel-header">
+            <h2>Claude</h2>
+            <span>Campaign copy</span>
+          </div>
+          <form action={saveAiSettingsAction} className="crm-form settings-form">
+            <input name="openaiModel" type="hidden" value={settings.openaiModel} />
+            <label>
+              Anthropic API key
+              <input
+                autoComplete="off"
+                name="claudeApiKey"
+                placeholder={
+                  settings.hasClaudeKey
+                    ? `Saved: ${settings.claudeKeyHint} — paste new key to replace`
+                    : 'sk-ant-...'
+                }
+                type="password"
+              />
+            </label>
+            <label>
+              Claude model
+              <select defaultValue={settings.claudeModel} name="claudeModel">
+                <option value="claude-sonnet-4-5">claude-sonnet-4-5</option>
+                <option value="claude-opus-4-5">claude-opus-4-5</option>
+                <option value="claude-3-5-haiku-latest">claude-3-5-haiku-latest</option>
+              </select>
+            </label>
+            <div className="settings-actions">
+              <button className="primary-button" type="submit">Save Claude</button>
+              {settings.hasClaudeKey && settings.claudeKeyHint && !settings.claudeKeyHint.includes('.env') ? (
+                <button className="clear-button" name="clearClaudeKey" type="submit" value="1">
+                  Remove Claude key
+                </button>
+              ) : null}
+            </div>
+          </form>
+        </article>
+
+        <article className="panel">
+          <div className="panel-header">
             <h2>OpenAI</h2>
-            <span>Used by AI Agent</span>
+            <span>Used by AI Agent + fallback</span>
           </div>
 
           <form action={saveAiSettingsAction} className="crm-form settings-form">
+            <input name="claudeModel" type="hidden" value={settings.claudeModel} />
             <label>
               API key
               <input
@@ -90,26 +130,12 @@ export default async function SettingsPage() {
           </div>
           <div className="detail-kv">
             <div>
-              <span>Key status</span>
-              <strong>{settings.hasOpenAiKey ? 'Configured' : 'Missing'}</strong>
+              <span>Claude</span>
+              <strong>{settings.hasClaudeKey ? settings.claudeKeyHint : 'Missing'}</strong>
             </div>
             <div>
-              <span>Active source</span>
-              <strong>
-                {settings.source === 'crm'
-                  ? 'CRM Settings'
-                  : settings.source === 'env'
-                    ? 'Server .env'
-                    : 'None'}
-              </strong>
-            </div>
-            <div>
-              <span>Masked key</span>
-              <strong>{settings.openaiKeyHint || '—'}</strong>
-            </div>
-            <div>
-              <span>Model</span>
-              <strong>{settings.openaiModel}</strong>
+              <span>OpenAI</span>
+              <strong>{settings.hasOpenAiKey ? settings.openaiKeyHint : 'Missing'}</strong>
             </div>
             <div>
               <span>Last updated</span>

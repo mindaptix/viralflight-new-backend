@@ -1272,3 +1272,62 @@ a.clear-button {
   }
 }
 
+.campaign-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.public-page {
+  min-height: 100vh;
+  padding: 24px 16px 60px;
+  background: var(--canvas);
+}
+
+.public-top {
+  max-width: 860px;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.public-card {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 28px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.public-card h1 {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: -0.03em;
+}
+
+.public-card > p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.public-block {
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.public-block h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.public-page .panel {
+  max-width: 860px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
