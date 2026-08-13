@@ -24,7 +24,7 @@ function uid() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-export function AgentChat() {
+export function AgentChat({ initialPrompt = '' }: { initialPrompt?: string }) {
   const [messages, setMessages] = useState<UiMessage[]>([
     {
       id: 'welcome',
@@ -33,7 +33,7 @@ export function AgentChat() {
         'Hi — main Viral Flight AI hoon. App jaisi language mein poochho: “Delhi influencers under 20k”, “Mumbai fashion 100k+ followers”, ya “show Bengaluru agencies”.',
     },
   ])
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(initialPrompt)
   const [pending, startTransition] = useTransition()
   const bottomRef = useRef<HTMLDivElement | null>(null)
 

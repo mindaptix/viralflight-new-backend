@@ -5,42 +5,10 @@ import { getPayload } from 'payload'
 
 import { LoginForm, LogoutButton } from './auth-controls'
 import { PortalShell, Brand } from './components/portal-shell'
-import {
-  getDashboardData,
-  type CompletionFilter,
-  type DashboardFilters,
-  type RoleFilter,
-} from './dashboard-data'
-import { CITIES, formatDate, formatNumber } from './lib/format'
+import { getAgencyDashboard } from './dashboard-home'
+import { formatNumber } from './lib/format'
 
 export const dynamic = 'force-dynamic'
-
-type PageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>
-}
-
-function first(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] ?? '' : value ?? ''
-}
-
-function readFilters(params: Record<string, string | string[] | undefined>): DashboardFilters {
-  const roleValue = first(params.role)
-  const completionValue = first(params.completion)
-  const role: RoleFilter = ['influencer', 'brand', 'agency'].includes(roleValue)
-    ? (roleValue as RoleFilter)
-    : 'all'
-  const completion: CompletionFilter = ['complete', 'incomplete'].includes(completionValue)
-    ? (completionValue as CompletionFilter)
-    : 'all'
-
-  return {
-    role,
-    completion,
-    city: first(params.city),
-    from: first(params.from),
-    to: first(params.to),
-  }
-}
 
 function LoginPage() {
   return (
@@ -83,40 +51,19 @@ function LoginPage() {
   )
 }
 
-function RankingList({
-  items,
-  empty,
-}: {
-  items: Array<{ label: string; value: number }>
-  empty: string
-}) {
-  const max = Math.max(...items.map((item) => item.value), 1)
-  if (!items.length) return <div className="empty-state">{empty}</div>
-
-  return (
-    <ol className="rank-list">
-      {items.map((item) => (
-        <li key={item.label}>
-          <div className="rank-label">
-            <span>{item.label}</span>
-            <div className="rank-track">
-              <i style={{ width: `${Math.max((item.value / max) * 100, 4)}%` }} />
-            </div>
-          </div>
-          <strong>{formatNumber(item.value)}</strong>
-        </li>
-      ))}
-    </ol>
-  )
+function compact(value: number) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}K`
+  return formatNumber(value)
 }
 
-function profileHref(role: string, id: string) {
-  if (role === 'influencer') return `/influencers/${id}`
-  if (role === 'agency') return `/agencies/${id}`
-  return null
+function statusClass(status: string) {
+  if (status === 'Completed') return 'done'
+  if (status === 'On Hold') return 'hold'
+  return 'progress'
 }
 
-export default async function Page({ searchParams }: PageProps) {
+export default async function Page() {
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
 
@@ -134,23 +81,8 @@ export default async function Page({ searchParams }: PageProps) {
     )
   }
 
-  const filters = readFilters(await searchParams)
-  const data = await getDashboardData(filters)
-  const completionRate = data.metrics.totalUsers
-    ? Math.round((data.metrics.completedProfiles / data.metrics.totalUsers) * 100)
-    : 0
-  const metricCards = [
-    ['↗', 'Total registrations', data.metrics.totalUsers],
-    ['◎', 'Influencers', data.metrics.influencers],
-    ['◆', 'Brands', data.metrics.brands],
-    ['△', 'Agencies', data.metrics.agencies],
-    ['✓', 'Complete profiles', data.metrics.completedProfiles],
-    ['#', 'Completion rate', `${completionRate}%`],
-    ['•', 'Verified mobiles', data.metrics.verifiedMobiles],
-    ['◉', 'Instagram connected', data.metrics.instagramConnected],
-    ['+', 'New this month', data.metrics.newThisMonth],
-    ['◇', 'Active campaigns', data.metrics.activeCampaigns],
-  ] as const
+  const data = await getAgencyDashboard()
+  const firstCampaign = data.campaigns[0]?.title || 'your next campaign'
 
   return (
     <PortalShell
@@ -162,182 +94,216 @@ export default async function Page({ searchParams }: PageProps) {
         role: user.role,
       }}
     >
-      <div className="dashboard-heading">
-        <div>
-          <p className="eyebrow">Network intelligence</p>
-          <h1>Operations overview</h1>
-          <p>CRM for influencers & agencies, plus onboarding and campaign signals.</p>
-        </div>
-        <div className="heading-actions">
-          <Link className="filter-button" href="/campaigns">
-            Campaigns
-          </Link>
-          <Link className="clear-button" href="/agent">
-            Ask AI Agent
-          </Link>
-          <Link className="clear-button" href="/influencers">
-            Influencers
-          </Link>
-          <Link className="clear-button" href="/agencies">
-            Agencies
-          </Link>
-          <span className="live-badge">
-            <i className="live-dot" />
-            Live database
-          </span>
-        </div>
-      </div>
-
-      <form className="filters">
-        <label>
-          Audience
-          <select defaultValue={filters.role} name="role">
-            <option value="all">All users</option>
-            <option value="influencer">Influencers</option>
-            <option value="brand">Brands</option>
-            <option value="agency">Agencies</option>
-          </select>
-        </label>
-        <label>
-          City
-          <select defaultValue={filters.city} name="city">
-            <option value="">All cities</option>
-            {CITIES.map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Profile status
-          <select defaultValue={filters.completion} name="completion">
-            <option value="all">All profiles</option>
-            <option value="complete">Complete</option>
-            <option value="incomplete">Incomplete</option>
-          </select>
-        </label>
-        <label>
-          From
-          <input defaultValue={filters.from} name="from" type="date" />
-        </label>
-        <label>
-          To
-          <input defaultValue={filters.to} name="to" type="date" />
-        </label>
-        <button className="filter-button" type="submit">
-          Apply
-        </button>
-        <a className="clear-button" href="/">
-          Reset
-        </a>
-      </form>
-
-      <section className="metric-grid">
-        {metricCards.map(([icon, label, value]) => (
-          <article className="metric-card" key={label}>
-            <span className="metric-icon">{icon}</span>
-            <strong>{typeof value === 'number' ? formatNumber(value) : value}</strong>
-            <span>{label}</span>
-          </article>
-        ))}
+      <section className="dash-metrics">
+        <article>
+          <span>Live campaigns</span>
+          <strong>{formatNumber(data.metrics.liveCampaigns)}</strong>
+        </article>
+        <article>
+          <span>Active influencers</span>
+          <strong>{formatNumber(data.metrics.influencers)}</strong>
+        </article>
+        <article>
+          <span>Pending approvals</span>
+          <strong>{formatNumber(data.metrics.pendingApprovals)}</strong>
+        </article>
+        <article>
+          <span>Client live links</span>
+          <strong>{formatNumber(data.metrics.clientLinks)}</strong>
+        </article>
       </section>
 
-      <section className="section-grid">
-        <article className="panel">
-          <div className="panel-header">
-            <h2>Recent onboarding</h2>
-            <span>{data.recent.length} latest records</span>
+      <div className="dash-grid">
+        <article className="dash-card">
+          <div className="dash-card-head">
+            <h2>Active Campaigns</h2>
+            <Link href="/campaigns">View all</Link>
           </div>
-          {data.recent.length ? (
+          {data.campaigns.length ? (
             <div className="table-wrap">
-              <table>
+              <table className="dash-table">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Role</th>
-                    <th>City</th>
+                    <th>Campaign</th>
+                    <th>Client</th>
+                    <th>Deliverables</th>
+                    <th>Progress</th>
                     <th>Status</th>
-                    <th>Joined</th>
+                    <th>Due date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {data.recent.map((row) => {
-                    const href = profileHref(row.role, row.id)
-                    return (
-                      <tr key={`${row.role}-${row.id}`}>
-                        <td className="person-cell">
-                          {href ? (
-                            <Link className="table-link" href={href}>
-                              <strong>{row.name}</strong>
-                            </Link>
-                          ) : (
-                            <strong>{row.name}</strong>
-                          )}
-                          <span>{row.mobile}</span>
-                        </td>
-                        <td>
-                          <span className="role-badge">{row.role}</span>
-                        </td>
-                        <td>{row.city}</td>
-                        <td>
-                          <span
-                            className={`status-badge ${
-                              row.complete ? 'complete' : 'incomplete'
-                            }`}
-                          >
-                            {row.complete ? 'Complete' : 'Incomplete'}
+                  {data.campaigns.map((row) => (
+                    <tr key={row.id}>
+                      <td>
+                        <Link className="campaign-cell" href={`/campaigns/${row.id}`}>
+                          <span className="campaign-mark">◎</span>
+                          <span>
+                            <strong>{row.title}</strong>
+                            <em>{row.reelsLabel}</em>
                           </span>
-                        </td>
-                        <td>{formatDate(row.createdAt)}</td>
-                      </tr>
-                    )
-                  })}
+                        </Link>
+                      </td>
+                      <td>{row.client}</td>
+                      <td>
+                        {row.done}/{row.total}
+                      </td>
+                      <td>
+                        <div className="progress-cell">
+                          <span className="progress-track">
+                            <i style={{ width: `${row.progress}%` }} />
+                          </span>
+                          {row.progress}%
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`status-pill ${statusClass(row.status)}`}>
+                          {row.status}
+                        </span>
+                      </td>
+                      <td>{row.due}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <div className="empty-state">No onboarding records match these filters.</div>
+            <div className="empty-state">
+              No campaigns yet.{' '}
+              <Link href="/campaigns/new">Create Campaign +</Link>
+            </div>
           )}
         </article>
 
-        <div className="side-stack">
-          <article className="panel">
-            <div className="panel-header">
-              <h2>Top cities</h2>
-              <span>By profiles</span>
+        <aside className="dash-right">
+          <article className="dash-card">
+            <div className="dash-card-head">
+              <h2>Influencer Shortlist</h2>
+              <Link href="/influencers">Open</Link>
             </div>
-            <RankingList items={data.cities} empty="No city data available." />
+            <ul className="shortlist">
+              {data.shortlist.map((person) => (
+                <li key={person.id}>
+                  <Link href={`/influencers/${person.id}`}>
+                    <span className="vf-avatar">{person.name.slice(0, 1).toUpperCase()}</span>
+                    <span>
+                      <strong>{person.name}</strong>
+                      <em>
+                        {person.city || 'India'} · {compact(person.followers)} · {person.niche}
+                      </em>
+                    </span>
+                    <b>{person.match} Match</b>
+                  </Link>
+                </li>
+              ))}
+              {!data.shortlist.length ? (
+                <li className="empty-state">No influencers in the CRM yet.</li>
+              ) : null}
+            </ul>
           </article>
-          <article className="panel">
-            <div className="panel-header">
-              <h2>Top niches & industries</h2>
-              <span>Audience mix</span>
+
+          <article className="dash-card assistant-card">
+            <div className="dash-card-head">
+              <h2>Claude + OpenAI Assistant</h2>
             </div>
-            <RankingList items={data.segments} empty="No segment data available." />
+            <div className="assist-prompts">
+              <Link href={`/agent?q=${encodeURIComponent(`Generate a creative brief for ${firstCampaign}`)}`}>
+                Generate creative brief for {firstCampaign}
+              </Link>
+              <Link href="/agent?q=Suggest%20influencers%20for%20a%20skincare%20campaign">
+                Suggest influencers for a skincare campaign
+              </Link>
+              <Link href="/agent?q=Write%20outreach%20email%20for%20fashion%20influencers">
+                Write outreach email for fashion influencers
+              </Link>
+            </div>
+            <form action="/agent" className="assist-form">
+              <input name="q" placeholder="Ask anything..." />
+              <button aria-label="Ask AI" type="submit">
+                →
+              </button>
+            </form>
+            <p className="assist-foot">Powered by Claude & GPT</p>
           </article>
-          <article className="panel">
-            <div className="panel-header">
-              <h2>Campaign activity</h2>
-              <span>Selected date range</span>
-            </div>
-            <ol className="rank-list">
-              <li>
-                <div className="rank-label">
-                  <span>Total campaigns</span>
+        </aside>
+      </div>
+
+      <div className="dash-bottom">
+        <article className="dash-card">
+          <div className="dash-card-head">
+            <h2>Approvals Queue</h2>
+            <Link href="/approvals">View all</Link>
+          </div>
+          <ul className="queue-list">
+            {data.approvals.map((item) => (
+              <li key={item.id}>
+                <div>
+                  <strong>{item.kind}</strong>
+                  <span>
+                    {item.campaignTitle} · {item.creatorName}
+                  </span>
+                  <em>{item.when}</em>
                 </div>
-                <strong>{formatNumber(data.metrics.campaigns)}</strong>
+                <Link className="review-btn" href={item.href}>
+                  Review
+                </Link>
               </li>
-              <li>
-                <div className="rank-label">
-                  <span>Applications received</span>
-                </div>
-                <strong>{formatNumber(data.metrics.applications)}</strong>
+            ))}
+            {!data.approvals.length ? (
+              <li className="empty-state">Nothing waiting for review.</li>
+            ) : null}
+          </ul>
+        </article>
+
+        <article className="dash-card">
+          <div className="dash-card-head">
+            <h2>Client Live Links</h2>
+            <Link href="/links">View all</Link>
+          </div>
+          <ul className="link-list">
+            {data.clientLinks.map((item) => (
+              <li key={item.id}>
+                <strong>{item.client}</strong>
+                <a href={item.url} rel="noreferrer" target="_blank">
+                  {item.url.replace(/^https?:\/\//, '')}
+                </a>
               </li>
-            </ol>
-          </article>
+            ))}
+            {!data.clientLinks.length ? (
+              <li className="empty-state">Create a campaign to generate a live client link.</li>
+            ) : null}
+          </ul>
+        </article>
+      </div>
+
+      <article className="dash-card perf-strip">
+        <div className="dash-card-head">
+          <h2>Live Campaign Performance</h2>
+          <span>Instagram stats from posted reels</span>
         </div>
-      </section>
+        <div className="perf-grid">
+          <div>
+            <span>Total Reach</span>
+            <strong>{compact(data.performance.reach)}</strong>
+          </div>
+          <div>
+            <span>Total Views</span>
+            <strong>{compact(data.performance.views)}</strong>
+          </div>
+          <div>
+            <span>Engagement Rate</span>
+            <strong>{data.performance.engagement}%</strong>
+          </div>
+          <div>
+            <span>Likes</span>
+            <strong>{compact(data.performance.likes)}</strong>
+          </div>
+          <div>
+            <span>Comments</span>
+            <strong>{compact(data.performance.comments)}</strong>
+          </div>
+        </div>
+      </article>
     </PortalShell>
   )
 }

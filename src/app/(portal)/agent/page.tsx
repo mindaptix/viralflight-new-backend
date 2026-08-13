@@ -4,8 +4,15 @@ import { AgentChat } from './agent-chat'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AgentPage() {
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export default async function AgentPage({ searchParams }: PageProps) {
   const user = await requireSuperAdmin()
+  const params = await searchParams
+  const raw = params.q
+  const initialPrompt = Array.isArray(raw) ? raw[0] || '' : raw || ''
 
   return (
     <PortalShell active="agent" user={user}>
@@ -23,7 +30,7 @@ export default async function AgentPage() {
           Live CRM data
         </span>
       </div>
-      <AgentChat />
+      <AgentChat initialPrompt={initialPrompt} />
     </PortalShell>
   )
 }

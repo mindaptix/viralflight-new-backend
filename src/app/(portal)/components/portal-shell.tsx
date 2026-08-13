@@ -5,46 +5,55 @@ import { LogoutButton } from '../auth-controls'
 import type { PortalUser } from '../lib/auth'
 
 const navItems = [
-  { href: '/', label: 'Overview', hint: 'Network pulse' },
-  { href: '/campaigns', label: 'Campaigns', hint: 'VF in-house work' },
-  { href: '/agent', label: 'AI Agent', hint: 'Ask in plain English' },
-  { href: '/influencers', label: 'Influencers', hint: 'Creator CRM' },
-  { href: '/agencies', label: 'Agencies', hint: 'Partner directory' },
-  { href: '/settings', label: 'Settings', hint: 'OpenAI, Claude & CRM' },
+  { href: '/', key: 'overview', label: 'Dashboard' },
+  { href: '/campaigns', key: 'campaigns', label: 'Campaigns' },
+  { href: '/influencers', key: 'influencers', label: 'Influencers' },
+  { href: '/approvals', key: 'approvals', label: 'Approvals' },
+  { href: '/links', key: 'links', label: 'Client Links' },
+  { href: '/reports', key: 'reports', label: 'Reports' },
+  { href: '/agent', key: 'agent', label: 'AI Studio' },
 ]
 
-const titles: Record<string, { eyebrow: string; title: string }> = {
-  overview: {
-    eyebrow: 'Viral Flight',
-    title: 'Operations overview',
-  },
-  agent: {
-    eyebrow: 'Viral Flight AI',
-    title: 'Company agent',
-  },
-  influencers: {
-    eyebrow: 'Creator CRM',
-    title: 'Influencers',
-  },
-  agencies: {
-    eyebrow: 'Partner CRM',
-    title: 'Agencies',
-  },
-  campaigns: {
-    eyebrow: 'Viral Flight campaigns',
-    title: 'In-house campaigns',
-  },
-  settings: {
-    eyebrow: 'Company CRM',
-    title: 'Settings',
-  },
+const titles: Record<string, string> = {
+  overview: 'Dashboard',
+  campaigns: 'Campaigns',
+  influencers: 'Influencers',
+  approvals: 'Approvals',
+  links: 'Client Links',
+  reports: 'Reports',
+  agent: 'AI Studio',
+  agencies: 'Agencies',
+  settings: 'Settings',
 }
+
+export type ShellActive =
+  | 'overview'
+  | 'agent'
+  | 'influencers'
+  | 'agencies'
+  | 'settings'
+  | 'campaigns'
+  | 'approvals'
+  | 'links'
+  | 'reports'
 
 export function Brand() {
   return (
-    <Link className="brand-lockup" href="/">
-      <span className="brand-mark">VF</span>
-      <span>Viral Flight</span>
+    <Link className="brand-lockup vf-brand" href="/">
+      <span className="vf-plane" aria-hidden>
+        <svg fill="none" height="18" viewBox="0 0 24 24" width="18">
+          <path
+            d="M3 11.5 21 3l-7.2 18-2.9-6.6L3 11.5Z"
+            fill="white"
+            stroke="white"
+            strokeLinejoin="round"
+            strokeWidth="1.4"
+          />
+        </svg>
+      </span>
+      <span>
+        Viral Flight <em>CRM</em>
+      </span>
     </Link>
   )
 }
@@ -55,54 +64,65 @@ export function PortalShell({
   children,
 }: {
   user: PortalUser
-  active: 'overview' | 'agent' | 'influencers' | 'agencies' | 'settings' | 'campaigns'
+  active: ShellActive
   children: ReactNode
 }) {
-  const heading = titles[active] || titles.overview
+  const title = titles[active] || 'Dashboard'
 
   return (
-    <div className="crm-shell">
-      <aside className="crm-sidebar">
+    <div className="vf-app">
+      <aside className="vf-side">
         <Brand />
-        <p className="crm-sidebar-label">Company workspace</p>
-        <nav className="crm-nav">
-          {navItems.map((item) => {
-            const key = item.href === '/'
-              ? 'overview'
-              : item.href.replace(/^\//, '')
-            const isActive = active === key
-            return (
-              <Link
-                className={`crm-nav-link${isActive ? ' active' : ''}`}
-                href={item.href}
-                key={item.href}
-              >
-                <span className="crm-nav-label">{item.label}</span>
-                <span className="crm-nav-hint">{item.hint}</span>
-              </Link>
-            )
-          })}
+        <nav className="vf-nav">
+          {navItems.map((item) => (
+            <Link
+              className={`vf-nav-item${active === item.key ? ' is-active' : ''}`}
+              href={item.href}
+              key={item.href}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
-        <a className="crm-nav-link muted" href="/admin" target="_blank" rel="noreferrer">
-          Payload Admin ↗
-        </a>
-      </aside>
-
-      <div className="crm-content">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">{heading.eyebrow}</p>
-            <strong className="topbar-title">{heading.title}</strong>
-          </div>
-          <div className="admin-actions">
-            <div className="admin-identity">
+        <div className="vf-side-foot">
+          <div className="vf-user">
+            <span className="vf-avatar">
+              {(user.name || 'A').slice(0, 1).toUpperCase()}
+            </span>
+            <div>
               <strong>{user.name || 'Super Admin'}</strong>
-              <span>{user.email}</span>
+              <span>Account Manager</span>
             </div>
+          </div>
+          <p className="vf-tip">
+            Viral Flight Tip: Use AI Studio to generate creative briefs, outreach emails and
+            analyze performance faster.
+          </p>
+          <div className="vf-side-links">
+            <Link href="/settings">Settings</Link>
+            <Link href="/agencies">Agencies</Link>
             <LogoutButton />
           </div>
+        </div>
+      </aside>
+
+      <div className="vf-main">
+        <header className="vf-top">
+          <h1>{title}</h1>
+          <form action="/influencers" className="vf-search">
+            <input name="q" placeholder="Search campaigns, influencers, clients..." />
+            <kbd>⌘K</kbd>
+          </form>
+          <div className="vf-top-actions">
+            <span className="vf-icon-btn" title="Notifications">
+              ⌁
+            </span>
+            <Link className="vf-create" href="/campaigns/new">
+              Create Campaign +
+            </Link>
+          </div>
         </header>
-        <main className="dashboard-main crm-main">{children}</main>
+        <div className="vf-body">{children}</div>
       </div>
     </div>
   )
