@@ -38,7 +38,7 @@ function parseOutline(text: string, fallbackClient: string): DeckOutline {
   const json = JSON.parse(match ? match[0] : '{}') as Partial<DeckOutline>
   const slidesRaw = Array.isArray(json.slides) ? json.slides : []
   const slides = slidesRaw.slice(0, 12).map((slide, index) => {
-    const item = slide && typeof slide === 'object' ? slide : {}
+    const item = (slide && typeof slide === 'object' ? slide : {}) as Record<string, unknown>
     const kindRaw = String(item.kind || 'content')
     const kind =
       kindRaw === 'title' || kindRaw === 'stats' || kindRaw === 'closing' ? kindRaw : 'content'
