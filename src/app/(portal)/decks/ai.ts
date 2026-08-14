@@ -33,17 +33,22 @@ Rules:
 - Currency INR. Tone: confident, practical, no fluff.
 - Speaker notes in "note" (1-2 sentences).`
 
+function slideKind(value: unknown, index: number): DeckSlide['kind'] {
+  if (index === 0) return 'title'
+  if (value === 'title' || value === 'stats' || value === 'closing' || value === 'content') {
+    return value
+  }
+  return 'content'
+}
+
 function parseOutline(text: string, fallbackClient: string): DeckOutline {
   const match = text.match(/\{[\s\S]*\}/)
   const json = JSON.parse(match ? match[0] : '{}') as Partial<DeckOutline>
   const slidesRaw = Array.isArray(json.slides) ? json.slides : []
-  const slides = slidesRaw.slice(0, 12).map((slide, index) => {
+  const slides: DeckSlide[] = slidesRaw.slice(0, 12).map((slide, index) => {
     const item = (slide && typeof slide === 'object' ? slide : {}) as Record<string, unknown>
-    const kindRaw = String(item.kind || 'content')
-    const kind =
-      kindRaw === 'title' || kindRaw === 'stats' || kindRaw === 'closing' ? kindRaw : 'content'
     return {
-      kind: index === 0 ? 'title' : kind,
+      kind: slideKind(item.kind, index),
       heading: String(item.heading || `Slide ${index + 1}`).slice(0, 90),
       bullets: (Array.isArray(item.bullets) ? item.bullets : [])
         .map((bullet) => String(bullet || '').trim())

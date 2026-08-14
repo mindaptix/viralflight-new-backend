@@ -1,29 +1,29 @@
-/* Viral Flight logo: orange #F7921D + green #21B011 on light CRM */
+/* Viral Flight CRM: dark purple + lime, logo on lime tile */
 :root {
   --orange: #f7921d;
   --orange-dark: #d97a12;
-  --ink: #111111;
-  --muted: #6b7280;
-  --faint: #9ca3af;
-  --purple: #f7921d;
-  --violet: #f7921d;
-  --purple-dark: #d97a12;
-  --lime: #21b011;
-  --lime-dark: #1a8c0e;
+  --ink: #171224;
+  --muted: #706a7c;
+  --faint: #9b93ab;
+  --purple: #6d28d9;
+  --violet: #8b5cf6;
+  --purple-dark: #4c1d95;
+  --lime: #d9f99d;
+  --lime-dark: #bef264;
   --rose: #f43f5e;
   --cyan: #22d3ee;
   --amber: #fbbf24;
   --surface: #ffffff;
-  --canvas: #f6f5f2;
-  --line: #eceae4;
-  --green: #21b011;
-  --red: #f43f5e;
-  --dark: #000000;
-  --dark-elevated: #111111;
-  --card-yellow: #fff4e5;
-  --card-blue: #fff4e5;
-  --card-green: #e9f8e6;
-  --shadow: 0 10px 28px rgba(17, 17, 17, 0.06);
+  --canvas: #f6f4f9;
+  --line: #e9e5ef;
+  --green: #16804a;
+  --red: #c9344b;
+  --dark: #160a2b;
+  --dark-elevated: #22143a;
+  --card-yellow: #f5f0ff;
+  --card-blue: #f5f0ff;
+  --card-green: #f7fee7;
+  --shadow: 0 18px 48px rgba(39, 22, 65, 0.08);
   --radius-sm: 12px;
   --radius-md: 16px;
   --radius-lg: 18px;
@@ -74,9 +74,9 @@ select {
   justify-content: space-between;
   padding: 52px clamp(32px, 7vw, 92px);
   background:
-    radial-gradient(circle at 18% 14%, rgba(247, 146, 29, 0.22), transparent 32%),
-    radial-gradient(circle at 86% 80%, rgba(33, 176, 17, 0.18), transparent 34%),
-    #000;
+    radial-gradient(circle at 18% 14%, rgba(217, 249, 157, 0.22), transparent 32%),
+    radial-gradient(circle at 86% 80%, rgba(139, 92, 246, 0.28), transparent 34%),
+    #160a2b;
   color: #f8fafc;
 }
 
@@ -103,6 +103,8 @@ select {
   font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.02em;
+  color: inherit;
+  text-decoration: none;
 }
 
 .vf-mark {
@@ -112,7 +114,7 @@ select {
   place-items: center;
   flex-shrink: 0;
   border-radius: 12px;
-  background: #000;
+  background: var(--lime);
 }
 
 .vf-mark svg {
@@ -130,7 +132,7 @@ select {
   width: 42px;
   object-fit: cover;
   border-radius: 12px;
-  background: #000;
+  background: var(--lime);
 }
 
 .restricted .vf-logo {
@@ -156,7 +158,7 @@ select {
 
 .login-story .eyebrow,
 .crm-content .topbar .eyebrow {
-  color: var(--orange);
+  color: var(--lime);
 }
 
 .story-copy h1 {
@@ -296,7 +298,7 @@ select {
   height: 52px;
   margin-top: 4px;
   background: var(--purple);
-  color: #111;
+  color: #fff;
 }
 
 .primary-button:hover,
@@ -472,7 +474,7 @@ select {
 
 .filter-button {
   background: var(--purple);
-  color: #111;
+  color: #fff;
 }
 
 .clear-button {
@@ -506,7 +508,7 @@ select {
   place-items: center;
   margin-bottom: 14px;
   border-radius: 10px;
-  background: rgba(247, 146, 29, 0.16);
+  background: rgba(109, 40, 217, 0.12);
   color: var(--purple);
   font-size: 15px;
   font-weight: 700;
@@ -632,7 +634,7 @@ tr:last-child td {
 }
 
 .role-badge {
-  background: rgba(247, 146, 29, 0.16);
+  background: rgba(109, 40, 217, 0.12);
   color: var(--purple);
 }
 
@@ -682,7 +684,7 @@ tr:last-child td {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--orange), var(--green));
+  background: linear-gradient(90deg, var(--purple), var(--lime-dark));
 }
 
 .rank-list strong {
@@ -782,9 +784,9 @@ tr:last-child td {
 .crm-sidebar {
   padding: 24px 16px;
   background:
-    radial-gradient(circle at 20% 0%, rgba(247, 146, 29, 0.16), transparent 42%),
-    radial-gradient(circle at 100% 80%, rgba(33, 176, 17, 0.14), transparent 40%),
-    #000;
+    radial-gradient(circle at 20% 0%, rgba(217, 249, 157, 0.18), transparent 42%),
+    radial-gradient(circle at 100% 80%, rgba(139, 92, 246, 0.22), transparent 40%),
+    #160a2b;
   color: #f8fafc;
   display: flex;
   flex-direction: column;
@@ -858,13 +860,13 @@ tr:last-child td {
 }
 
 .crm-nav-link.active {
-  background: rgba(247, 146, 29, 0.16);
-  color: var(--orange);
-  box-shadow: inset 0 0 0 1px rgba(247, 146, 29, 0.28);
+  background: rgba(217, 249, 157, 0.16);
+  color: var(--lime);
+  box-shadow: inset 0 0 0 1px rgba(217, 249, 157, 0.32);
 }
 
 .crm-nav-link.active .crm-nav-hint {
-  color: rgba(247, 146, 29, 0.72);
+  color: rgba(217, 249, 157, 0.78);
 }
 
 .crm-nav-link.muted {
@@ -996,7 +998,7 @@ tr:last-child td {
   display: inline-flex;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(247, 146, 29, 0.16);
+  background: rgba(109, 40, 217, 0.12);
   color: var(--purple);
   font-size: 12px;
   font-weight: 600;
@@ -1109,7 +1111,7 @@ tr:last-child td {
 }
 
 .brand-work-list a {
-  color: var(--orange);
+  color: var(--purple);
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
@@ -1172,7 +1174,7 @@ a.clear-button {
 .agent-bubble.user {
   align-self: flex-end;
   background: var(--purple);
-  color: #111;
+  color: #fff;
   border-bottom-right-radius: 6px;
 }
 
@@ -1253,7 +1255,7 @@ a.clear-button {
 .agent-suggest button:hover:not(:disabled) {
   border-color: var(--violet);
   color: var(--purple);
-  background: rgba(247, 146, 29, 0.16);
+  background: rgba(109, 40, 217, 0.12);
 }
 
 .agent-composer {
@@ -1425,9 +1427,12 @@ a.clear-button {
   display: flex;
   flex-direction: column;
   padding: 22px 16px 16px;
-  background: #fff;
-  color: var(--ink);
-  border-right: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(217, 249, 157, 0.16), transparent 38%),
+    radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.2), transparent 42%),
+    #160a2b;
+  color: #f8fafc;
+  border-right: 0;
 }
 
 .vf-brand {
@@ -1443,7 +1448,7 @@ a.clear-button {
 
 .vf-brand em {
   font-style: normal;
-  color: var(--orange);
+  color: var(--lime);
 }
 
 .vf-brand .vf-mark {
@@ -1465,20 +1470,20 @@ a.clear-button {
 .vf-nav-item {
   padding: 11px 14px;
   border-radius: 12px;
-  color: var(--muted);
+  color: rgba(248, 250, 252, 0.72);
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
 }
 
 .vf-nav-item:hover {
-  color: var(--ink);
-  background: #f6f5f2;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .vf-nav-item.is-active {
-  color: #111;
-  background: var(--orange);
+  color: #160a2b;
+  background: var(--lime);
 }
 
 .vf-side-foot {
@@ -1500,8 +1505,8 @@ a.clear-button {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: #efece6;
-  color: var(--ink);
+  background: rgba(217, 249, 157, 0.2);
+  color: var(--lime);
   font-size: 13px;
   font-weight: 700;
   object-fit: cover;
@@ -1536,7 +1541,7 @@ a.clear-button {
 }
 
 .vf-user span {
-  color: var(--muted);
+  color: rgba(248, 250, 252, 0.55);
   font-size: 11px;
 }
 
@@ -1544,9 +1549,9 @@ a.clear-button {
   margin: 0;
   padding: 12px;
   border-radius: 12px;
-  background: var(--card-green);
-  color: var(--ink);
-  border: 1px solid rgba(33, 176, 17, 0.22);
+  background: rgba(217, 249, 157, 0.12);
+  color: #f8fafc;
+  border: 1px solid rgba(217, 249, 157, 0.28);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -1560,7 +1565,7 @@ a.clear-button {
 
 .vf-side-links a,
 .vf-side-links .logout-button {
-  color: var(--muted);
+  color: rgba(248, 250, 252, 0.6);
   font-size: 12px;
   text-decoration: none;
   background: none;
@@ -1637,8 +1642,8 @@ a.clear-button {
   align-items: center;
   padding: 0 16px;
   border-radius: 12px;
-  background: var(--orange);
-  color: #111;
+  background: var(--purple);
+  color: #fff;
   font-weight: 700;
   font-size: 13px;
   text-decoration: none;
@@ -1761,8 +1766,8 @@ a.clear-button {
   display: grid;
   place-items: center;
   border-radius: 10px;
-  background: rgba(247, 146, 29, 0.16);
-  color: var(--orange);
+  background: rgba(109, 40, 217, 0.12);
+  color: var(--purple);
 }
 
 .progress-cell {
@@ -1777,13 +1782,13 @@ a.clear-button {
   height: 6px;
   overflow: hidden;
   border-radius: 99px;
-  background: #efece6;
+  background: #efe8fb;
 }
 
 .progress-track i {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--orange), var(--green));
+  background: linear-gradient(90deg, var(--purple), var(--lime-dark));
 }
 
 .status-pill {
@@ -1795,18 +1800,18 @@ a.clear-button {
 }
 
 .status-pill.progress {
-  background: rgba(247, 146, 29, 0.16);
-  color: var(--orange);
+  background: rgba(109, 40, 217, 0.12);
+  color: var(--purple);
 }
 
 .status-pill.done {
-  background: rgba(33, 176, 17, 0.16);
+  background: rgba(22, 128, 74, 0.14);
   color: var(--green);
 }
 
 .status-pill.hold {
-  background: rgba(247, 146, 29, 0.1);
-  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.18);
+  color: #b45309;
 }
 
 .shortlist,
@@ -1865,7 +1870,7 @@ a.clear-button {
   padding: 7px 12px;
   border-radius: 10px;
   background: var(--purple);
-  color: #111;
+  color: #fff;
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
@@ -1880,7 +1885,7 @@ a.clear-button {
 .assist-prompts a {
   padding: 10px 12px;
   border-radius: 10px;
-  background: #f6f5f2;
+  background: #f5f0ff;
   color: var(--ink);
   font-size: 12px;
   text-decoration: none;
@@ -1905,7 +1910,7 @@ a.clear-button {
   border: 0;
   border-radius: 10px;
   background: var(--purple);
-  color: #111;
+  color: #fff;
 }
 
 .assist-foot {
@@ -1951,11 +1956,11 @@ a.clear-button {
   padding: 16px 16px 14px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: #000;
+  background: #160a2b;
 }
 
 .deck-slide span {
-  color: var(--orange);
+  color: var(--lime);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -2024,7 +2029,7 @@ a.clear-button {
 .insight-track {
   height: 8px;
   border-radius: 99px;
-  background: #efece6;
+  background: #efe8fb;
   overflow: hidden;
 }
 
