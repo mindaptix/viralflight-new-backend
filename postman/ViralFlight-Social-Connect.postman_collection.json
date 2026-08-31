@@ -1,0 +1,137 @@
+{
+  "info": {
+    "name": "Viral Flight — Social Connect",
+    "description": "Instagram + Facebook OAuth APIs for Viral Flight influencer app",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://viralflight.cloud"
+    },
+    {
+      "key": "accessToken",
+      "value": "YOUR_JWT_ACCESS_TOKEN"
+    }
+  ],
+  "item": [
+    {
+      "name": "Instagram",
+      "item": [
+        {
+          "name": "Get Connect URL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/influencer/instagram/connect-url"
+          }
+        },
+        {
+          "name": "OAuth Callback (browser only)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/influencer/instagram/callback?code=AUTH_CODE&state=STATE_TOKEN",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "influencer", "instagram", "callback"],
+              "query": [
+                { "key": "code", "value": "AUTH_CODE" },
+                { "key": "state", "value": "STATE_TOKEN" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/influencer/instagram/stats"
+          }
+        },
+        {
+          "name": "Sync",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/influencer/instagram/sync"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Facebook",
+      "item": [
+        {
+          "name": "Get Connect URL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/influencer/facebook/connect-url"
+          }
+        },
+        {
+          "name": "OAuth Callback (browser only)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/influencer/facebook/callback?code=AUTH_CODE&state=STATE_TOKEN",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "influencer", "facebook", "callback"],
+              "query": [
+                { "key": "code", "value": "AUTH_CODE" },
+                { "key": "state", "value": "STATE_TOKEN" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/influencer/facebook/stats"
+          }
+        },
+        {
+          "name": "Sync",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/influencer/facebook/sync"
+          }
+        }
+      ]
+    }
+  ]
+}

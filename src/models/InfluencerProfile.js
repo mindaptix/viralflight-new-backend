@@ -316,6 +316,9 @@ const influencerProfileSchema = new mongoose.Schema(
     managerName: { type: String, trim: true },
     managerMobile: { type: String, trim: true },
     youtubeHandle: { type: String, trim: true },
+    instagramHandle: { type: String, trim: true, lowercase: true },
+    facebookPageName: { type: String, trim: true },
+    facebookPageId: { type: String, trim: true },
 
     isProfileComplete: { type: Boolean, default: false },
     workModeEnabled: { type: Boolean, default: true, index: true },

@@ -24,6 +24,13 @@ import {
   syncInstagram,
 } from "../controllers/instagramController.js";
 import {
+  getFacebookConnectUrl,
+  getFacebookStats,
+  handleFacebookCallback,
+  syncFacebook,
+} from "../controllers/facebookController.js";
+import { rateLimit } from "../../../shared/http/rateLimitMiddleware.js";
+import {
   getMediaKit,
   getRateCard,
   listBrandInvites,
@@ -57,10 +64,37 @@ router.get(
   authMiddleware,
   getMyApplicationForCampaignController
 );
-router.get("/instagram/connect-url", authMiddleware, getInstagramConnectUrl);
+const socialConnectRateLimit = rateLimit({ max: 10, keyPrefix: "social-connect" });
+const socialSyncRateLimit = rateLimit({ max: 10, keyPrefix: "social-sync" });
+
+router.get(
+  "/instagram/connect-url",
+  authMiddleware,
+  socialConnectRateLimit,
+  getInstagramConnectUrl
+);
 router.get("/instagram/callback", handleInstagramCallback);
 router.get("/instagram/stats", authMiddleware, getInstagramStats);
-router.post("/instagram/sync", authMiddleware, syncInstagram);
+router.post(
+  "/instagram/sync",
+  authMiddleware,
+  socialSyncRateLimit,
+  syncInstagram
+);
+router.get(
+  "/facebook/connect-url",
+  authMiddleware,
+  socialConnectRateLimit,
+  getFacebookConnectUrl
+);
+router.get("/facebook/callback", handleFacebookCallback);
+router.get("/facebook/stats", authMiddleware, getFacebookStats);
+router.post(
+  "/facebook/sync",
+  authMiddleware,
+  socialSyncRateLimit,
+  syncFacebook
+);
 router.post("/full-onboarding", authMiddleware, saveFullOnboarding);
 router.post("/profile-views", profileViewerAuth, recordProfileView);
 router.post("/logout", authMiddleware, logout);

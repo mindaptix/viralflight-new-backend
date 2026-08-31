@@ -24,26 +24,26 @@ const handleMetaError = (res, error, fallbackMessage) => {
   });
 };
 
-export const getInstagramConnectUrl = async (req, res) => {
+export const getFacebookConnectUrl = async (req, res) => {
   try {
-    const connectUrl = buildConnectUrl(req.user, "instagram");
+    const connectUrl = buildConnectUrl(req.user, "facebook");
 
     res.json({
       success: true,
       connectUrl,
     });
   } catch (error) {
-    handleMetaError(res, error, "Unable to generate Instagram connect URL");
+    handleMetaError(res, error, "Unable to generate Facebook connect URL");
   }
 };
 
-export const handleInstagramCallback = async (req, res) => {
+export const handleFacebookCallback = async (req, res) => {
   try {
     const { code, state, error, error_description: errorDescription } = req.query;
 
     if (error) {
       return sendOAuthHtml(res, 400, {
-        title: "Instagram connection failed",
+        title: "Facebook connection failed",
         message: errorDescription || String(error),
         isSuccess: false,
       });
@@ -51,71 +51,71 @@ export const handleInstagramCallback = async (req, res) => {
 
     if (!code || !state) {
       return sendOAuthHtml(res, 400, {
-        title: "Instagram connection failed",
+        title: "Facebook connection failed",
         message: "Missing authorization code or state parameter.",
         isSuccess: false,
       });
     }
 
-    const stateUser = verifyStateToken(String(state), "instagram");
+    const stateUser = verifyStateToken(String(state), "facebook");
 
     if (stateUser.role !== "influencer") {
       return sendOAuthHtml(res, 403, {
         title: "Access denied",
-        message: "Only influencer accounts can connect Instagram.",
+        message: "Only influencer accounts can connect Facebook.",
         isSuccess: false,
       });
     }
 
     await connectFromOAuth({
       user: stateUser,
-      platform: "instagram",
+      platform: "facebook",
       code: String(code),
     });
 
     return sendOAuthHtml(res, 200, {
-      title: "Instagram connected successfully",
+      title: "Facebook connected successfully",
       message: "Return to Viral Flight app.",
       isSuccess: true,
     });
   } catch (error) {
     return sendOAuthHtml(res, error.statusCode || 500, {
-      title: "Instagram connection failed",
-      message: error.message || "Unable to connect Instagram.",
+      title: "Facebook connection failed",
+      message: error.message || "Unable to connect Facebook.",
       isSuccess: false,
     });
   }
 };
 
-export const syncInstagram = async (req, res) => {
+export const syncFacebook = async (req, res) => {
   try {
-    const instagram = await syncConnection({
+    const facebook = await syncConnection({
       user: req.user,
-      platform: "instagram",
+      platform: "facebook",
     });
 
     res.json({
       success: true,
-      message: "Instagram synced",
-      instagram,
+      message: "Facebook synced",
+      facebook,
     });
   } catch (error) {
-    handleMetaError(res, error, "Unable to sync Instagram");
+    handleMetaError(res, error, "Unable to sync Facebook");
   }
 };
 
-export const getInstagramStats = async (req, res) => {
+export const getFacebookStats = async (req, res) => {
   try {
-    const instagram = await getStats({
+    const facebook = await getStats({
       user: req.user,
-      platform: "instagram",
+      platform: "facebook",
     });
 
     res.json({
       success: true,
-      instagram,
+      facebook,
     });
   } catch (error) {
-    handleMetaError(res, error, "Unable to fetch Instagram stats");
+    handleMetaError(res, error, "Unable to fetch Facebook stats");
   }
 };
