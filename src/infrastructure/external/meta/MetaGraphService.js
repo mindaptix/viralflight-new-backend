@@ -5,13 +5,12 @@ const DEFAULT_GRAPH_API_VERSION = "v21.0";
 const DEFAULT_RECENT_MEDIA_LIMIT = 12;
 const MAX_RETRIES = 3;
 
-const INSTAGRAM_SCOPES = [
-  "instagram_basic",
-  "instagram_manage_insights",
-  "pages_show_list",
-  "pages_read_engagement",
-  "business_management",
+const INSTAGRAM_LOGIN_SCOPES = [
+  "instagram_business_basic",
+  "instagram_business_manage_insights",
 ];
+
+const INSTAGRAM_SCOPES = INSTAGRAM_LOGIN_SCOPES;
 
 const FACEBOOK_SCOPES = [
   "pages_show_list",
@@ -45,6 +44,9 @@ const getGraphApiVersion = () =>
 
 const getGraphBaseUrl = () =>
   `https://graph.facebook.com/${getGraphApiVersion()}`;
+
+const getInstagramGraphBaseUrl = () =>
+  `https://graph.instagram.com/${getGraphApiVersion()}`;
 
 const getMetaAppId = () =>
   process.env.META_APP_ID || process.env.INSTAGRAM_APP_ID;
@@ -163,7 +165,6 @@ const verifyStateToken = (state, platform) => {
 };
 
 const buildConnectUrl = (user, platform) => {
-  const scopes = platform === "instagram" ? INSTAGRAM_SCOPES : FACEBOOK_SCOPES;
   const redirectUri = getRedirectUri(platform);
 
   if (!redirectUri) {
@@ -172,11 +173,27 @@ const buildConnectUrl = (user, platform) => {
     );
   }
 
+  const clientId = getRequiredEnv(getMetaAppId, "META_APP_ID");
+  const state = buildStateToken(user, platform);
+
+  if (platform === "instagram") {
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      state,
+      scope: INSTAGRAM_LOGIN_SCOPES.join(","),
+      response_type: "code",
+      enable_fb_login: "0",
+    });
+
+    return `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+  }
+
   const params = new URLSearchParams({
-    client_id: getRequiredEnv(getMetaAppId, "META_APP_ID"),
+    client_id: clientId,
     redirect_uri: redirectUri,
-    state: buildStateToken(user, platform),
-    scope: scopes.join(","),
+    state,
+    scope: FACEBOOK_SCOPES.join(","),
     response_type: "code",
   });
 
@@ -226,6 +243,71 @@ const requestGraph = async (path, params = {}, options = {}, attempt = 1) => {
   return payload;
 };
 
+const parseJsonSafe = async (response) => {
+  const text = await response.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    return { raw: text };
+  }
+};
+
+const extractInstagramAccessToken = (payload) => {
+  if (payload?.access_token) {
+    return {
+      access_token: payload.access_token,
+      user_id: payload.user_id || payload.user?.id,
+      expires_in: payload.expires_in,
+    };
+  }
+
+  const first = Array.isArray(payload?.data) ? payload.data[0] : null;
+  if (first?.access_token) {
+    return {
+      access_token: first.access_token,
+      user_id: first.user_id,
+      expires_in: first.expires_in,
+    };
+  }
+
+  return null;
+};
+
+const exchangeInstagramLoginCode = async (code) => {
+  const body = new URLSearchParams({
+    client_id: getRequiredEnv(getMetaAppId, "META_APP_ID"),
+    client_secret: getRequiredEnv(getMetaAppSecret, "META_APP_SECRET"),
+    grant_type: "authorization_code",
+    redirect_uri: getRedirectUri("instagram"),
+    code,
+  });
+
+  const response = await fetch("https://api.instagram.com/oauth/access_token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  const payload = await parseJsonSafe(response);
+  const token = extractInstagramAccessToken(payload);
+
+  if (!response.ok || payload.error || payload.error_type || !token) {
+    const apiError = payload.error || payload;
+    throw new MetaApiError(
+      apiError.error_message ||
+        apiError.message ||
+        "Instagram Login token exchange failed",
+      {
+        statusCode: response.status || 502,
+        code: apiError.code || apiError.error_type,
+      }
+    );
+  }
+
+  return token;
+};
+
 const exchangeCodeForShortLivedToken = (code, platform) =>
   requestGraph("/oauth/access_token", {
     client_id: getRequiredEnv(getMetaAppId, "META_APP_ID"),
@@ -242,7 +324,95 @@ const exchangeForLongLivedToken = (shortLivedToken) =>
     fb_exchange_token: shortLivedToken,
   });
 
-const refreshLongLivedTokenIfNeeded = async (accessToken, expiresAt) => {
+const requestInstagramGraph = async (path, params = {}, attempt = 1) => {
+  const url = new URL(`${getInstagramGraphBaseUrl()}${path}`);
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      url.searchParams.set(key, String(value));
+    }
+  });
+
+  const response = await fetch(url);
+  const payload = await parseJsonSafe(response);
+
+  if (!response.ok || payload.error) {
+    const apiError = payload.error || {};
+    const isRateLimited =
+      apiError.code === 4 ||
+      apiError.code === 17 ||
+      apiError.code === 32 ||
+      response.status === 429;
+
+    if (isRateLimited && attempt < MAX_RETRIES) {
+      await sleep(2 ** attempt * 500);
+      return requestInstagramGraph(path, params, attempt + 1);
+    }
+
+    throw new MetaApiError(
+      apiError.message || "Instagram Graph API request failed",
+      {
+        statusCode: response.status,
+        code: apiError.code || apiError.type,
+        path,
+      }
+    );
+  }
+
+  return payload;
+};
+
+const requestInstagramUnversioned = async (path, params = {}) => {
+  const url = new URL(`https://graph.instagram.com${path}`);
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      url.searchParams.set(key, String(value));
+    }
+  });
+
+  const response = await fetch(url);
+  const payload = await parseJsonSafe(response);
+
+  if (!response.ok || payload.error) {
+    const apiError = payload.error || {};
+    throw new MetaApiError(
+      apiError.message || "Instagram Graph API request failed",
+      {
+        statusCode: response.status,
+        code: apiError.code || apiError.type,
+        path,
+      }
+    );
+  }
+
+  return payload;
+};
+
+const exchangeInstagramForLongLivedToken = async (shortLivedToken) => {
+  const payload = await requestInstagramUnversioned("/access_token", {
+    grant_type: "ig_exchange_token",
+    client_secret: getRequiredEnv(getMetaAppSecret, "META_APP_SECRET"),
+    access_token: shortLivedToken,
+  });
+
+  return {
+    access_token: payload.access_token,
+    expires_in: payload.expires_in,
+  };
+};
+
+const refreshInstagramLongLivedToken = (accessToken) =>
+  requestInstagramUnversioned("/refresh_access_token", {
+    grant_type: "ig_refresh_token",
+    access_token: accessToken,
+  });
+
+const refreshLongLivedTokenIfNeeded = async (
+  accessToken,
+  expiresAt,
+  platform
+) => {
   if (!expiresAt) {
     return { accessToken, expiresAt: undefined };
   }
@@ -250,6 +420,20 @@ const refreshLongLivedTokenIfNeeded = async (accessToken, expiresAt) => {
   const expiresInMs = new Date(expiresAt).getTime() - Date.now();
   if (expiresInMs > 7 * 24 * 60 * 60 * 1000) {
     return { accessToken, expiresAt };
+  }
+
+  if (platform === "instagram") {
+    try {
+      const refreshed = await refreshInstagramLongLivedToken(accessToken);
+      return {
+        accessToken: refreshed.access_token,
+        expiresAt: refreshed.expires_in
+          ? new Date(Date.now() + Number(refreshed.expires_in) * 1000)
+          : expiresAt,
+      };
+    } catch (error) {
+      // Legacy Facebook Login tokens still use fb_exchange_token.
+    }
   }
 
   const refreshed = await exchangeForLongLivedToken(accessToken);
@@ -269,11 +453,27 @@ const getPages = (accessToken) =>
     limit: 25,
   });
 
+const getInstagramLoginProfile = async (accessToken) =>
+  requestInstagramGraph("/me", {
+    access_token: accessToken,
+    fields:
+      "user_id,id,username,account_type,followers_count,follows_count,media_count,profile_picture_url",
+  });
+
 const getInstagramAccount = async (igUserId, accessToken) =>
   requestGraph(`/${igUserId}`, {
     access_token: accessToken,
     fields:
       "id,username,account_type,followers_count,follows_count,media_count,profile_picture_url",
+  });
+
+const getRecentInstagramLoginMedia = async (igUserId, accessToken) =>
+  requestInstagramGraph(`/${igUserId}/media`, {
+    access_token: accessToken,
+    fields: "id,like_count,comments_count,timestamp",
+    limit:
+      Number(process.env.INSTAGRAM_RECENT_MEDIA_LIMIT) ||
+      DEFAULT_RECENT_MEDIA_LIMIT,
   });
 
 const getRecentMedia = async (igUserId, accessToken) =>
@@ -284,6 +484,39 @@ const getRecentMedia = async (igUserId, accessToken) =>
       Number(process.env.INSTAGRAM_RECENT_MEDIA_LIMIT) ||
       DEFAULT_RECENT_MEDIA_LIMIT,
   });
+
+const getInstagramLoginInsights = async (igUserId, accessToken) => {
+  try {
+    const insights = await requestInstagramGraph(`/${igUserId}/insights`, {
+      access_token: accessToken,
+      metric: "impressions,reach,profile_views",
+      period: "day",
+    });
+
+    const metrics = Array.isArray(insights.data) ? insights.data : [];
+    const impressionsMetric = metrics.find(
+      (item) => item.name === "impressions"
+    );
+    const reachMetric = metrics.find((item) => item.name === "reach");
+
+    if (impressionsMetric?.values?.length && reachMetric?.values?.length) {
+      const recentImpressions = impressionsMetric.values
+        .slice(-30)
+        .reduce((sum, item) => sum + Number(item.value || 0), 0);
+      const recentReach = reachMetric.values
+        .slice(-30)
+        .reduce((sum, item) => sum + Number(item.value || 0), 0);
+
+      if (recentImpressions > 0) {
+        return Number(((recentReach / recentImpressions) * 100).toFixed(2));
+      }
+    }
+  } catch (error) {
+    // Fall back to media-based engagement.
+  }
+
+  return undefined;
+};
 
 const getInstagramInsights = async (igUserId, accessToken) => {
   try {
@@ -426,18 +659,20 @@ const getFacebookPageInsights = async (pageId, pageToken) => {
   return undefined;
 };
 
-const syncInstagramData = async ({ accessToken, preferredHandle }) => {
-  const pages = await getPages(accessToken);
-  const page = pickInstagramPage(pages, preferredHandle);
-  const pageToken = page.access_token || accessToken;
-  const pageInstagramAccount = page.instagram_business_account;
-  const account = await getInstagramAccount(pageInstagramAccount.id, pageToken);
-
-  let engagementRate = await getInstagramInsights(account.id, pageToken);
+const mapInstagramAccountToSyncData = async ({
+  account,
+  accessToken,
+  facebookPageId,
+  rawMetaPayload,
+  fetchInsights,
+  fetchMedia,
+}) => {
+  const igUserId = account.user_id || account.id;
+  let engagementRate = await fetchInsights(igUserId, accessToken);
 
   if (engagementRate === undefined) {
     try {
-      const media = await getRecentMedia(account.id, pageToken);
+      const media = await fetchMedia(igUserId, accessToken);
       engagementRate = calculateEngagementRateFromMedia(
         media.data,
         account.followers_count
@@ -448,9 +683,9 @@ const syncInstagramData = async ({ accessToken, preferredHandle }) => {
   }
 
   return {
-    accessToken: pageToken,
-    platformUserId: account.id,
-    facebookPageId: page.id,
+    accessToken,
+    platformUserId: String(igUserId),
+    facebookPageId,
     handle: normalizeHandle(account.username),
     followers: Number(account.followers_count || 0),
     follows: Number(account.follows_count || 0),
@@ -458,8 +693,53 @@ const syncInstagramData = async ({ accessToken, preferredHandle }) => {
     accountType: account.account_type || "CREATOR",
     profilePictureUrl: account.profile_picture_url,
     engagementRate,
-    rawMetaPayload: { account, page: { id: page.id, name: page.name } },
+    rawMetaPayload,
   };
+};
+
+const syncInstagramViaLogin = async (accessToken) => {
+  const account = await getInstagramLoginProfile(accessToken);
+
+  return mapInstagramAccountToSyncData({
+    account,
+    accessToken,
+    facebookPageId: undefined,
+    rawMetaPayload: { account, authType: "instagram_login" },
+    fetchInsights: getInstagramLoginInsights,
+    fetchMedia: getRecentInstagramLoginMedia,
+  });
+};
+
+const syncInstagramViaFacebookPages = async ({
+  accessToken,
+  preferredHandle,
+}) => {
+  const pages = await getPages(accessToken);
+  const page = pickInstagramPage(pages, preferredHandle);
+  const pageToken = page.access_token || accessToken;
+  const pageInstagramAccount = page.instagram_business_account;
+  const account = await getInstagramAccount(pageInstagramAccount.id, pageToken);
+
+  return mapInstagramAccountToSyncData({
+    account,
+    accessToken: pageToken,
+    facebookPageId: page.id,
+    rawMetaPayload: {
+      account,
+      page: { id: page.id, name: page.name },
+      authType: "facebook_login",
+    },
+    fetchInsights: getInstagramInsights,
+    fetchMedia: getRecentMedia,
+  });
+};
+
+const syncInstagramData = async ({ accessToken, preferredHandle }) => {
+  try {
+    return await syncInstagramViaLogin(accessToken);
+  } catch (error) {
+    return syncInstagramViaFacebookPages({ accessToken, preferredHandle });
+  }
 };
 
 const syncFacebookData = async ({ accessToken }) => {
@@ -498,26 +778,69 @@ const syncFacebookData = async ({ accessToken }) => {
   };
 };
 
+const exchangeInstagramCodeAndToken = async (code) => {
+  try {
+    const shortLivedToken = await exchangeInstagramLoginCode(code);
+    let longLivedToken = shortLivedToken;
+
+    try {
+      longLivedToken = await exchangeInstagramForLongLivedToken(
+        shortLivedToken.access_token
+      );
+    } catch (error) {
+      longLivedToken = shortLivedToken;
+    }
+
+    return {
+      access_token: longLivedToken.access_token,
+      expires_in: longLivedToken.expires_in,
+    };
+  } catch (instagramLoginError) {
+    const shortLivedToken = await exchangeCodeForShortLivedToken(
+      code,
+      "instagram"
+    );
+    const longLivedToken = await exchangeForLongLivedToken(
+      shortLivedToken.access_token
+    );
+
+    return {
+      access_token: longLivedToken.access_token,
+      expires_in: longLivedToken.expires_in,
+    };
+  }
+};
+
 const exchangeCodeAndSync = async ({ code, platform, preferredHandle }) => {
-  const shortLivedToken = await exchangeCodeForShortLivedToken(code, platform);
-  const longLivedToken = await exchangeForLongLivedToken(
-    shortLivedToken.access_token
-  );
-  const expiresAt = longLivedToken.expires_in
-    ? new Date(Date.now() + Number(longLivedToken.expires_in) * 1000)
+  let accessToken;
+  let expiresIn;
+
+  if (platform === "instagram") {
+    const token = await exchangeInstagramCodeAndToken(code);
+    accessToken = token.access_token;
+    expiresIn = token.expires_in;
+  } else {
+    const shortLivedToken = await exchangeCodeForShortLivedToken(code, platform);
+    const longLivedToken = await exchangeForLongLivedToken(
+      shortLivedToken.access_token
+    );
+    accessToken = longLivedToken.access_token;
+    expiresIn = longLivedToken.expires_in;
+  }
+
+  const expiresAt = expiresIn
+    ? new Date(Date.now() + Number(expiresIn) * 1000)
     : undefined;
 
   const syncFn = platform === "instagram" ? syncInstagramData : syncFacebookData;
   const syncedData = await syncFn({
-    accessToken: longLivedToken.access_token,
+    accessToken,
     preferredHandle,
   });
 
   return {
     ...syncedData,
-    encryptedToken: encryptToken(
-      syncedData.accessToken || longLivedToken.access_token
-    ),
+    encryptedToken: encryptToken(syncedData.accessToken || accessToken),
     expiresAt,
   };
 };
@@ -528,12 +851,13 @@ const syncWithStoredToken = async ({
   platform,
   preferredHandle,
 }) => {
-  let accessToken = decryptToken(encryptedToken);
+  const originalToken = decryptToken(encryptedToken);
   const refreshed = await refreshLongLivedTokenIfNeeded(
-    accessToken,
-    tokenExpiresAt
+    originalToken,
+    tokenExpiresAt,
+    platform
   );
-  accessToken = refreshed.accessToken;
+  const accessToken = refreshed.accessToken;
 
   const syncFn = platform === "instagram" ? syncInstagramData : syncFacebookData;
   const syncedData = await syncFn({ accessToken, preferredHandle });
@@ -543,7 +867,7 @@ const syncWithStoredToken = async ({
     accessToken,
     expiresAt: refreshed.expiresAt,
     encryptedToken:
-      refreshed.accessToken !== decryptToken(encryptedToken)
+      refreshed.accessToken !== originalToken
         ? encryptToken(refreshed.accessToken)
         : undefined,
   };
@@ -553,6 +877,7 @@ export {
   MetaApiError,
   MetaConfigError,
   buildConnectUrl,
+  buildStateToken,
   decryptToken,
   encryptToken,
   exchangeCodeAndSync,
@@ -560,5 +885,6 @@ export {
   syncWithStoredToken,
   verifyStateToken,
   INSTAGRAM_SCOPES,
+  INSTAGRAM_LOGIN_SCOPES,
   FACEBOOK_SCOPES,
 };

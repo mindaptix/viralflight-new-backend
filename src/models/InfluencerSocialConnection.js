@@ -20,7 +20,7 @@ const influencerSocialConnectionSchema = new mongoose.Schema(
     platform: {
       type: String,
       required: true,
-      enum: ["instagram", "facebook"],
+      enum: ["instagram", "facebook", "youtube"],
       trim: true,
       lowercase: true,
     },
@@ -38,6 +38,8 @@ const influencerSocialConnectionSchema = new mongoose.Schema(
     accountType: { type: String, trim: true, uppercase: true },
     pageName: { type: String, trim: true },
     facebookPageId: { type: String, trim: true },
+    channelName: { type: String, trim: true },
+    youtubeChannelId: { type: String, trim: true },
     isConnected: { type: Boolean, default: false, index: true },
     lastSyncedAt: { type: Date },
     rawMetaPayload: { type: mongoose.Schema.Types.Mixed },

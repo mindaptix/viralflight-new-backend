@@ -29,6 +29,12 @@ import {
   handleFacebookCallback,
   syncFacebook,
 } from "../controllers/facebookController.js";
+import {
+  getYoutubeConnectUrl,
+  getYoutubeStats,
+  handleYoutubeCallback,
+  syncYoutube,
+} from "../controllers/youtubeController.js";
 import { rateLimit } from "../../../shared/http/rateLimitMiddleware.js";
 import {
   getMediaKit,
@@ -94,6 +100,20 @@ router.post(
   authMiddleware,
   socialSyncRateLimit,
   syncFacebook
+);
+router.get(
+  "/youtube/connect-url",
+  authMiddleware,
+  socialConnectRateLimit,
+  getYoutubeConnectUrl
+);
+router.get("/youtube/callback", handleYoutubeCallback);
+router.get("/youtube/stats", authMiddleware, getYoutubeStats);
+router.post(
+  "/youtube/sync",
+  authMiddleware,
+  socialSyncRateLimit,
+  syncYoutube
 );
 router.post("/full-onboarding", authMiddleware, saveFullOnboarding);
 router.post("/profile-views", profileViewerAuth, recordProfileView);

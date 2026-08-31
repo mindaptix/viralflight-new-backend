@@ -1,18 +1,19 @@
-# Viral Flight — Social Connect API (Instagram + Facebook)
+# Viral Flight — Social Connect API (Instagram, Facebook, YouTube)
 
-Backend APIs for influencer Instagram and Facebook OAuth via the official Meta Graph API.
+Backend APIs for influencer social OAuth: Instagram Login, Facebook Pages, and YouTube Data API.
 
 ## Prerequisites
 
 - Node.js 18+
 - MongoDB
-- Meta Developer App with Facebook Login + Instagram Graph API products
+- Meta Developer App with **Instagram API with Instagram Login** + Facebook Login
+- Google Cloud project with YouTube Data API v3
 
 ## Quick Start
 
 ```bash
 cp .env.example .env
-# Fill in META_APP_ID, META_APP_SECRET, JWT_SECRET, MONGO_URI
+# Fill in META_APP_ID, META_APP_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, JWT_SECRET, MONGO_URI
 
 npm install
 npm run dev
@@ -20,20 +21,34 @@ npm run dev
 
 Server runs on `http://localhost:5000` by default.
 
-## Meta Developer App Setup
+## Meta Developer App Setup (Instagram + Facebook)
 
 1. Go to [Meta for Developers](https://developers.facebook.com/) and create a **Business** app.
-2. Add products: **Facebook Login** and **Instagram Graph API**.
-3. Under **Facebook Login → Settings**, add Valid OAuth Redirect URIs:
+2. Add products:
+   - **Instagram API with Instagram Login** (required so mobile users see Instagram login, not Facebook)
+   - **Facebook Login** (for Facebook Page connect)
+3. Instagram Login → Valid OAuth Redirect URIs:
    - `https://viralflight.cloud/api/influencer/instagram/callback`
+   - Local: `http://localhost:5000/api/influencer/instagram/callback`
+4. Facebook Login → Valid OAuth Redirect URIs:
    - `https://viralflight.cloud/api/influencer/facebook/callback`
-   - Local dev: `http://localhost:5000/api/influencer/instagram/callback`
-   - Local dev: `http://localhost:5000/api/influencer/facebook/callback`
-4. Request these permissions in **App Review**:
-   - `instagram_basic`, `instagram_manage_insights`
-   - `pages_show_list`, `pages_read_engagement`, `read_insights`
-   - `business_management`
-5. Copy App ID and App Secret into `.env`.
+   - Local: `http://localhost:5000/api/influencer/facebook/callback`
+5. Instagram Login permissions:
+   - `instagram_business_basic`
+   - `instagram_business_manage_insights`
+6. Facebook Page permissions:
+   - `pages_show_list`, `pages_read_engagement`, `read_insights`, `business_management`
+7. Copy App ID and App Secret into `.env`.
+
+## Google Cloud Setup (YouTube)
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/) and create/select a project.
+2. Enable **YouTube Data API v3**.
+3. Create **OAuth 2.0 Client ID** (application type: Web application).
+4. Add Authorized redirect URI:
+   - `https://viralflight.cloud/api/influencer/youtube/callback`
+   - Local: `http://localhost:5000/api/influencer/youtube/callback`
+5. Copy Client ID and Client Secret into `.env`.
 
 ### Environment Variables
 
@@ -44,6 +59,9 @@ META_REDIRECT_URI_INSTAGRAM=https://viralflight.cloud/api/influencer/instagram/c
 META_REDIRECT_URI_FACEBOOK=https://viralflight.cloud/api/influencer/facebook/callback
 META_GRAPH_API_VERSION=v21.0
 META_TOKEN_ENCRYPTION_KEY=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+YOUTUBE_REDIRECT_URI=https://viralflight.cloud/api/influencer/youtube/callback
 JWT_SECRET=
 MONGO_URI=
 ```
@@ -64,13 +82,17 @@ Protected routes require `Authorization: Bearer <JWT>` with `role=influencer`.
 | GET | `/api/influencer/facebook/callback` | No |
 | GET | `/api/influencer/facebook/stats` | Yes |
 | POST | `/api/influencer/facebook/sync` | Yes |
+| GET | `/api/influencer/youtube/connect-url` | Yes |
+| GET | `/api/influencer/youtube/callback` | No |
+| GET | `/api/influencer/youtube/stats` | Yes |
+| POST | `/api/influencer/youtube/sync` | Yes |
 
 Rate limit: connect-url and sync — 10 requests/minute per user.
 
 ## cURL Examples
 
 ```bash
-# Instagram connect URL
+# Instagram connect URL (must be instagram.com, not facebook.com)
 curl -s -H "Authorization: Bearer YOUR_JWT" \
   https://viralflight.cloud/api/influencer/instagram/connect-url
 
@@ -93,13 +115,35 @@ curl -s -H "Authorization: Bearer YOUR_JWT" \
 # Facebook sync
 curl -s -X POST -H "Authorization: Bearer YOUR_JWT" \
   https://viralflight.cloud/api/influencer/facebook/sync
+
+# YouTube connect URL
+curl -s -H "Authorization: Bearer YOUR_JWT" \
+  https://viralflight.cloud/api/influencer/youtube/connect-url
+
+# YouTube stats
+curl -s -H "Authorization: Bearer YOUR_JWT" \
+  https://viralflight.cloud/api/influencer/youtube/stats
+
+# YouTube sync
+curl -s -X POST -H "Authorization: Bearer YOUR_JWT" \
+  https://viralflight.cloud/api/influencer/youtube/sync
 ```
 
 ## Sample Responses
 
-**Connect URL:**
+**Instagram connect URL:**
+```json
+{ "success": true, "connectUrl": "https://www.instagram.com/oauth/authorize?client_id=..." }
+```
+
+**Facebook connect URL:**
 ```json
 { "success": true, "connectUrl": "https://www.facebook.com/v21.0/dialog/oauth?..." }
+```
+
+**YouTube connect URL:**
+```json
+{ "success": true, "connectUrl": "https://accounts.google.com/o/oauth2/v2/auth?..." }
 ```
 
 **Instagram connected:**
@@ -122,7 +166,25 @@ curl -s -X POST -H "Authorization: Bearer YOUR_JWT" \
 }
 ```
 
-**Not connected:**
+**YouTube connected:**
+```json
+{
+  "success": true,
+  "youtube": {
+    "isConnected": true,
+    "handle": "Channel Name",
+    "channelName": "Channel Name",
+    "youtubeChannelId": "UCxxxxxxxx",
+    "followers": 125000,
+    "followersDisplay": "125K",
+    "profilePictureUrl": "https://...",
+    "accountType": "CHANNEL",
+    "lastSyncedAt": "2026-08-31T10:00:00.000Z"
+  }
+}
+```
+
+**Not connected (always HTTP 200):**
 ```json
 {
   "success": true,
@@ -138,7 +200,8 @@ curl -s -X POST -H "Authorization: Bearer YOUR_JWT" \
 ## Architecture
 
 - `src/models/InfluencerSocialConnection.js` — MongoDB collection
-- `src/infrastructure/external/meta/MetaGraphService.js` — OAuth + Graph API
+- `src/infrastructure/external/meta/MetaGraphService.js` — Instagram Login + Facebook Graph
+- `src/infrastructure/external/youtube/YoutubeOAuthService.js` — Google OAuth + YouTube Data API
 - `src/application/social/SocialConnectionService.js` — business logic
 - `src/jobs/socialStatsSyncJob.js` — nightly cron (24h)
 

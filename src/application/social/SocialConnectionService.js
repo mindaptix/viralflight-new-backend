@@ -6,6 +6,10 @@ import {
   normalizeHandle,
   syncWithStoredToken,
 } from "../../infrastructure/external/meta/MetaGraphService.js";
+import {
+  exchangeCodeAndSync as exchangeYoutubeCodeAndSync,
+  syncWithStoredToken as youtubeSyncWithStoredToken,
+} from "../../infrastructure/external/youtube/YoutubeOAuthService.js";
 import { formatFollowersDisplay } from "../../shared/utils/followerFormat.js";
 import { getOrCreateRoleProfile } from "../../utils/profileControllerUtils.js";
 
@@ -106,6 +110,41 @@ const buildInstagramResponse = (connection) => {
   };
 };
 
+const PLATFORM_LABELS = {
+  instagram: "Instagram",
+  facebook: "Facebook",
+  youtube: "YouTube",
+};
+
+const buildYoutubeResponse = (connection) => {
+  if (!connection?.isConnected) {
+    return {
+      isConnected: false,
+      handle: "",
+      followers: 0,
+      followersDisplay: "0",
+    };
+  }
+
+  return {
+    isConnected: true,
+    handle: connection.handle || connection.channelName || "",
+    channelName: connection.channelName || connection.handle || "",
+    youtubeChannelId: connection.youtubeChannelId || connection.platformUserId,
+    followers: connection.followers ?? 0,
+    followersDisplay: formatFollowersDisplay(connection.followers),
+    profilePictureUrl: connection.profilePictureUrl,
+    accountType: connection.accountType || "CHANNEL",
+    lastSyncedAt: connection.lastSyncedAt,
+  };
+};
+
+const buildPlatformResponse = (platform, connection) => {
+  if (platform === "instagram") return buildInstagramResponse(connection);
+  if (platform === "facebook") return buildFacebookResponse(connection);
+  return buildYoutubeResponse(connection);
+};
+
 const buildFacebookResponse = (connection) => {
   if (!connection?.isConnected) {
     return {
@@ -200,6 +239,31 @@ const updateInfluencerProfileFromConnection = async (user, platform, syncData) =
     }
   }
 
+  if (platform === "youtube") {
+    profile.youtubeHandle = syncData.handle || syncData.channelName;
+
+    const platformIndex = profile.platforms.findIndex(
+      (item) => item.platform === "youtube"
+    );
+    const platformData = {
+      platform: "youtube",
+      username: syncData.handle,
+      channelName: syncData.channelName || syncData.handle,
+      subscribers: syncData.followers,
+      followers: syncData.followers,
+      engagement: syncData.engagementRate ?? 0,
+    };
+
+    if (platformIndex >= 0) {
+      profile.platforms[platformIndex] = {
+        ...profile.platforms[platformIndex].toObject?.(),
+        ...platformData,
+      };
+    } else {
+      profile.platforms.push(platformData);
+    }
+  }
+
   await profile.save();
   return profile;
 };
@@ -220,6 +284,8 @@ const upsertConnection = async (userId, platform, syncData, tokenData) => {
     accountType: syncData.accountType,
     pageName: syncData.pageName,
     facebookPageId: syncData.facebookPageId,
+    channelName: syncData.channelName,
+    youtubeChannelId: syncData.youtubeChannelId,
     isConnected: true,
     lastSyncedAt: now,
     rawMetaPayload: syncData.rawMetaPayload,
@@ -230,6 +296,10 @@ const upsertConnection = async (userId, platform, syncData, tokenData) => {
 
   if (tokenData?.encryptedToken) {
     update.accessToken = tokenData.encryptedToken;
+  }
+
+  if (tokenData?.encryptedRefreshToken) {
+    update.refreshToken = tokenData.encryptedRefreshToken;
   }
 
   return InfluencerSocialConnection.findOneAndUpdate(
@@ -244,23 +314,25 @@ const connectFromOAuth = async ({ user, platform, code }) => {
   const preferredHandle =
     platform === "instagram" ? getPreferredInstagramHandle(profile) : undefined;
 
-  const syncData = await exchangeCodeAndSync({
-    code,
-    platform,
-    preferredHandle,
-  });
+  const syncData =
+    platform === "youtube"
+      ? await exchangeYoutubeCodeAndSync({ code })
+      : await exchangeCodeAndSync({
+          code,
+          platform,
+          preferredHandle,
+        });
 
   await upsertConnection(user.userId, platform, syncData, {
     encryptedToken: syncData.encryptedToken,
+    encryptedRefreshToken: syncData.encryptedRefreshToken,
     expiresAt: syncData.expiresAt,
   });
 
   await updateInfluencerProfileFromConnection(user, platform, syncData);
 
   const connection = await getConnection(user.userId, platform);
-  return platform === "instagram"
-    ? buildInstagramResponse(connection)
-    : buildFacebookResponse(connection);
+  return buildPlatformResponse(platform, connection);
 };
 
 const applySyncToConnection = async (connection, syncData) => {
@@ -275,6 +347,8 @@ const applySyncToConnection = async (connection, syncData) => {
   connection.accountType = syncData.accountType;
   connection.pageName = syncData.pageName;
   connection.facebookPageId = syncData.facebookPageId;
+  connection.channelName = syncData.channelName;
+  connection.youtubeChannelId = syncData.youtubeChannelId;
   connection.isConnected = true;
   connection.lastSyncedAt = new Date();
   connection.rawMetaPayload = syncData.rawMetaPayload;
@@ -282,6 +356,10 @@ const applySyncToConnection = async (connection, syncData) => {
 
   if (syncData.encryptedToken) {
     connection.accessToken = syncData.encryptedToken;
+  }
+
+  if (syncData.encryptedRefreshToken) {
+    connection.refreshToken = syncData.encryptedRefreshToken;
   }
 
   if (syncData.expiresAt) {
@@ -297,7 +375,7 @@ const syncConnection = async ({ user, platform }) => {
 
   if (!connection?.isConnected) {
     throw new MetaApiError(
-      `${platform === "instagram" ? "Instagram" : "Facebook"} is not connected`,
+      `${PLATFORM_LABELS[platform] || platform} is not connected`,
       { statusCode: 400, code: "NOT_CONNECTED" }
     );
   }
@@ -307,19 +385,24 @@ const syncConnection = async ({ user, platform }) => {
     platform === "instagram" ? getPreferredInstagramHandle(profile) : undefined;
 
   try {
-    const syncData = await syncWithStoredToken({
-      encryptedToken: connection.accessToken,
-      tokenExpiresAt: connection.tokenExpiresAt,
-      platform,
-      preferredHandle,
-    });
+    const syncData =
+      platform === "youtube"
+        ? await youtubeSyncWithStoredToken({
+            encryptedToken: connection.accessToken,
+            encryptedRefreshToken: connection.refreshToken,
+            tokenExpiresAt: connection.tokenExpiresAt,
+          })
+        : await syncWithStoredToken({
+            encryptedToken: connection.accessToken,
+            tokenExpiresAt: connection.tokenExpiresAt,
+            platform,
+            preferredHandle,
+          });
 
     await applySyncToConnection(connection, syncData);
     await updateInfluencerProfileFromConnection(user, platform, syncData);
 
-    return platform === "instagram"
-      ? buildInstagramResponse(connection)
-      : buildFacebookResponse(connection);
+    return buildPlatformResponse(platform, connection);
   } catch (error) {
     connection.syncError = {
       message: error.message,
@@ -357,9 +440,7 @@ const getStats = async ({ user, platform, autoSyncIfStale = true }) => {
       });
     }
 
-    return platform === "instagram"
-      ? buildInstagramResponse(null)
-      : buildFacebookResponse(null);
+    return buildPlatformResponse(platform, null);
   }
 
   const isStale =
@@ -374,9 +455,7 @@ const getStats = async ({ user, platform, autoSyncIfStale = true }) => {
     }
   }
 
-  return platform === "instagram"
-    ? buildInstagramResponse(connection)
-    : buildFacebookResponse(connection);
+  return buildPlatformResponse(platform, connection);
 };
 
 const syncAllConnectedAccounts = async () => {
@@ -400,12 +479,19 @@ const syncAllConnectedAccounts = async () => {
           ? getPreferredInstagramHandle(profile)
           : undefined;
 
-      const syncData = await syncWithStoredToken({
-        encryptedToken: connection.accessToken,
-        tokenExpiresAt: connection.tokenExpiresAt,
-        platform: connection.platform,
-        preferredHandle,
-      });
+      const syncData =
+        connection.platform === "youtube"
+          ? await youtubeSyncWithStoredToken({
+              encryptedToken: connection.accessToken,
+              encryptedRefreshToken: connection.refreshToken,
+              tokenExpiresAt: connection.tokenExpiresAt,
+            })
+          : await syncWithStoredToken({
+              encryptedToken: connection.accessToken,
+              tokenExpiresAt: connection.tokenExpiresAt,
+              platform: connection.platform,
+              preferredHandle,
+            });
 
       await applySyncToConnection(connection, syncData);
 
@@ -444,6 +530,7 @@ const syncAllConnectedAccounts = async () => {
 export {
   buildFacebookResponse,
   buildInstagramResponse,
+  buildYoutubeResponse,
   connectFromOAuth,
   getConnection,
   getStats,
