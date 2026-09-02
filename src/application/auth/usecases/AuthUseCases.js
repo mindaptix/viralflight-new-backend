@@ -59,7 +59,7 @@ export class SendOtpUseCase extends UseCase {
       message: "OTP sent successfully",
       selectedRole: role,
       mobile,
-      ...(otpMeta?.debugOtp ? { debugOtp: otpMeta.debugOtp } : {}),
+      debugOtp: otpMeta.debugOtp,
     };
   }
 }

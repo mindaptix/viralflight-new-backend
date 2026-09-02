@@ -26,12 +26,7 @@ export class LocalOtpService {
 
     console.log(`[LocalOTP] ${mobile} -> ${code}`);
 
-    const response = {};
-    if (process.env.NODE_ENV !== "production") {
-      response.debugOtp = code;
-    }
-
-    return response;
+    return { debugOtp: code };
   }
 
   async verifyOtp(mobile, code) {
