@@ -26,11 +26,23 @@ class YoutubeApiError extends MetaApiError {
   }
 }
 
-const getGoogleClientId = () => process.env.GOOGLE_CLIENT_ID;
-const getGoogleClientSecret = () => process.env.GOOGLE_CLIENT_SECRET;
+const trimEnv = (value) =>
+  typeof value === "string" ? value.trim() : "";
+
+const getPublicBaseUrl = () => {
+  const raw =
+    trimEnv(process.env.PUBLIC_APP_URL) ||
+    trimEnv(process.env.APP_BASE_URL) ||
+    "https://viralflight.cloud";
+  return raw.replace(/\/$/, "");
+};
+
+const getGoogleClientId = () => trimEnv(process.env.GOOGLE_CLIENT_ID);
+const getGoogleClientSecret = () => trimEnv(process.env.GOOGLE_CLIENT_SECRET);
 const getYoutubeRedirectUri = () =>
-  process.env.YOUTUBE_REDIRECT_URI ||
-  process.env.GOOGLE_REDIRECT_URI_YOUTUBE;
+  trimEnv(process.env.YOUTUBE_REDIRECT_URI) ||
+  trimEnv(process.env.GOOGLE_REDIRECT_URI_YOUTUBE) ||
+  `${getPublicBaseUrl()}/api/influencer/youtube/callback`;
 
 const requireGoogleConfig = () => {
   const clientId = getGoogleClientId();
@@ -38,18 +50,14 @@ const requireGoogleConfig = () => {
   const redirectUri = getYoutubeRedirectUri();
 
   if (!clientId) {
-    throw new YoutubeConfigError("GOOGLE_CLIENT_ID is required for YouTube connect");
+    throw new YoutubeConfigError(
+      "GOOGLE_CLIENT_ID is required for YouTube connect. Create an OAuth Web client in Google Cloud Console and set GOOGLE_CLIENT_ID."
+    );
   }
 
   if (!clientSecret) {
     throw new YoutubeConfigError(
-      "GOOGLE_CLIENT_SECRET is required for YouTube connect"
-    );
-  }
-
-  if (!redirectUri) {
-    throw new YoutubeConfigError(
-      "YOUTUBE_REDIRECT_URI is required for YouTube connect"
+      "GOOGLE_CLIENT_SECRET is required for YouTube connect. Set it from the same Google Cloud OAuth Web client."
     );
   }
 

@@ -62,18 +62,34 @@ const getRequiredEnv = (resolver, label) => {
   return value;
 };
 
+const trimEnv = (value) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
+
+const getPublicBaseUrl = () => {
+  const raw =
+    trimEnv(process.env.PUBLIC_APP_URL) ||
+    trimEnv(process.env.APP_BASE_URL) ||
+    "https://viralflight.cloud";
+  return raw.replace(/\/$/, "");
+};
+
 const getRedirectUri = (platform) => {
-  if (platform === "instagram") {
-    return (
-      process.env.META_REDIRECT_URI_INSTAGRAM ||
-      process.env.INSTAGRAM_REDIRECT_URI
-    );
+  const explicit =
+    platform === "instagram"
+      ? trimEnv(process.env.META_REDIRECT_URI_INSTAGRAM) ||
+        trimEnv(process.env.INSTAGRAM_REDIRECT_URI)
+      : trimEnv(process.env.META_REDIRECT_URI_FACEBOOK) ||
+        trimEnv(process.env.FACEBOOK_REDIRECT_URI);
+
+  if (explicit) {
+    return explicit;
   }
 
-  return (
-    process.env.META_REDIRECT_URI_FACEBOOK ||
-    process.env.FACEBOOK_REDIRECT_URI
-  );
+  return `${getPublicBaseUrl()}/api/influencer/${platform}/callback`;
 };
 
 const getEncryptionKey = () => {
@@ -166,13 +182,6 @@ const verifyStateToken = (state, platform) => {
 
 const buildConnectUrl = (user, platform) => {
   const redirectUri = getRedirectUri(platform);
-
-  if (!redirectUri) {
-    throw new MetaConfigError(
-      `Redirect URI is required for ${platform} OAuth`
-    );
-  }
-
   const clientId = getRequiredEnv(getMetaAppId, "META_APP_ID");
   const state = buildStateToken(user, platform);
 

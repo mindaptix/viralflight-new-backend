@@ -1,5 +1,6 @@
 import { JwtAuthService } from "../infrastructure/external/auth/JwtAuthService.js";
-import { TwilioOtpService } from "../infrastructure/external/otp/TwilioOtpService.js";
+import { LocalOtpService } from "../infrastructure/external/otp/LocalOtpService.js";
+// import { TwilioOtpService } from "../infrastructure/external/otp/TwilioOtpService.js";
 import { CampaignApplicationRepository } from "../infrastructure/persistence/mongoose/repositories/CampaignApplicationRepository.js";
 import { CampaignRepository } from "../infrastructure/persistence/mongoose/repositories/CampaignRepository.js";
 import { InfluencerDashboardRepository } from "../infrastructure/persistence/mongoose/repositories/InfluencerDashboardRepository.js";
@@ -56,7 +57,8 @@ const createContainer = () => {
   const influencerDashboardRepository = new InfluencerDashboardRepository();
 
   const authService = new JwtAuthService();
-  const otpService = new TwilioOtpService();
+  const otpService = new LocalOtpService();
+  // const otpService = new TwilioOtpService();
 
   return {
     // infrastructure
