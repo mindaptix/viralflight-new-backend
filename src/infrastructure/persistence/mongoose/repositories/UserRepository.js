@@ -50,4 +50,8 @@ export class UserRepository {
       }
     );
   }
+
+  async deleteByCredentials({ userId, mobile, role }) {
+    return User.findOneAndDelete({ _id: userId, mobile, role });
+  }
 }

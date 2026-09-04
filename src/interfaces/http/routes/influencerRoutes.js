@@ -1,7 +1,7 @@
 import express from "express";
 
 import authMiddleware from "../middleware/authMiddleware.js";
-import { logout } from "../controllers/authController.js";
+import { deleteAccount, logout } from "../controllers/authController.js";
 import {
   getDashboardStats,
   recordProfileView,
@@ -118,5 +118,6 @@ router.post(
 router.post("/full-onboarding", authMiddleware, saveFullOnboarding);
 router.post("/profile-views", profileViewerAuth, recordProfileView);
 router.post("/logout", authMiddleware, logout);
+router.delete("/account", authMiddleware, deleteAccount);
 
 export default router;

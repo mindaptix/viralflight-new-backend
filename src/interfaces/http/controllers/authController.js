@@ -23,3 +23,8 @@ export const logout = asyncHandler(async (req, res) => {
   const result = await container.logoutUseCase.execute({ user: req.user });
   sendSuccess(res, result);
 });
+
+export const deleteAccount = asyncHandler(async (req, res) => {
+  const result = await container.deleteAccountUseCase.execute({ user: req.user });
+  sendSuccess(res, result);
+});

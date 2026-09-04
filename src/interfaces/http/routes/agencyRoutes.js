@@ -5,7 +5,7 @@ import {
   getOnboardingOptions,
   saveFullOnboarding,
 } from "../controllers/agencyController.js";
-import { logout } from "../controllers/authController.js";
+import { deleteAccount, logout } from "../controllers/authController.js";
 import {
   createAgencyCampaignController,
   listAgencyCampaigns,
@@ -29,5 +29,6 @@ router.get("/influencers", agencyAuth, listAgencyInfluencers);
 router.post("/full-onboarding", agencyAuth, saveFullOnboarding);
 router.post("/campaigns", agencyAuth, createAgencyCampaignController);
 router.post("/logout", agencyAuth, logout);
+router.delete("/account", agencyAuth, deleteAccount);
 
 export default router;

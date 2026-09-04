@@ -215,9 +215,15 @@ const applyBrandPatch = (profile, body) => {
     profile.profileImageUrl =
       normalizeText(body.profileImageUrl ?? body.avatarUrl) || "";
   }
+  if (
+    body.coverImageUrl !== undefined ||
+    body.coverUrl !== undefined ||
+    body.bannerUrl !== undefined
+  ) {
+    profile.coverImageUrl =
+      normalizeText(body.coverImageUrl ?? body.coverUrl ?? body.bannerUrl) || "";
+  }
 };
-
-const applyAgencyPatch = (profile, body) => {
   if (body.agencyName !== undefined || body.name !== undefined) {
     profile.agencyName =
       normalizeText(body.agencyName ?? body.name) || profile.agencyName;
@@ -246,6 +252,14 @@ const applyAgencyPatch = (profile, body) => {
   if (body.profileImageUrl !== undefined || body.avatarUrl !== undefined) {
     profile.profileImageUrl =
       normalizeText(body.profileImageUrl ?? body.avatarUrl) || "";
+  }
+  if (
+    body.coverImageUrl !== undefined ||
+    body.coverUrl !== undefined ||
+    body.bannerUrl !== undefined
+  ) {
+    profile.coverImageUrl =
+      normalizeText(body.coverImageUrl ?? body.coverUrl ?? body.bannerUrl) || "";
   }
   if (body.niches !== undefined || body.focusAreas !== undefined) {
     const value = body.niches ?? body.focusAreas;

@@ -23,6 +23,7 @@ import {
   SendOtpUseCase,
   VerifyOtpUseCase,
 } from "../application/auth/usecases/AuthUseCases.js";
+import { DeleteAccountUseCase } from "../application/auth/usecases/DeleteAccountUseCase.js";
 import { CreateCampaignUseCase } from "../application/campaigns/usecases/CreateCampaignUseCase.js";
 import {
   ListAgencyCampaignsUseCase,
@@ -83,6 +84,7 @@ const createContainer = () => {
     }),
     refreshTokenUseCase: new RefreshTokenUseCase({ userRepository, authService }),
     logoutUseCase: new LogoutUseCase({ userRepository }),
+    deleteAccountUseCase: new DeleteAccountUseCase({ userRepository }),
 
     // campaigns
     createCampaignUseCase: new CreateCampaignUseCase({
