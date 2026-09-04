@@ -31,7 +31,7 @@ const mimeFromExt = (filePath = "") => {
 
 const isAllowedImage = (file = {}) => {
   const mime = String(file.mimetype || "").toLowerCase().trim();
-  if (/^image\/(jpeg|jpg|png|webp|heic)$/i.test(mime)) {
+  if (/^image\//i.test(mime)) {
     return true;
   }
 

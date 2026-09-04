@@ -224,6 +224,8 @@ const applyBrandPatch = (profile, body) => {
       normalizeText(body.coverImageUrl ?? body.coverUrl ?? body.bannerUrl) || "";
   }
 };
+
+const applyAgencyPatch = (profile, body) => {
   if (body.agencyName !== undefined || body.name !== undefined) {
     profile.agencyName =
       normalizeText(body.agencyName ?? body.name) || profile.agencyName;
@@ -266,6 +268,9 @@ const applyBrandPatch = (profile, body) => {
     profile.niches = Array.isArray(value)
       ? value.map((item) => String(item).trim()).filter(Boolean)
       : [];
+    if (Array.isArray(value)) {
+      profile.focusAreas = value.map((item) => String(item).trim()).filter(Boolean);
+    }
   }
 };
 

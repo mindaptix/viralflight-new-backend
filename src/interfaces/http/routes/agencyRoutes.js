@@ -12,6 +12,7 @@ import {
 } from "../controllers/campaignController.js";
 import { listCampaignApplicationsController } from "../controllers/campaignApplicationController.js";
 import { listAgencyInfluencers } from "../controllers/discoveryController.js";
+import { getAgencyDashboard } from "../controllers/publicOrgController.js";
 import { requireRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -26,6 +27,7 @@ router.get(
   listCampaignApplicationsController
 );
 router.get("/influencers", agencyAuth, listAgencyInfluencers);
+router.get("/dashboard", agencyAuth, getAgencyDashboard);
 router.post("/full-onboarding", agencyAuth, saveFullOnboarding);
 router.post("/campaigns", agencyAuth, createAgencyCampaignController);
 router.post("/logout", agencyAuth, logout);
