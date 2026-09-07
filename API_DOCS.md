@@ -61,6 +61,11 @@ GET  /api/connections
 GET  /api/connections/requests
 GET  /api/connections/:id
 PATCH /api/connections/:id/status
+POST /api/chat/conversations
+GET  /api/chat/conversations
+GET  /api/chat/conversations/:conversationId/messages
+POST /api/chat/conversations/:conversationId/messages
+PATCH /api/chat/conversations/:conversationId/read
 ```
 
 There are no active custom `/api/admin/*` APIs right now. Payload CMS admin is available at:

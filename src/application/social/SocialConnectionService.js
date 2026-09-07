@@ -527,6 +527,43 @@ const syncAllConnectedAccounts = async () => {
   return { synced, failed, total: connections.length };
 };
 
+
+const disconnectConnection = async ({ user, platform }) => {
+  const connection = await InfluencerSocialConnection.findOne({
+    userId: user.userId,
+    platform,
+  });
+
+  if (connection) {
+    connection.isConnected = false;
+    connection.accessToken = undefined;
+    connection.refreshToken = undefined;
+    connection.tokenExpiresAt = undefined;
+    connection.syncError = undefined;
+    await connection.save();
+  }
+
+  const profile = await InfluencerProfile.findOne({ userId: user.userId });
+  if (profile) {
+    if (platform === "instagram" && profile.instagram) {
+      profile.instagram.isConnected = false;
+      profile.instagram.token = undefined;
+      await profile.save();
+    } else if (platform === "facebook" && profile.facebook) {
+      profile.facebook.isConnected = false;
+      await profile.save();
+    } else if (platform === "youtube" && profile.youtube) {
+      profile.youtube.isConnected = false;
+      await profile.save();
+    }
+  }
+
+  return buildPlatformResponse(
+    platform,
+    connection ? { ...connection.toObject(), isConnected: false } : null
+  );
+};
+
 export {
   buildFacebookResponse,
   buildInstagramResponse,
@@ -536,4 +573,5 @@ export {
   getStats,
   syncAllConnectedAccounts,
   syncConnection,
+  disconnectConnection,
 };

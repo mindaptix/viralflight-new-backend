@@ -9,7 +9,9 @@ import {
 } from "../src/application/connections/ConnectionRequestService.js";
 import AgencyProfile from "../src/models/AgencyProfile.js";
 import BrandProfile from "../src/models/BrandProfile.js";
+import ChatMessage from "../src/models/ChatMessage.js";
 import ConnectionRequest from "../src/models/ConnectionRequest.js";
+import Conversation from "../src/models/Conversation.js";
 import InfluencerProfile from "../src/models/InfluencerProfile.js";
 import Notification from "../src/models/Notification.js";
 import User from "../src/models/User.js";
@@ -78,6 +80,20 @@ async function runUnitTests() {
   // Mock BrandProfile & AgencyProfile
   BrandProfile.findOne = async () => fakeBrandProfile;
   AgencyProfile.findOne = async () => fakeAgencyProfile;
+
+  // Mock Conversation & ChatMessage for chat auto-initiation
+  Conversation.findOne = async () => null;
+  Conversation.create = async (doc) => ({
+    ...doc,
+    _id: new mongoose.Types.ObjectId(),
+    save: async function () { return this; },
+  });
+  ChatMessage.create = async (doc) => ({
+    ...doc,
+    _id: new mongoose.Types.ObjectId(),
+    createdAt: new Date(),
+    save: async function () { return this; },
+  });
 
   // Mock Notification.create
   Notification.create = async (doc) => {

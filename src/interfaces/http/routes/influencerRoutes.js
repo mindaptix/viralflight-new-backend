@@ -22,6 +22,7 @@ import {
   getInstagramStats,
   handleInstagramCallback,
   syncInstagram,
+  disconnectInstagram,
 } from "../controllers/instagramController.js";
 import {
   getFacebookConnectUrl,
@@ -86,6 +87,16 @@ router.post(
   authMiddleware,
   socialSyncRateLimit,
   syncInstagram
+);
+router.post(
+  "/instagram/disconnect",
+  authMiddleware,
+  disconnectInstagram
+);
+router.delete(
+  "/instagram/disconnect",
+  authMiddleware,
+  disconnectInstagram
 );
 router.get(
   "/facebook/connect-url",

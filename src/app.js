@@ -14,6 +14,7 @@ import engagementRoutes from "./interfaces/http/routes/engagementRoutes.js";
 import connectionRoutes from "./interfaces/http/routes/connectionRoutes.js";
 import profileRoutes from "./interfaces/http/routes/profileRoutes.js";
 import uploadRoutes, { uploadsRoot } from "./interfaces/http/routes/uploadRoutes.js";
+import chatRoutes from "./interfaces/http/routes/chatRoutes.js";
 import { errorMiddleware } from "./shared/http/errorMiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -68,6 +69,7 @@ app.use("/api/uploads", uploadRoutes);
 app.use("/api", discoveryRoutes);
 app.use("/api", jsonForMobileApi, engagementRoutes);
 app.use("/api", jsonForMobileApi, connectionRoutes);
+app.use("/api/chat", express.json(), chatRoutes);
 
 app.use(errorMiddleware);
 

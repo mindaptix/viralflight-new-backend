@@ -9,6 +9,8 @@ import ConnectionRequest, {
 import InfluencerProfile from "../../models/InfluencerProfile.js";
 import Notification from "../../models/Notification.js";
 import User from "../../models/User.js";
+import { initiateCampaignChat } from "../chat/ChatService.js";
+import { getChatIO } from "../../infrastructure/socket/chatSocket.js";
 import {
   ForbiddenError,
   NotFoundError,
@@ -320,6 +322,54 @@ export const updateConnectionRequestStatus = async ({
   doc.status = nextStatus;
   await doc.save();
 
+  // When request is accepted, initiate chat conversation between Brand and Creator
+  let chatConversation = null;
+  if (nextStatus === "accepted") {
+    try {
+      const creatorUserId =
+        doc.creatorId && mongoose.Types.ObjectId.isValid(doc.creatorId)
+          ? doc.creatorId
+          : undefined;
+
+      if (creatorUserId && doc.brandId) {
+        const welcomeText =
+          doc.kind === "quote"
+            ? `🎉 Quote request accepted! You can now discuss the collaboration details directly here.`
+            : `🎉 Connection request accepted! You are now connected and can chat directly here.`;
+
+        const chatResult = await initiateCampaignChat({
+          brandUserId: doc.brandId,
+          influencerUserId: creatorUserId,
+          initialMessageText: welcomeText,
+        });
+
+        chatConversation = chatResult.conversation;
+
+        const io = getChatIO();
+        if (io && chatResult.message) {
+          const conversationRoom = `conversation:${chatResult.conversation._id}`;
+          const creatorRoom = `user:${creatorUserId}`;
+          const brandRoom = `user:${doc.brandId}`;
+
+          io.to(conversationRoom).emit("new_message", {
+            conversationId: String(chatResult.conversation._id),
+            message: chatResult.message,
+          });
+          io.to(creatorRoom).emit("new_message", {
+            conversationId: String(chatResult.conversation._id),
+            message: chatResult.message,
+          });
+          io.to(brandRoom).emit("new_message", {
+            conversationId: String(chatResult.conversation._id),
+            message: chatResult.message,
+          });
+        }
+      }
+    } catch (chatErr) {
+      console.error("Could not initiate chat for accepted request:", chatErr);
+    }
+  }
+
   // Send status update notification to other party
   if (isCreator || creatorMatchesProfile) {
     // Notify Brand/Agency
@@ -334,6 +384,7 @@ export const updateConnectionRequestStatus = async ({
         metadata: {
           requestId: toId(doc._id),
           status: nextStatus,
+          conversationId: chatConversation ? toId(chatConversation._id) : undefined,
         },
       });
     }

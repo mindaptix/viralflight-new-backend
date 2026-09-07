@@ -8,6 +8,7 @@ import {
   connectFromOAuth,
   getStats,
   syncConnection,
+  disconnectConnection,
 } from "../../../application/social/SocialConnectionService.js";
 import { sendOAuthHtml } from "../../../shared/utils/oauthHtml.js";
 
@@ -117,5 +118,22 @@ export const getInstagramStats = async (req, res) => {
     });
   } catch (error) {
     handleMetaError(res, error, "Unable to fetch Instagram stats");
+  }
+};
+
+export const disconnectInstagram = async (req, res) => {
+  try {
+    const instagram = await disconnectConnection({
+      user: req.user,
+      platform: "instagram",
+    });
+
+    res.json({
+      success: true,
+      message: "Instagram disconnected successfully",
+      instagram,
+    });
+  } catch (error) {
+    handleMetaError(res, error, "Unable to disconnect Instagram");
   }
 };

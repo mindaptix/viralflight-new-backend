@@ -333,7 +333,7 @@ const exchangeForLongLivedToken = (shortLivedToken) =>
     fb_exchange_token: shortLivedToken,
   });
 
-const requestInstagramGraph = async (path, params = {}, attempt = 1) => {
+const requestInstagramGraph = async (path, params = {}, options = {}, attempt = 1) => {
   const url = new URL(`${getInstagramGraphBaseUrl()}${path}`);
 
   Object.entries(params).forEach(([key, value]) => {
@@ -342,7 +342,15 @@ const requestInstagramGraph = async (path, params = {}, attempt = 1) => {
     }
   });
 
-  const response = await fetch(url);
+  const headers = { ...(options.headers || {}) };
+  if (params.access_token && !headers.Authorization) {
+    headers.Authorization = `Bearer ${params.access_token}`;
+  }
+
+  const response = await fetch(url, {
+    method: options.method || "GET",
+    headers: Object.keys(headers).length > 0 ? headers : undefined,
+  });
   const payload = await parseJsonSafe(response);
 
   if (!response.ok || payload.error) {
@@ -462,12 +470,25 @@ const getPages = (accessToken) =>
     limit: 25,
   });
 
-const getInstagramLoginProfile = async (accessToken) =>
-  requestInstagramGraph("/me", {
-    access_token: accessToken,
-    fields:
-      "user_id,id,username,account_type,followers_count,follows_count,media_count,profile_picture_url",
-  });
+const getInstagramLoginProfile = async (accessToken) => {
+  try {
+    return await requestInstagramGraph("/me", {
+      access_token: accessToken,
+      fields:
+        "id,user_id,username,account_type,followers_count,follows_count,media_count,profile_picture_url",
+    }, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+  } catch (error) {
+    // Fallback if extended fields fail on basic display or specific account configurations
+    return await requestInstagramGraph("/me", {
+      access_token: accessToken,
+      fields: "id,username,followers_count",
+    }, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+  }
+};
 
 const getInstagramAccount = async (igUserId, accessToken) =>
   requestGraph(`/${igUserId}`, {
