@@ -1,125 +1,162 @@
 # Connections + Quote Requests API
 
-Replaces Flutter local-only `ConnectionsStore` with backend APIs.
+Backend API endpoints to handle **Quote Requests** and **Connection Requests** between Brands/Agencies and Creators/Influencers in ViralFlight.
 
 Base URL: `https://viralflight.cloud`  
 Auth: `Authorization: Bearer <JWT>`
 
 ---
 
-## Connect (brand / agency → influencer)
+## 1. Create a Connection or Quote Request
 
-| Method | Endpoint | Who |
-|--------|----------|-----|
-| POST | `/api/connections` | brand, agency |
-| GET | `/api/connections` | brand, agency, influencer |
-| GET | `/api/connections/:influencerProfileId/status` | brand, agency |
-| DELETE | `/api/connections/:influencerProfileId` | brand, agency |
+Creates a new request from the authenticated brand or agency to a creator. Also automatically triggers an in-app notification to the target creator.
 
-### Connect
+- **Method**: `POST`
+- **Endpoint**: `/api/connections/requests`
+- **Roles**: `brand`, `agency`
 
+### Request Headers
 ```http
-POST /api/connections
+Authorization: Bearer <token>
+Content-Type: application/json
 ```
 
+### Request Body
 ```json
 {
-  "influencerProfileId": "68f0....",
-  "note": "optional note"
+  "creator_id": "68f0abc12345678901234567",
+  "kind": "quote", // Allowed: "quote" | "connection"
+  "brand_name": "Acme Fitness", // Optional, defaults to brand/agency profile name
+  "brand_niche": "Fitness & Wellness", // Optional, defaults to brand/agency niche
+  "message": "Please share your quote for a paid collaboration.",
+  "budget_display": "$500 - $1,000", // Optional (e.g., "$500 - $1,000" or "To discuss")
+  "deliverable": "1 Reel + 2 Stories", // Optional (e.g., "Reel / Story")
+  "city": "Mumbai" // Optional, defaults to creator profile city
 }
 ```
 
+### Response (`201 Created`)
 ```json
 {
   "success": true,
-  "message": "Connected successfully",
-  "connection": {
-    "id": "...",
-    "status": "connected",
-    "isConnected": true,
-    "influencerProfileId": "...",
-    "influencer": { "id": "...", "name": "...", "profileImageUrl": "..." },
-    "connectedAt": "..."
+  "data": {
+    "id": "68f0def98765432109876543",
+    "kind": "quote",
+    "status": "pending",
+    "creator_id": "68f0abc12345678901234567",
+    "brand_id": "68f011122233344455566677",
+    "brand_name": "Acme Fitness",
+    "brand_niche": "Fitness & Wellness",
+    "message": "Please share your quote for a paid collaboration.",
+    "budget_display": "$500 - $1,000",
+    "deliverable": "1 Reel + 2 Stories",
+    "city": "Mumbai",
+    "created_at": "2026-09-07T12:30:00.000Z"
   }
 }
 ```
 
-### List
+---
 
-Brand/agency → their saved connections.  
-Influencer → who connected to them.
+## 2. Fetch User's Requests / Inbox
 
-### Status / disconnect
+Fetch all connection and quote requests (for creators to view incoming requests, or brands/agencies to view outgoing requests).
 
-```http
-GET /api/connections/:influencerProfileId/status
-→ { "success": true, "isConnected": true, "connection": {...} }
+- **Method**: `GET`
+- **Endpoint**: `/api/connections` (or `/api/connections/requests`)
+- **Roles**: `influencer`, `brand`, `agency`
 
-DELETE /api/connections/:influencerProfileId
-→ { "success": true, "message": "Disconnected successfully", "isConnected": false }
+### Query Parameters
+- `type` / `kind` (optional): `all` | `quotes` | `connections`
+- `status` (optional): `pending` | `accepted` | `declined` | `disconnected`
+- `page` (optional, default: `1`): page number
+- `limit` (optional, default: `20`): items per page
+
+### Response (`200 OK`)
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "68f0def98765432109876543",
+      "kind": "quote",
+      "status": "pending",
+      "is_incoming": true,
+      "creator_id": "68f0abc12345678901234567",
+      "brand_id": "68f011122233344455566677",
+      "brand_name": "Acme Fitness",
+      "brand_niche": "Fitness & Wellness",
+      "message": "Please share your quote for a paid collaboration.",
+      "budget_display": "$500 - $1,000",
+      "deliverable": "1 Reel + 2 Stories",
+      "city": "Mumbai",
+      "created_at": "2026-09-07T12:30:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 1,
+    "page": 1,
+    "limit": 20
+  }
+}
 ```
 
 ---
 
-## Request quote
+## 3. Update Request Status
 
-| Method | Endpoint | Who |
-|--------|----------|-----|
-| POST | `/api/quote-requests` | brand, agency |
-| GET | `/api/quote-requests` | brand, agency, influencer |
-| GET | `/api/quote-requests/:id` | owner sides |
-| POST | `/api/quote-requests/:id/respond` | influencer |
-| POST | `/api/quote-requests/:id/accept` | brand, agency |
-| POST | `/api/quote-requests/:id/decline` | either side |
-| POST | `/api/quote-requests/:id/withdraw` | brand, agency |
+Allows creators or brands to accept, decline, or disconnect requests. Triggers in-app notifications to the opposite party.
 
-### Create quote request
+- **Method**: `PATCH`
+- **Endpoint**: `/api/connections/:id/status` (or `/api/connections/requests/:id/status`)
+- **Roles**: `influencer`, `brand`, `agency`
 
-```http
-POST /api/quote-requests
-```
-
+### Request Body
 ```json
 {
-  "influencerProfileId": "68f0....",
-  "message": "Need 2 Reels for Diwali campaign",
-  "deliverables": ["reel", "story"],
-  "budgetHint": 25000,
-  "currency": "INR",
-  "campaignId": "optional-campaign-id"
+  "status": "accepted" // Allowed values: "accepted" | "declined" | "disconnected"
 }
 ```
 
-### Influencer responds
-
-```http
-POST /api/quote-requests/:id/respond
-```
-
+### Response (`200 OK`)
 ```json
 {
-  "quotedAmount": 30000,
-  "currency": "INR",
-  "note": "Includes edits",
-  "validityDays": 14
+  "success": true,
+  "message": "Request status updated to accepted",
+  "data": {
+    "id": "68f0def98765432109876543",
+    "status": "accepted",
+    "updated_at": "2026-09-07T12:35:00.000Z"
+  }
 }
 ```
-
-Statuses: `pending` → `quoted` → `accepted` | `declined` | `withdrawn`
 
 ---
 
-## Flutter migration notes
+## 4. Get Request by ID
 
-Replace `ConnectionsStore` local saves with:
+- **Method**: `GET`
+- **Endpoint**: `/api/connections/requests/:id` (or `/api/connections/:id`)
+- **Roles**: Owner of request (`creator` or `brand` / `agency`)
 
-1. On Connect tap → `POST /api/connections`
-2. On screen load → `GET /api/connections`
-3. Check button state → `GET /api/connections/:id/status`
-4. Disconnect → `DELETE /api/connections/:id`
-
-Replace local quote store with:
-
-1. Request quote → `POST /api/quote-requests`
-2. Inbox list → `GET /api/quote-requests`
-3. Influencer quote → `POST /api/quote-requests/:id/respond`
+### Response (`200 OK`)
+```json
+{
+  "success": true,
+  "data": {
+    "id": "68f0def98765432109876543",
+    "kind": "quote",
+    "status": "accepted",
+    "is_incoming": true,
+    "creator_id": "68f0abc12345678901234567",
+    "brand_id": "68f011122233344455566677",
+    "brand_name": "Acme Fitness",
+    "brand_niche": "Fitness & Wellness",
+    "message": "Please share your quote for a paid collaboration.",
+    "budget_display": "$500 - $1,000",
+    "deliverable": "1 Reel + 2 Stories",
+    "city": "Mumbai",
+    "created_at": "2026-09-07T12:30:00.000Z"
+  }
+}
+```

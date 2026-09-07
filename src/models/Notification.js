@@ -7,6 +7,9 @@ const NOTIFICATION_TYPES = [
   "profile_view",
   "community",
   "campaign",
+  "connection_request",
+  "quote_request",
+  "connection",
 ];
 
 const notificationSchema = new mongoose.Schema(

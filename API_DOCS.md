@@ -56,6 +56,11 @@ POST /api/brand/full-onboarding
 POST /api/brand/campaigns
 POST /api/brand/logout
 DELETE /api/brand/account
+POST /api/connections/requests
+GET  /api/connections
+GET  /api/connections/requests
+GET  /api/connections/:id
+PATCH /api/connections/:id/status
 ```
 
 There are no active custom `/api/admin/*` APIs right now. Payload CMS admin is available at:
@@ -1076,3 +1081,13 @@ Fields: userId, mobile, brandName, contactPerson, city, industry, website,
 instagramHandle, campaignInterests, monthlyCampaignBudget, description,
 isProfileComplete, completedAt
 ```
+
+Connection & Quote Requests:
+
+```txt
+Collection: connections_requests
+Fields: creatorId, creatorProfileId, creatorMobile, brandId, brandRole,
+brandName, brandNiche, kind, message, budgetDisplay, deliverable, city,
+status, createdAt, updatedAt
+```
+
