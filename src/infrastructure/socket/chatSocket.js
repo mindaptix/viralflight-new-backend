@@ -68,24 +68,28 @@ export const initChatSocket = (httpServer) => {
       io.emit("user_presence", { userId, isOnline: true });
     }
 
-    // ─── Join Conversation Room ────────────────────────────────────────────
-    socket.on("join_conversation", ({ conversationId }, callback) => {
-      if (conversationId) {
-        const roomName = `conversation:${conversationId}`;
+    // ─── Join Conversation / Room ──────────────────────────────────────────
+    const handleJoin = ({ conversationId, roomId }, callback) => {
+      const targetId = conversationId || roomId;
+      if (targetId) {
+        const roomName = `conversation:${targetId}`;
         socket.join(roomName);
         if (typeof callback === "function") {
-          callback({ success: true, room: roomName, conversationId });
+          callback({ success: true, room: roomName, conversationId: targetId });
         }
       }
-    });
+    };
+    socket.on("join_conversation", handleJoin);
+    socket.on("join_room", handleJoin);
 
     // ─── Leave Conversation Room ───────────────────────────────────────────
-    socket.on("leave_conversation", ({ conversationId }, callback) => {
-      if (conversationId) {
-        const roomName = `conversation:${conversationId}`;
+    socket.on("leave_conversation", ({ conversationId, roomId }, callback) => {
+      const targetId = conversationId || roomId;
+      if (targetId) {
+        const roomName = `conversation:${targetId}`;
         socket.leave(roomName);
         if (typeof callback === "function") {
-          callback({ success: true, room: roomName, conversationId });
+          callback({ success: true, room: roomName, conversationId: targetId });
         }
       }
     });
@@ -93,36 +97,57 @@ export const initChatSocket = (httpServer) => {
     // ─── Real-Time Direct Message ──────────────────────────────────────────
     socket.on("send_message", async (payload, callback) => {
       try {
-        const { conversationId, recipientId, text, mediaUrl, mediaType, metadata } =
-          payload || {};
+        const {
+          conversationId,
+          recipientId,
+          text,
+          content,
+          mediaUrl,
+          mediaType,
+          type,
+          metadata,
+        } = payload || {};
+
+        const messageText = text || content;
+        const resolvedMediaType = mediaType || type;
 
         const result = await sendMessage({
           user: socket.user,
           conversationId,
           recipientId,
-          text,
+          text: messageText,
           mediaUrl,
-          mediaType,
+          mediaType: resolvedMediaType,
           metadata,
         });
 
         const conversationRoom = `conversation:${result.conversationId}`;
         const recipientRoom = `user:${result.recipientId}`;
 
+        const broadcastMessage = {
+          ...result.message,
+          content: result.message.text,
+          type: result.message.media_type || type || "text",
+          senderId: result.message.sender_id,
+          recipientId: result.message.recipient_id,
+          role: socket.user?.role || "influencer",
+          timestamp: result.message.created_at,
+        };
+
         // Emit to conversation room (so all active viewers in that chat receive it)
         io.to(conversationRoom).emit("new_message", {
           conversationId: result.conversationId,
-          message: result.message,
+          message: broadcastMessage,
         });
 
         // Also emit directly to recipient's personal room (for push/inbox/notification badge)
         io.to(recipientRoom).emit("new_message", {
           conversationId: result.conversationId,
-          message: result.message,
+          message: broadcastMessage,
         });
 
         if (typeof callback === "function") {
-          callback({ success: true, data: result.message });
+          callback({ success: true, data: broadcastMessage });
         }
       } catch (err) {
         if (typeof callback === "function") {
@@ -201,3 +226,37 @@ export const initChatSocket = (httpServer) => {
 
   return io;
 };
+
+export const emitDealStatusChanged = ({
+  dealId,
+  influencerUserId,
+  brandUserId,
+  status,
+  deal,
+  milestone,
+}) => {
+  if (!io) return;
+
+  const payload = {
+    dealId,
+    status,
+    timestamp: new Date().toISOString(),
+    deal: deal
+      ? typeof deal.toObject === "function"
+        ? deal.toObject()
+        : deal
+      : null,
+    milestone: milestone || null,
+  };
+
+  if (influencerUserId) {
+    io.to(`user:${influencerUserId}`).emit("deal_status_changed", payload);
+  }
+  if (brandUserId) {
+    io.to(`user:${brandUserId}`).emit("deal_status_changed", payload);
+  }
+  if (dealId) {
+    io.to(`deal:${dealId}`).emit("deal_status_changed", payload);
+  }
+};
+

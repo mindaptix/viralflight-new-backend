@@ -85,6 +85,40 @@ const agencyProfileSchema = new mongoose.Schema(
       type: [{ type: String, trim: true }],
       default: [],
     },
+    // ─── Extended Onboarding Fields ─────────────────────────────────────────────
+    gstNumber: { type: String, trim: true, uppercase: true },
+    gstVerified: { type: Boolean, default: false },
+    representedNiches: { type: [{ type: String, trim: true }], default: [] },
+    rosterSize: { type: String, trim: true }, // e.g. "11-50"
+    multiTalentDiscount: { type: Boolean, default: false },
+    includeGst: { type: Boolean, default: false },
+    termsAuthorized: { type: Boolean, default: false },
+    // ─── Talent Roster ────────────────────────────────────────────────────────────
+    talent: {
+      type: [
+        {
+          influencerProfileId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "InfluencerProfile",
+          },
+          influencerUserId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+          name: { type: String, trim: true },
+          instagramHandle: { type: String, trim: true },
+          city: { type: String, trim: true },
+          niche: { type: String, trim: true },
+          status: {
+            type: String,
+            enum: ["active", "inactive", "pending"],
+            default: "active",
+          },
+          addedAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
     isProfileComplete: {
       type: Boolean,
       default: false,

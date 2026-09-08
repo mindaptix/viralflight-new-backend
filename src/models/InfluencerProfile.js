@@ -304,6 +304,7 @@ const influencerProfileSchema = new mongoose.Schema(
     },
     rateRange: rateRangeSchema,
     rateCard: { type: rateCardSchema, default: () => ({}) },
+    rateCardTelemetry: { type: mongoose.Schema.Types.Mixed, default: null },
     mediaKit: { type: mediaKitSchema, default: () => ({}) },
     pastCollaborations: {
       type: [{ type: String, trim: true }],

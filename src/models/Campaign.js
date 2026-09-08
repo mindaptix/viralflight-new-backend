@@ -119,6 +119,29 @@ const campaignSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    // ─── Marketplace Enhancement Fields ──────────────────────────────────────
+    campaignType: {
+      type: String,
+      trim: true,
+    },
+    targetNiches: {
+      type: [{ type: String, trim: true }],
+      default: [],
+    },
+    targetScaleTier: {
+      type: [{ type: String, trim: true }],
+      default: [],
+    },
+    slotsTotal: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    slotsRemaining: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

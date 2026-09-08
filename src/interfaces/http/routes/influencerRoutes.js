@@ -44,28 +44,78 @@ import {
   updateMediaKit,
   updateRateCard,
 } from "../controllers/influencerAssetsController.js";
+import {
+  getHomeDashboardController,
+  getCuratedCampaignsController,
+  applyToCuratedCampaignController,
+  toggleCampaignBookmarkController,
+  getAutoMatchRateCardController,
+  updateAutoMatchRateCardController,
+  resetAutoMatchRateCardDefaultsController,
+  getDealsSummaryController,
+  getDealsController,
+  acceptEscrowDealController,
+  counterOfferDealController,
+  submitMilestoneDraftController,
+} from "../controllers/influencerFeatureSuiteController.js";
 import { listAgencyInfluencers } from "../controllers/discoveryController.js";
 import { requireRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 const profileViewerAuth = requireRoles(["agency", "brand"]);
 
+// ─── 1. Influencer Home & Feed APIs ──────────────────────────────────────────
+router.get("/home/dashboard", authMiddleware, getHomeDashboardController);
+router.get("/campaigns/curated", authMiddleware, getCuratedCampaignsController);
+router.post(
+  "/campaigns/:campaignId/apply",
+  authMiddleware,
+  applyToCuratedCampaignController
+);
+router.post(
+  "/campaigns/:campaignId/bookmark",
+  authMiddleware,
+  toggleCampaignBookmarkController
+);
+
+// ─── 2. Auto-Match Rate Card APIs ────────────────────────────────────────────
+router.get("/rate-card", authMiddleware, getAutoMatchRateCardController);
+router.put("/rate-card", authMiddleware, updateAutoMatchRateCardController);
+router.post(
+  "/rate-card/reset-defaults",
+  authMiddleware,
+  resetAutoMatchRateCardDefaultsController
+);
+
+// ─── 3. Deals, Sponsorships & Escrow Management ─────────────────────────────
+router.get("/deals/summary", authMiddleware, getDealsSummaryController);
+router.get("/deals", authMiddleware, getDealsController);
+router.post(
+  "/deals/:dealId/accept-escrow",
+  authMiddleware,
+  acceptEscrowDealController
+);
+router.post(
+  "/deals/:dealId/counter-offer",
+  authMiddleware,
+  counterOfferDealController
+);
+router.post(
+  "/deals/:dealId/milestones/:milestoneId/submit-draft",
+  authMiddleware,
+  submitMilestoneDraftController
+);
+
+// ─── Existing Onboarding, Profile & Asset APIs ──────────────────────────────
 router.get("/onboarding-options", authMiddleware, getOnboardingOptions);
 router.get("/profile", authMiddleware, getMyProfile);
 router.get("/dashboard-stats", authMiddleware, getDashboardStats);
 router.get("/brand-invites", authMiddleware, listBrandInvites);
-router.get("/rate-card", authMiddleware, getRateCard);
-router.put("/rate-card", authMiddleware, updateRateCard);
 router.get("/media-kit", authMiddleware, getMediaKit);
 router.put("/media-kit", authMiddleware, updateMediaKit);
 router.get("/campaigns-for-you", authMiddleware, listCampaignsForInfluencer);
 router.get("/creators", authMiddleware, listAgencyInfluencers);
 router.get("/applications", authMiddleware, listMyApplicationsController);
-router.post(
-  "/campaigns/:campaignId/apply",
-  authMiddleware,
-  applyToCampaignController
-);
 router.get(
   "/campaigns/:campaignId/application",
   authMiddleware,
