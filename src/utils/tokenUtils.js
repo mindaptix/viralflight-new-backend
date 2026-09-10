@@ -5,9 +5,13 @@ const getRefreshSecret = () =>
   process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
 
 const createTokens = (payload) => {
-  // Session stays valid until the user logs out — do not set JWT exp.
-  const accessToken = jwt.sign(payload, process.env.JWT_SECRET);
-  const refreshToken = jwt.sign(payload, getRefreshSecret());
+  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
+  });
+
+  const refreshToken = jwt.sign(payload, getRefreshSecret(), {
+    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
+  });
 
   return { accessToken, refreshToken };
 };

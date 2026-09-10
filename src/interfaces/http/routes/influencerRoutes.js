@@ -1,7 +1,7 @@
 import express from "express";
 
 import authMiddleware from "../middleware/authMiddleware.js";
-import { deleteAccount, logout } from "../controllers/authController.js";
+import { logout } from "../controllers/authController.js";
 import {
   getDashboardStats,
   recordProfileView,
@@ -23,19 +23,6 @@ import {
   handleInstagramCallback,
   syncInstagram,
 } from "../controllers/instagramController.js";
-import {
-  getFacebookConnectUrl,
-  getFacebookStats,
-  handleFacebookCallback,
-  syncFacebook,
-} from "../controllers/facebookController.js";
-import {
-  getYoutubeConnectUrl,
-  getYoutubeStats,
-  handleYoutubeCallback,
-  syncYoutube,
-} from "../controllers/youtubeController.js";
-import { rateLimit } from "../../../shared/http/rateLimitMiddleware.js";
 import {
   getMediaKit,
   getRateCard,
@@ -70,54 +57,12 @@ router.get(
   authMiddleware,
   getMyApplicationForCampaignController
 );
-const socialConnectRateLimit = rateLimit({ max: 10, keyPrefix: "social-connect" });
-const socialSyncRateLimit = rateLimit({ max: 10, keyPrefix: "social-sync" });
-
-router.get(
-  "/instagram/connect-url",
-  authMiddleware,
-  socialConnectRateLimit,
-  getInstagramConnectUrl
-);
+router.get("/instagram/connect-url", authMiddleware, getInstagramConnectUrl);
 router.get("/instagram/callback", handleInstagramCallback);
 router.get("/instagram/stats", authMiddleware, getInstagramStats);
-router.post(
-  "/instagram/sync",
-  authMiddleware,
-  socialSyncRateLimit,
-  syncInstagram
-);
-router.get(
-  "/facebook/connect-url",
-  authMiddleware,
-  socialConnectRateLimit,
-  getFacebookConnectUrl
-);
-router.get("/facebook/callback", handleFacebookCallback);
-router.get("/facebook/stats", authMiddleware, getFacebookStats);
-router.post(
-  "/facebook/sync",
-  authMiddleware,
-  socialSyncRateLimit,
-  syncFacebook
-);
-router.get(
-  "/youtube/connect-url",
-  authMiddleware,
-  socialConnectRateLimit,
-  getYoutubeConnectUrl
-);
-router.get("/youtube/callback", handleYoutubeCallback);
-router.get("/youtube/stats", authMiddleware, getYoutubeStats);
-router.post(
-  "/youtube/sync",
-  authMiddleware,
-  socialSyncRateLimit,
-  syncYoutube
-);
+router.post("/instagram/sync", authMiddleware, syncInstagram);
 router.post("/full-onboarding", authMiddleware, saveFullOnboarding);
 router.post("/profile-views", profileViewerAuth, recordProfileView);
 router.post("/logout", authMiddleware, logout);
-router.delete("/account", authMiddleware, deleteAccount);
 
 export default router;

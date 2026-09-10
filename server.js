@@ -3,7 +3,6 @@ import next from "next";
 
 import app from "./src/app.js";
 import connectDB from "./src/config/db.js";
-import { startSocialStatsSyncJob } from "./src/jobs/socialStatsSyncJob.js";
 
 const PORT = process.env.PORT || 5000;
 const isDev = process.env.NODE_ENV !== "production";
@@ -13,7 +12,6 @@ const nextHandler = nextApp.getRequestHandler();
 const startServer = async () => {
   await nextApp.prepare();
   await connectDB();
-  startSocialStatsSyncJob();
 
   // Express APIs first, then Payload/Next for /admin and /api/*
   app.use((req, res) => nextHandler(req, res));

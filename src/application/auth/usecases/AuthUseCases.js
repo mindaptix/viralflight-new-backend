@@ -48,7 +48,7 @@ export class SendOtpUseCase extends UseCase {
       }
     }
 
-    const otpMeta = await this.otpService.sendOtp(mobile);
+    await this.otpService.sendOtp(mobile);
     await this.userRepository.upsertOtpRequest({
       mobile,
       role,
@@ -59,7 +59,6 @@ export class SendOtpUseCase extends UseCase {
       message: "OTP sent successfully",
       selectedRole: role,
       mobile,
-      debugOtp: otpMeta.debugOtp,
     };
   }
 }

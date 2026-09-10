@@ -1,19 +1,129 @@
+import InfluencerProfile from "../../../models/InfluencerProfile.js";
 import {
-  MetaApiError,
-  MetaConfigError,
+  InstagramApiError,
+  InstagramConfigError,
   buildConnectUrl,
+  exchangeCodeAndSync,
+  normalizeHandle,
+  syncWithStoredToken,
   verifyStateToken,
-} from "../../../infrastructure/external/meta/MetaGraphService.js";
+} from "../../../infrastructure/external/instagram/InstagramGraphService.js";
 import {
-  connectFromOAuth,
-  getStats,
-  syncConnection,
-} from "../../../application/social/SocialConnectionService.js";
-import { sendOAuthHtml } from "../../../shared/utils/oauthHtml.js";
+  getOrCreateRoleProfile,
+  getProfileQuery,
+} from "../../../utils/profileControllerUtils.js";
 
-const handleMetaError = (res, error, fallbackMessage) => {
+const formatCount = (value) => {
+  const number = Number(value || 0);
+
+  if (number >= 1000000) {
+    return `${Number((number / 1000000).toFixed(1))}M`;
+  }
+
+  if (number >= 1000) {
+    return `${Number((number / 1000).toFixed(1))}K`;
+  }
+
+  return String(number);
+};
+
+const getManualInstagramHandle = (profile) => {
+  const instagramPlatform = profile.platforms?.find(
+    (item) => item.platform === "instagram"
+  );
+
+  return normalizeHandle(instagramPlatform?.username || profile.instagram?.handle);
+};
+
+const buildInstagramStats = (profile) => {
+  const manualInstagram = profile.platforms?.find(
+    (item) => item.platform === "instagram"
+  );
+  const instagram = profile.instagram || {};
+  const followers = instagram.followers ?? manualInstagram?.followers ?? 0;
+  const engagementRate =
+    instagram.engagementRate ?? manualInstagram?.engagement ?? undefined;
+  const handle = instagram.handle ?? manualInstagram?.username;
+
+  return {
+    handle,
+    instagramUserId: instagram.instagramUserId,
+    followers,
+    followersDisplay: formatCount(followers),
+    follows: instagram.follows,
+    mediaCount: instagram.mediaCount,
+    engagementRate,
+    lastSyncedAt: instagram.lastSyncedAt,
+    accountType: instagram.accountType,
+    profilePictureUrl: instagram.profilePictureUrl,
+    isConnected: Boolean(instagram.isConnected),
+    syncError: instagram.syncError,
+  };
+};
+
+const applyInstagramSyncToProfile = (profile, syncData, tokenData) => {
+  const now = new Date();
+
+  profile.instagram = {
+    ...(profile.instagram?.toObject?.() || profile.instagram || {}),
+    handle: syncData.handle,
+    instagramUserId: syncData.instagramUserId,
+    facebookPageId: syncData.facebookPageId,
+    accountType: syncData.accountType,
+    followers: syncData.followers,
+    follows: syncData.follows,
+    mediaCount: syncData.mediaCount,
+    engagementRate: syncData.engagementRate,
+    profilePictureUrl: syncData.profilePictureUrl,
+    lastSyncedAt: now,
+    connectedAt: profile.instagram?.connectedAt || now,
+    isConnected: true,
+    syncError: undefined,
+    token: tokenData || profile.instagram?.token,
+  };
+
+  const platformData = {
+    platform: "instagram",
+    username: syncData.handle,
+    followers: syncData.followers,
+    engagement: syncData.engagementRate ?? 0,
+  };
+  const platformIndex = profile.platforms.findIndex(
+    (item) => item.platform === "instagram"
+  );
+
+  if (platformIndex >= 0) {
+    profile.platforms[platformIndex] = {
+      ...profile.platforms[platformIndex].toObject?.(),
+      ...platformData,
+    };
+  } else {
+    profile.platforms.push(platformData);
+  }
+};
+
+const sendOAuthResult = (res, statusCode, payload) => {
+  const redirectBase = payload.success
+    ? process.env.INSTAGRAM_OAUTH_SUCCESS_REDIRECT
+    : process.env.INSTAGRAM_OAUTH_ERROR_REDIRECT;
+
+  if (!redirectBase) {
+    return res.status(statusCode).json(payload);
+  }
+
+  const redirectUrl = new URL(redirectBase);
+  redirectUrl.searchParams.set("instagramConnected", payload.success ? "1" : "0");
+
+  if (!payload.success) {
+    redirectUrl.searchParams.set("error", payload.message);
+  }
+
+  return res.redirect(redirectUrl.toString());
+};
+
+const handleInstagramError = (res, error, fallbackMessage) => {
   const statusCode =
-    error instanceof MetaConfigError || error instanceof MetaApiError
+    error instanceof InstagramConfigError || error instanceof InstagramApiError
       ? error.statusCode
       : 500;
 
@@ -26,14 +136,16 @@ const handleMetaError = (res, error, fallbackMessage) => {
 
 export const getInstagramConnectUrl = async (req, res) => {
   try {
-    const connectUrl = buildConnectUrl(req.user, "instagram");
+    const connectUrl = buildConnectUrl(req.user);
 
     res.json({
       success: true,
+      message: "Instagram connect URL generated successfully",
       connectUrl,
+      expiresInSeconds: 600,
     });
   } catch (error) {
-    handleMetaError(res, error, "Unable to generate Instagram connect URL");
+    handleInstagramError(res, error, "Unable to generate Instagram connect URL");
   }
 };
 
@@ -42,80 +154,106 @@ export const handleInstagramCallback = async (req, res) => {
     const { code, state, error, error_description: errorDescription } = req.query;
 
     if (error) {
-      return sendOAuthHtml(res, 400, {
-        title: "Instagram connection failed",
+      return sendOAuthResult(res, 400, {
+        success: false,
         message: errorDescription || String(error),
-        isSuccess: false,
       });
     }
 
     if (!code || !state) {
-      return sendOAuthHtml(res, 400, {
-        title: "Instagram connection failed",
-        message: "Missing authorization code or state parameter.",
-        isSuccess: false,
+      return sendOAuthResult(res, 400, {
+        success: false,
+        message: "Instagram callback requires code and state",
       });
     }
 
-    const stateUser = verifyStateToken(String(state), "instagram");
+    const stateUser = verifyStateToken(String(state));
 
     if (stateUser.role !== "influencer") {
-      return sendOAuthHtml(res, 403, {
-        title: "Access denied",
-        message: "Only influencer accounts can connect Instagram.",
-        isSuccess: false,
+      return sendOAuthResult(res, 403, {
+        success: false,
+        message: "Only influencer accounts can connect Instagram",
       });
     }
 
-    await connectFromOAuth({
-      user: stateUser,
-      platform: "instagram",
+    const profile = await getOrCreateRoleProfile(stateUser, InfluencerProfile);
+    const syncData = await exchangeCodeAndSync({
       code: String(code),
+      preferredHandle: getManualInstagramHandle(profile),
     });
 
-    return sendOAuthHtml(res, 200, {
-      title: "Instagram connected successfully",
-      message: "Return to Viral Flight app.",
-      isSuccess: true,
+    applyInstagramSyncToProfile(profile, syncData, {
+      ...syncData.encryptedToken,
+      expiresAt: syncData.expiresAt,
+    });
+
+    await profile.save();
+
+    return sendOAuthResult(res, 200, {
+      success: true,
+      message: "Instagram connected successfully",
+      instagram: buildInstagramStats(profile),
     });
   } catch (error) {
-    return sendOAuthHtml(res, error.statusCode || 500, {
-      title: "Instagram connection failed",
-      message: error.message || "Unable to connect Instagram.",
-      isSuccess: false,
+    return sendOAuthResult(res, error.statusCode || 500, {
+      success: false,
+      message: error.message || "Unable to connect Instagram",
+      code: error.code,
     });
   }
 };
 
 export const syncInstagram = async (req, res) => {
   try {
-    const instagram = await syncConnection({
-      user: req.user,
-      platform: "instagram",
-    });
+    const profile = await InfluencerProfile.findOne(getProfileQuery(req.user))
+      .select("+instagram.token.iv +instagram.token.tag +instagram.token.value")
+      .exec();
 
-    res.json({
-      success: true,
-      message: "Instagram synced",
-      instagram,
-    });
+    if (!profile?.instagram?.isConnected) {
+      return res.status(400).json({
+        success: false,
+        message: "Instagram is not connected for this influencer profile",
+      });
+    }
+
+    try {
+      const syncData = await syncWithStoredToken(
+        profile.instagram.token,
+        getManualInstagramHandle(profile)
+      );
+
+      applyInstagramSyncToProfile(profile, syncData);
+      await profile.save();
+
+      return res.json({
+        success: true,
+        message: "Instagram synced successfully",
+        instagram: buildInstagramStats(profile),
+      });
+    } catch (error) {
+      profile.instagram.syncError = {
+        message: error.message,
+        code: error.code,
+        occurredAt: new Date(),
+      };
+      await profile.save();
+      throw error;
+    }
   } catch (error) {
-    handleMetaError(res, error, "Unable to sync Instagram");
+    handleInstagramError(res, error, "Unable to sync Instagram");
   }
 };
 
 export const getInstagramStats = async (req, res) => {
   try {
-    const instagram = await getStats({
-      user: req.user,
-      platform: "instagram",
-    });
+    const profile = await getOrCreateRoleProfile(req.user, InfluencerProfile);
 
     res.json({
       success: true,
-      instagram,
+      message: "Instagram stats fetched successfully",
+      instagram: buildInstagramStats(profile),
     });
   } catch (error) {
-    handleMetaError(res, error, "Unable to fetch Instagram stats");
+    handleInstagramError(res, error, "Unable to fetch Instagram stats");
   }
 };
