@@ -9,18 +9,9 @@ import {
   verifyStateToken,
 } from "../../../infrastructure/external/instagram/InstagramGraphService.js";
 import {
-<<<<<<< HEAD
-  connectFromOAuth,
-  getStats,
-  syncConnection,
-  disconnectConnection,
-} from "../../../application/social/SocialConnectionService.js";
-import { sendOAuthHtml } from "../../../shared/utils/oauthHtml.js";
-=======
   getOrCreateRoleProfile,
   getProfileQuery,
 } from "../../../utils/profileControllerUtils.js";
->>>>>>> 542fda10a598293e5d98e294bf7584fb0afbb8bc
 
 const formatCount = (value) => {
   const number = Number(value || 0);
@@ -264,22 +255,5 @@ export const getInstagramStats = async (req, res) => {
     });
   } catch (error) {
     handleInstagramError(res, error, "Unable to fetch Instagram stats");
-  }
-};
-
-export const disconnectInstagram = async (req, res) => {
-  try {
-    const instagram = await disconnectConnection({
-      user: req.user,
-      platform: "instagram",
-    });
-
-    res.json({
-      success: true,
-      message: "Instagram disconnected successfully",
-      instagram,
-    });
-  } catch (error) {
-    handleMetaError(res, error, "Unable to disconnect Instagram");
   }
 };

@@ -13,9 +13,6 @@ import discoveryRoutes from "./interfaces/http/routes/discoveryRoutes.js";
 import engagementRoutes from "./interfaces/http/routes/engagementRoutes.js";
 import profileRoutes from "./interfaces/http/routes/profileRoutes.js";
 import uploadRoutes, { uploadsRoot } from "./interfaces/http/routes/uploadRoutes.js";
-import chatRoutes from "./interfaces/http/routes/chatRoutes.js";
-import collaborationRoutes from "./interfaces/http/routes/collaborationRoutes.js";
-import aiRoutes from "./interfaces/http/routes/aiRoutes.js";
 import { errorMiddleware } from "./shared/http/errorMiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -69,13 +66,6 @@ app.use("/api/uploads", uploadRoutes);
 // Discovery is GET-only — no JSON body parser needed.
 app.use("/api", discoveryRoutes);
 app.use("/api", jsonForMobileApi, engagementRoutes);
-<<<<<<< HEAD
-app.use("/api", jsonForMobileApi, connectionRoutes);
-app.use("/api/chat", express.json(), chatRoutes);
-app.use("/api/collaborations", express.json(), collaborationRoutes);
-app.use("/api/ai", express.json(), aiRoutes);
-=======
->>>>>>> 542fda10a598293e5d98e294bf7584fb0afbb8bc
 
 app.use(errorMiddleware);
 
