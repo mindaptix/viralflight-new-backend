@@ -5,7 +5,7 @@ import {
   getOnboardingOptions,
   saveFullOnboarding,
 } from "../controllers/brandController.js";
-import { deleteAccount, logout } from "../controllers/authController.js";
+import { logout } from "../controllers/authController.js";
 import {
   createCampaign,
   listBrandCampaigns,
@@ -69,6 +69,5 @@ router.get("/creators", brandAuth, listBrandCreators);
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 router.post("/logout", brandAuth, logout);
-router.delete("/account", brandAuth, deleteAccount);
 
 export default router;

@@ -11,7 +11,6 @@ import campaignApplicationRoutes from "./interfaces/http/routes/campaignApplicat
 import campaignRoutes from "./interfaces/http/routes/campaignRoutes.js";
 import discoveryRoutes from "./interfaces/http/routes/discoveryRoutes.js";
 import engagementRoutes from "./interfaces/http/routes/engagementRoutes.js";
-import connectionRoutes from "./interfaces/http/routes/connectionRoutes.js";
 import profileRoutes from "./interfaces/http/routes/profileRoutes.js";
 import uploadRoutes, { uploadsRoot } from "./interfaces/http/routes/uploadRoutes.js";
 import chatRoutes from "./interfaces/http/routes/chatRoutes.js";
@@ -70,10 +69,13 @@ app.use("/api/uploads", uploadRoutes);
 // Discovery is GET-only — no JSON body parser needed.
 app.use("/api", discoveryRoutes);
 app.use("/api", jsonForMobileApi, engagementRoutes);
+<<<<<<< HEAD
 app.use("/api", jsonForMobileApi, connectionRoutes);
 app.use("/api/chat", express.json(), chatRoutes);
 app.use("/api/collaborations", express.json(), collaborationRoutes);
 app.use("/api/ai", express.json(), aiRoutes);
+=======
+>>>>>>> 542fda10a598293e5d98e294bf7584fb0afbb8bc
 
 app.use(errorMiddleware);
 

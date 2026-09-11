@@ -80,11 +80,6 @@ export const enrichRoleProfileDocument = (profile, role) => {
     profileImageUrl: avatarUrl,
     avatarUrl,
     imageUrl: avatarUrl,
-    coverImageUrl:
-      (typeof plain.coverImageUrl === "string" && plain.coverImageUrl.trim()) ||
-      (typeof plain.coverUrl === "string" && plain.coverUrl.trim()) ||
-      (typeof plain.bannerUrl === "string" && plain.bannerUrl.trim()) ||
-      "",
     managerName,
     managerMobile,
     manager: {
@@ -202,16 +197,12 @@ export const toPublicCreatorProfile = (profile) => {
     languages: enriched.languages,
     platforms,
     rateRange: profile.rateRange || {},
-    rateCard: profile.rateCard || { currency: "INR", items: [] },
     pastCollaborations: profile.pastCollaborations || [],
     portfolioLink: profile.portfolioLink || "",
-    portfolioImages: profile.mediaKit?.portfolioImages || [],
-    mediaKit: profile.mediaKit || {},
     collaborationPreference: profile.collaborationPreference || "",
     profileImageUrl: enriched.profileImageUrl,
     imageUrl: enriched.imageUrl,
     avatarUrl: enriched.avatarUrl,
-    coverImageUrl: enriched.coverImageUrl || "",
     profession: enriched.profession,
     instagramHandle: enriched.instagramHandle,
     youtubeHandle: enriched.youtubeHandle,

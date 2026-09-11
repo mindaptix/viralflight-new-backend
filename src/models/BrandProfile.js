@@ -116,10 +116,6 @@ const brandProfileSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    coverImageUrl: {
-      type: String,
-      trim: true,
-    },
     contactName: {
       type: String,
       trim: true,

@@ -22,7 +22,6 @@ POST /api/auth/send-otp
 POST /api/auth/verify-otp
 POST /api/auth/refresh-token
 POST /api/auth/logout
-DELETE /api/auth/account
 GET  /api/influencer/onboarding-options
 GET  /api/influencer/platform-options
 GET  /api/influencer/me
@@ -41,20 +40,19 @@ POST /api/influencer/complete-profile
 POST /api/influencer/full-onboarding
 POST /api/influencer/profile-views
 POST /api/influencer/logout
-DELETE /api/influencer/account
 GET  /api/agency/onboarding-options
 GET  /api/agency/profile
 GET  /api/agency/campaigns
 POST /api/agency/full-onboarding
 POST /api/agency/campaigns
 POST /api/agency/logout
-DELETE /api/agency/account
 GET  /api/brand/onboarding-options
 GET  /api/brand/profile
 GET  /api/brand/campaigns
 POST /api/brand/full-onboarding
 POST /api/brand/campaigns
 POST /api/brand/logout
+<<<<<<< HEAD
 DELETE /api/brand/account
 POST /api/connections/requests
 GET  /api/connections
@@ -66,6 +64,8 @@ GET  /api/chat/conversations
 GET  /api/chat/conversations/:conversationId/messages
 POST /api/chat/conversations/:conversationId/messages
 PATCH /api/chat/conversations/:conversationId/read
+=======
+>>>>>>> 542fda10a598293e5d98e294bf7584fb0afbb8bc
 ```
 
 There are no active custom `/api/admin/*` APIs right now. Payload CMS admin is available at:
@@ -219,35 +219,6 @@ POST /api/influencer/logout
 ```
 
 Frontend must delete saved `accessToken` and `refreshToken` after logout success. Backend clears the saved refresh token so refresh-token login cannot continue.
-
-### Delete Account
-
-Permanently deletes the authenticated account for its selected role, its role
-profile, and related account-owned records. Other role accounts registered with
-the same mobile number are not deleted.
-
-```txt
-DELETE /api/auth/account
-Authorization: Bearer ACCESS_TOKEN
-```
-
-Role-specific aliases are also available:
-
-```txt
-DELETE /api/brand/account
-DELETE /api/agency/account
-DELETE /api/influencer/account
-```
-
-Success:
-
-```json
-{
-  "success": true,
-  "message": "Account deleted successfully",
-  "deletedRole": "influencer"
-}
-```
 
 ## Influencer Onboarding
 

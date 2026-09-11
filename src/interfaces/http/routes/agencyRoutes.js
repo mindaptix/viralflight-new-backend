@@ -5,13 +5,14 @@ import {
   getOnboardingOptions,
   saveFullOnboarding,
 } from "../controllers/agencyController.js";
-import { deleteAccount, logout } from "../controllers/authController.js";
+import { logout } from "../controllers/authController.js";
 import {
   createAgencyCampaignController,
   listAgencyCampaigns,
 } from "../controllers/campaignController.js";
 import { listCampaignApplicationsController } from "../controllers/campaignApplicationController.js";
 import { listAgencyInfluencers } from "../controllers/discoveryController.js";
+<<<<<<< HEAD
 import { getAgencyDashboard } from "../controllers/publicOrgController.js";
 import {
   getAgencyDashboardStats,
@@ -22,6 +23,8 @@ import {
   getAgencyNegotiations,
   getAgencyHq,
 } from "../controllers/agencyFeatureSuiteController.js";
+=======
+>>>>>>> 542fda10a598293e5d98e294bf7584fb0afbb8bc
 import { requireRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -59,9 +62,13 @@ router.get(
 
 // ─── Discovery ────────────────────────────────────────────────────────────────
 router.get("/influencers", agencyAuth, listAgencyInfluencers);
+<<<<<<< HEAD
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
+=======
+router.post("/full-onboarding", agencyAuth, saveFullOnboarding);
+router.post("/campaigns", agencyAuth, createAgencyCampaignController);
+>>>>>>> 542fda10a598293e5d98e294bf7584fb0afbb8bc
 router.post("/logout", agencyAuth, logout);
-router.delete("/account", agencyAuth, deleteAccount);
 
 export default router;

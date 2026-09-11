@@ -47,19 +47,11 @@ export const buildBrandDiscoveryQuery = ({ search, industry, city }) => {
 export const toDiscoveryBrandDto = (profile) => {
   const interests = profile.campaignInterests || [];
   const lookingFor = interests[0] || "Creator collaborations";
-  const image =
-    (typeof profile.profileImageUrl === "string" && profile.profileImageUrl.trim()) ||
-    getBrandImage(profile.industry);
-  const cover =
-    (typeof profile.coverImageUrl === "string" && profile.coverImageUrl.trim()) ||
-    "";
 
   return {
     id: profile._id,
     _id: profile._id,
     profileId: profile._id,
-    brandId: profile._id,
-    ownerProfileId: profile._id,
     name: profile.brandName || "Brand",
     brandName: profile.brandName || "Brand",
     displayName: profile.brandName || "Brand",
@@ -69,10 +61,8 @@ export const toDiscoveryBrandDto = (profile) => {
     city: profile.city || "",
     subtitle: lookingFor,
     lookingFor,
-    imageUrl: image,
-    logoUrl: image,
-    profileImageUrl: image,
-    coverImageUrl: cover,
+    imageUrl: getBrandImage(profile.industry),
+    logoUrl: getBrandImage(profile.industry),
     verified: profile.isProfileComplete === true,
     mobile: profile.mobile || "",
     campaignInterests: interests,
@@ -113,19 +103,11 @@ export const buildAgencyDiscoveryQuery = ({ search, agencyType, niche, city }) =
 
 export const toDiscoveryAgencyDto = (profile) => {
   const focus = (profile.focusAreas || []).slice(0, 2).join(" · ");
-  const image =
-    (typeof profile.profileImageUrl === "string" && profile.profileImageUrl.trim()) ||
-    "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&q=80";
-  const cover =
-    (typeof profile.coverImageUrl === "string" && profile.coverImageUrl.trim()) ||
-    "";
 
   return {
     id: profile._id,
     _id: profile._id,
     profileId: profile._id,
-    agencyId: profile._id,
-    ownerProfileId: profile._id,
     name: profile.agencyName || "Agency",
     agencyName: profile.agencyName || "Agency",
     displayName: profile.agencyName || "Agency",
@@ -133,9 +115,8 @@ export const toDiscoveryAgencyDto = (profile) => {
     category: (profile.focusAreas || [])[0] || profile.agencyType || "",
     city: profile.city || "",
     subtitle: profile.agencyType || "",
-    imageUrl: image,
-    profileImageUrl: image,
-    coverImageUrl: cover,
+    imageUrl:
+      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&q=80",
     verified: profile.isProfileComplete === true,
     mobile: profile.mobile || "",
     focusAreas: profile.focusAreas || [],

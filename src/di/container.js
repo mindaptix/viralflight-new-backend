@@ -1,6 +1,5 @@
 import { JwtAuthService } from "../infrastructure/external/auth/JwtAuthService.js";
-import { LocalOtpService } from "../infrastructure/external/otp/LocalOtpService.js";
-// import { TwilioOtpService } from "../infrastructure/external/otp/TwilioOtpService.js";
+import { TwilioOtpService } from "../infrastructure/external/otp/TwilioOtpService.js";
 import { CampaignApplicationRepository } from "../infrastructure/persistence/mongoose/repositories/CampaignApplicationRepository.js";
 import { CampaignRepository } from "../infrastructure/persistence/mongoose/repositories/CampaignRepository.js";
 import { InfluencerDashboardRepository } from "../infrastructure/persistence/mongoose/repositories/InfluencerDashboardRepository.js";
@@ -23,7 +22,6 @@ import {
   SendOtpUseCase,
   VerifyOtpUseCase,
 } from "../application/auth/usecases/AuthUseCases.js";
-import { DeleteAccountUseCase } from "../application/auth/usecases/DeleteAccountUseCase.js";
 import { CreateCampaignUseCase } from "../application/campaigns/usecases/CreateCampaignUseCase.js";
 import {
   ListAgencyCampaignsUseCase,
@@ -58,8 +56,7 @@ const createContainer = () => {
   const influencerDashboardRepository = new InfluencerDashboardRepository();
 
   const authService = new JwtAuthService();
-  const otpService = new LocalOtpService();
-  // const otpService = new TwilioOtpService();
+  const otpService = new TwilioOtpService();
 
   return {
     // infrastructure
@@ -84,7 +81,6 @@ const createContainer = () => {
     }),
     refreshTokenUseCase: new RefreshTokenUseCase({ userRepository, authService }),
     logoutUseCase: new LogoutUseCase({ userRepository }),
-    deleteAccountUseCase: new DeleteAccountUseCase({ userRepository }),
 
     // campaigns
     createCampaignUseCase: new CreateCampaignUseCase({
