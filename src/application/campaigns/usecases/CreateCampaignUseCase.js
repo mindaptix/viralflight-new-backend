@@ -16,6 +16,13 @@ export class CreateCampaignUseCase extends UseCase {
   }
 
   async execute({ body, user }) {
+    const rawImages = body.imageUrls ?? [];
+    if (!Array.isArray(rawImages) || rawImages.length > 9 || rawImages.some((url) => {
+      if (typeof url !== "string") return true;
+      try { return !["http:", "https:"].includes(new URL(url).protocol); }
+      catch { return true; }
+    })) throw new ValidationError("Provide up to 9 valid additional image URLs");
+    const imageUrls = [...new Set(rawImages.map((url) => url.trim()))];
     const title = normalizeText(body.title);
     const category = normalizeText(body.category);
     const description = normalizeText(body.description);
@@ -86,7 +93,8 @@ export class CreateCampaignUseCase extends UseCase {
       deliverables: toStringList(body.deliverables),
       budgetAmount,
       budgetCurrency: normalizeText(body.budgetCurrency ?? body.currency) || "INR",
-      coverImageUrl: normalizeText(body.coverImageUrl ?? body.imageUrl),
+      coverImageUrl: normalizeText(body.coverImageUrl ?? body.imageUrl) || imageUrls[0],
+      imageUrls,
       location: normalizeText(body.location ?? body.city),
       applicationDeadline,
       status,

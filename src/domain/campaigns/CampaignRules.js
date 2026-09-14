@@ -47,3 +47,23 @@ export const calculateMatchPercent = (campaign, influencerProfile) => {
 
 export const isCampaignOwner = (campaign, user) =>
   String(campaign.ownerUserId) === String(user.userId);
+
+export const campaignActions = {
+  draft: { publish: "active", archive: "archived" },
+  active: { draft: "draft", pause: "paused", close: "completed" },
+  paused: { draft: "draft", publish: "active", close: "completed", archive: "archived" },
+  completed: { archive: "archived" },
+  cancelled: { archive: "archived" },
+  archived: {},
+};
+
+export const campaignPermissions = (campaign, user) => {
+  const isOwner = Boolean(user?.userId && campaign.ownerUserId &&
+    user.role === campaign.ownerRole && isCampaignOwner(campaign, user));
+  return {
+    isOwner,
+    availableActions: isOwner && user.role === "agency"
+      ? Object.keys(campaignActions[campaign.status] || {}) : [],
+    canReport: ["influencer", "brand"].includes(user?.role),
+  };
+};

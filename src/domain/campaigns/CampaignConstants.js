@@ -4,6 +4,7 @@ export const CAMPAIGN_STATUSES = [
   "paused",
   "completed",
   "cancelled",
+  "archived",
 ];
 
 export const APPLICATION_STATUSES = [

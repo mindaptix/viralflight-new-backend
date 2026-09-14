@@ -1,6 +1,20 @@
 import Campaign from "../../../../models/Campaign.js";
 
 export class CampaignRepository {
+  async deleteOwned(campaign) {
+    return Campaign.findOneAndUpdate(
+      { _id: campaign._id, ownerUserId: campaign.ownerUserId, ownerRole: "agency", deletedAt: null },
+      { $set: { deletedAt: new Date() } }, { new: true, runValidators: true }
+    );
+  }
+
+  async updateStatus(campaign, status) {
+    return Campaign.findOneAndUpdate(
+      { _id: campaign._id, ownerUserId: campaign.ownerUserId, ownerRole: "agency", status: campaign.status },
+      { $set: { status } }, { new: true, runValidators: true }
+    );
+  }
+
   async create(data) {
     return Campaign.create(data);
   }
@@ -39,5 +53,18 @@ export class CampaignRepository {
     })
       .sort({ createdAt: -1 })
       .limit(limit);
+  }
+
+  async softDeleteAgencyOwned({ campaignId, agencyUserId }) {
+    return Campaign.findOneAndUpdate(
+      {
+        _id: campaignId,
+        ownerRole: "agency",
+        ownerUserId: agencyUserId,
+        deletedAt: null,
+      },
+      { $set: { deletedAt: new Date() } },
+      { new: true, runValidators: true }
+    );
   }
 }

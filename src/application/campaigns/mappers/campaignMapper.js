@@ -46,6 +46,7 @@ export const toCampaignCard = (
     budgetCurrency: campaign.budgetCurrency,
     budgetDisplay,
     coverImageUrl: campaign.coverImageUrl,
+    imageUrls: campaign.imageUrls || [],
     location: campaign.location,
     applicationDeadline: campaign.applicationDeadline,
     daysLeft,

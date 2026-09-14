@@ -1,3 +1,4 @@
+import { campaignPermissions } from "../../../domain/campaigns/CampaignRules.js";
 import { container } from "../../../di/container.js";
 import { asyncHandler } from "../../../shared/http/asyncHandler.js";
 import { sendSuccess } from "../../../shared/http/respond.js";
@@ -10,7 +11,7 @@ export const getCampaignDetail = asyncHandler(async (req, res) => {
 
   sendSuccess(res, {
     message: "Campaign fetched successfully",
-    campaign,
+    campaign: { ...campaign.toObject(), ...campaignPermissions(campaign, req.user) },
     campaignCard,
     data: campaign,
   });

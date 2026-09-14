@@ -3,6 +3,7 @@ import { CAMPAIGN_STATUSES } from "../domain/campaigns/CampaignConstants.js";
 
 const campaignSchema = new mongoose.Schema(
   {
+    deletedAt: { type: Date, default: null, index: true },
     ownerRole: {
       type: String,
       enum: ["brand", "agency"],
@@ -96,6 +97,7 @@ const campaignSchema = new mongoose.Schema(
       uppercase: true,
       default: "INR",
     },
+    imageUrls: { type: [String], default: [] },
     coverImageUrl: {
       type: String,
       trim: true,
@@ -145,6 +147,14 @@ const campaignSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Deleted campaigns are unavailable to all app reads and status mutations.
+campaignSchema.pre(/^find/, function () {
+  this.where({ deletedAt: null });
+});
+campaignSchema.pre("countDocuments", function () {
+  this.where({ deletedAt: null });
+});
 
 campaignSchema.index({ status: 1, applicationDeadline: 1, createdAt: -1 });
 campaignSchema.index({ brandUserId: 1, status: 1 });
