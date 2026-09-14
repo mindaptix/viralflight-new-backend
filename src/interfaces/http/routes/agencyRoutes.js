@@ -10,6 +10,7 @@ import {
   createAgencyCampaignController,
   listAgencyCampaigns,
 } from "../controllers/campaignController.js";
+import { deleteAgencyCampaign } from "../controllers/agencyCampaignController.js";
 import { listCampaignApplicationsController } from "../controllers/campaignApplicationController.js";
 import { listAgencyInfluencers } from "../controllers/discoveryController.js";
 import { requireRoles } from "../middleware/authMiddleware.js";
@@ -28,6 +29,7 @@ router.get(
 router.get("/influencers", agencyAuth, listAgencyInfluencers);
 router.post("/full-onboarding", agencyAuth, saveFullOnboarding);
 router.post("/campaigns", agencyAuth, createAgencyCampaignController);
+router.delete("/campaigns/:campaignId", agencyAuth, deleteAgencyCampaign);
 router.post("/logout", agencyAuth, logout);
 
 export default router;
