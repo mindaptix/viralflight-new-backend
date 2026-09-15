@@ -40,10 +40,12 @@ export const toDiscoveryCreatorDto = (profile) => {
         ? ""
         : `${Number(engagement).toFixed(1).replace(/\.0$/, "")}%`,
     imageUrl:
+      profile.profileImageUrl ||
       profile.instagram?.profilePictureUrl ||
       profile.instagram?.profilePicture ||
       "",
     avatarUrl:
+      profile.profileImageUrl ||
       profile.instagram?.profilePictureUrl ||
       profile.instagram?.profilePicture ||
       "",

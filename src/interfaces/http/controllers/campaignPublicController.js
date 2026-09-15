@@ -9,11 +9,17 @@ export const getCampaignDetail = asyncHandler(async (req, res) => {
     user: req.user,
   });
 
+  const publicCampaign = {
+    ...campaign.toObject(),
+    brandLogoUrl: campaignCard.brandLogoUrl,
+    ownerLogoUrl: campaignCard.ownerLogoUrl,
+    ...campaignPermissions(campaign, req.user),
+  };
   sendSuccess(res, {
     message: "Campaign fetched successfully",
-    campaign: { ...campaign.toObject(), ...campaignPermissions(campaign, req.user) },
+    campaign: publicCampaign,
     campaignCard,
-    data: campaign,
+    data: publicCampaign,
   });
 });
 

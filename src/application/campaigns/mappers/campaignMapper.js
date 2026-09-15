@@ -37,6 +37,8 @@ export const toCampaignCard = (
     ownerName: campaign.ownerName || campaign.brandName || campaign.agencyName,
     brandName: campaign.brandName || campaign.ownerName || campaign.agencyName,
     agencyName: campaign.agencyName,
+    brandLogoUrl: campaign.brandLogoUrl || campaign.ownerLogoUrl || '',
+    ownerLogoUrl: campaign.ownerLogoUrl || campaign.brandLogoUrl || '',
     title: campaign.title,
     description: campaign.description,
     category: campaign.category,

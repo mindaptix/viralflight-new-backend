@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 import { toCampaignCard } from "../mappers/campaignMapper.js";
+import { withCampaignOwnerImages } from '../mappers/campaignOwnerImages.js';
 import { NotFoundError, ValidationError } from "../../../shared/errors/AppError.js";
 import { UseCase } from "../../../shared/usecase/UseCase.js";
 
@@ -26,9 +27,10 @@ export class GetCampaignDetailUseCase extends UseCase {
       influencerProfile = await this.influencerProfileRepository.findByUser(user);
     }
 
+    const [publicCampaign] = await withCampaignOwnerImages([campaign]);
     return {
       campaign,
-      campaignCard: toCampaignCard(campaign, influencerProfile),
+      campaignCard: toCampaignCard(publicCampaign, influencerProfile),
     };
   }
 }
