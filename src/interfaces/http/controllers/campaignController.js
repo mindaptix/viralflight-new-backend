@@ -1,5 +1,6 @@
 import { container } from "../../../di/container.js";
 import { toCampaignCard } from "../../../application/campaigns/mappers/campaignMapper.js";
+import { withCampaignOwnerImages } from "../../../application/campaigns/mappers/campaignOwnerImages.js";
 import { asyncHandler } from "../../../shared/http/asyncHandler.js";
 import { sendSuccess } from "../../../shared/http/respond.js";
 import Campaign from "../../../models/Campaign.js";
@@ -127,19 +128,20 @@ export const listPublicCampaigns = asyncHandler(async (req, res) => {
       .skip(skip)
       .limit(Number(limit))
       .select(
-        "title description category platforms budgetAmount budgetCurrency coverImageUrl applicationDeadline status campaignType targetNiches targetScaleTier slotsTotal slotsRemaining viewCount brandUserId agencyUserId ownerUserId createdAt"
+        "title description category platforms deliverables budgetAmount budgetCurrency coverImageUrl imageUrls location applicationDeadline status campaignType targetNiches targetScaleTier slotsTotal slotsRemaining viewCount brandUserId agencyUserId ownerUserId ownerRole ownerProfileId brandProfileId agencyProfileId brandName agencyName ownerName brandLogoUrl agencyLogoUrl ownerLogoUrl createdAt"
       )
       .lean(),
     Campaign.countDocuments(filter),
   ]);
 
+  const enrichedCampaigns = await withCampaignOwnerImages(campaigns);
+  const campaignCards = enrichedCampaigns.map((c) => toCampaignCard(c));
+
   sendSuccess(res, {
     message: "Campaign marketplace fetched successfully",
-    campaigns: campaigns.map((c) => ({
-      ...c,
-      id: String(c._id),
-      _id: undefined,
-    })),
+    count: campaignCards.length,
+    campaigns: campaignCards,
+    campaignCards,
     total,
     page: Number(page),
     limit: Number(limit),

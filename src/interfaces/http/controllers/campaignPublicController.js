@@ -12,6 +12,7 @@ export const getCampaignDetail = asyncHandler(async (req, res) => {
   const publicCampaign = {
     ...campaign.toObject(),
     brandLogoUrl: campaignCard.brandLogoUrl,
+    agencyLogoUrl: campaignCard.agencyLogoUrl,
     ownerLogoUrl: campaignCard.ownerLogoUrl,
     ...campaignPermissions(campaign, req.user),
   };

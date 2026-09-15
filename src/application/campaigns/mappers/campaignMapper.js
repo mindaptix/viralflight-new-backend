@@ -31,14 +31,37 @@ export const toCampaignCard = (
   const resolvedApplicants =
     typeof applicantCount === "number" ? applicantCount : 0;
 
+  const brandLogoUrl =
+    campaign.brandLogoUrl ||
+    campaign.agency?.logoUrl ||
+    campaign.agency?.avatarUrl ||
+    campaign.brand?.logoUrl ||
+    campaign.brand?.avatarUrl ||
+    campaign.brand?.profileImageUrl ||
+    campaign.ownerLogoUrl ||
+    "";
+
+  const agencyLogoUrl =
+    campaign.agencyLogoUrl ||
+    campaign.agency?.logoUrl ||
+    campaign.agency?.avatarUrl ||
+    (campaign.ownerRole === "agency" ? brandLogoUrl : "") ||
+    "";
+
+  const ownerLogoUrl =
+    campaign.ownerLogoUrl ||
+    (campaign.ownerRole === "agency" ? agencyLogoUrl : brandLogoUrl) ||
+    "";
+
   return {
     id: campaign._id,
     ownerRole: campaign.ownerRole || "brand",
     ownerName: campaign.ownerName || campaign.brandName || campaign.agencyName,
     brandName: campaign.brandName || campaign.ownerName || campaign.agencyName,
     agencyName: campaign.agencyName,
-    brandLogoUrl: campaign.brandLogoUrl || campaign.ownerLogoUrl || '',
-    ownerLogoUrl: campaign.ownerLogoUrl || campaign.brandLogoUrl || '',
+    brandLogoUrl,
+    agencyLogoUrl,
+    ownerLogoUrl,
     title: campaign.title,
     description: campaign.description,
     category: campaign.category,

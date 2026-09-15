@@ -13,6 +13,7 @@ export class InfluencerProfileRepository {
 
   async search({ query, limit = 30 }) {
     return InfluencerProfile.find(query)
+      .populate("userId", "avatar mobile role")
       .sort({ updatedAt: -1 })
       .limit(limit);
   }

@@ -25,6 +25,18 @@ export const toDiscoveryCreatorDto = (profile) => {
   const engagement = primary?.engagement ?? primary?.engagementRate ?? null;
   const niche = (profile.contentCategories || []).slice(0, 2).join(" · ");
 
+  const resolvedImageUrl =
+    profile.profileImageUrl ||
+    profile.avatarUrl ||
+    profile.imageUrl ||
+    profile.user?.avatar ||
+    profile.user?.profileImageUrl ||
+    profile.userId?.avatar ||
+    profile.userId?.profileImageUrl ||
+    profile.instagram?.profilePictureUrl ||
+    profile.instagram?.profilePicture ||
+    "";
+
   return {
     id: profile._id,
     _id: profile._id,
@@ -39,16 +51,9 @@ export const toDiscoveryCreatorDto = (profile) => {
       engagement === null || engagement === undefined
         ? ""
         : `${Number(engagement).toFixed(1).replace(/\.0$/, "")}%`,
-    imageUrl:
-      profile.profileImageUrl ||
-      profile.instagram?.profilePictureUrl ||
-      profile.instagram?.profilePicture ||
-      "",
-    avatarUrl:
-      profile.profileImageUrl ||
-      profile.instagram?.profilePictureUrl ||
-      profile.instagram?.profilePicture ||
-      "",
+    imageUrl: resolvedImageUrl,
+    avatarUrl: resolvedImageUrl,
+    profileImageUrl: resolvedImageUrl,
     contentCategories: profile.contentCategories || [],
     verified: profile.instagram?.isConnected === true,
     mobile: "",

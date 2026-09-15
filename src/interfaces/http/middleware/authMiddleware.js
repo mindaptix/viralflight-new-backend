@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import User from '../../../models/User.js';
 
-const requireRoles = (allowedRoles = ["influencer"]) => (req, res, next) => {
+const requireRoles = (allowedRoles = ["influencer"]) => async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -21,6 +23,18 @@ const requireRoles = (allowedRoles = ["influencer"]) => (req, res, next) => {
       });
     }
 
+    if (mongoose.connection?.readyState === 1) {
+      const accountExists = await User.exists({
+        _id: decoded.userId,
+        role: decoded.role,
+      });
+      if (!accountExists) {
+        return res.status(401).json({
+          success: false,
+          message: 'Account no longer exists',
+        });
+      }
+    }
     req.user = decoded;
     next();
   } catch (error) {
