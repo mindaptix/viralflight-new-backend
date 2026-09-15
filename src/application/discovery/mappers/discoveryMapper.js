@@ -48,8 +48,8 @@ export const toDiscoveryCreatorDto = (profile) => {
       profile.instagram?.profilePicture ||
       "",
     contentCategories: profile.contentCategories || [],
-    verified: profile.isProfileComplete === true,
-    mobile: profile.mobile || "",
+    verified: profile.instagram?.isConnected === true,
+    mobile: "",
     platforms: (profile.platforms || []).map((item) => ({
       platform: item.platform,
       username: item.username || item.channelName || "",
@@ -62,6 +62,8 @@ export const toDiscoveryCreatorDto = (profile) => {
 
 export const buildDiscoveryQuery = ({ search, niche, city }) => {
   const query = {
+    userId: { $ne: null },
+    claimStatus: { $ne: "unclaimed" },
     isProfileComplete: true,
     workModeEnabled: { $ne: false },
   };

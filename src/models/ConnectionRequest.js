@@ -10,6 +10,9 @@ const CONNECTION_REQUEST_STATUSES = [
 
 const connectionRequestSchema = new mongoose.Schema(
   {
+    contactConsent: { type: Boolean, default: false },
+    consentActorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    consentUpdatedAt: { type: Date },
     creatorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

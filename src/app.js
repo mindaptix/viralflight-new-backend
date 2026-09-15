@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import authRoutes from "./interfaces/http/routes/authRoutes.js";
+import marketplaceConnectionsRoutes from "./interfaces/http/routes/marketplaceConnectionsRoutes.js";
 import agencyRoutes from "./interfaces/http/routes/agencyRoutes.js";
 import brandRoutes from "./interfaces/http/routes/brandRoutes.js";
 import influencerRoutes from "./interfaces/http/routes/influencerRoutes.js";
@@ -59,6 +60,7 @@ const jsonForMobileApi = (req, res, next) => {
 // Mount v1 first so its routes cannot fall through to legacy dynamic paths.
 for (const prefix of ["/api/v1", "/api"]) {
   app.use(`${prefix}/auth`, express.json(), authRoutes);
+  app.use(`${prefix}/connections/requests`, express.json(), marketplaceConnectionsRoutes);
   app.use(`${prefix}/agency`, express.json(), agencyRoutes);
   app.use(`${prefix}/brand`, express.json(), brandRoutes);
   app.use(`${prefix}/influencer`, express.json(), influencerRoutes);

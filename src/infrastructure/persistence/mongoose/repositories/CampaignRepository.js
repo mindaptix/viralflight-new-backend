@@ -10,7 +10,7 @@ export class CampaignRepository {
 
   async updateStatus(campaign, status) {
     return Campaign.findOneAndUpdate(
-      { _id: campaign._id, ownerUserId: campaign.ownerUserId, ownerRole: "agency", status: campaign.status },
+      { _id: campaign._id, ownerUserId: campaign.ownerUserId, ownerRole: campaign.ownerRole, status: campaign.status, deletedAt: null },
       { $set: { status } }, { new: true, runValidators: true }
     );
   }

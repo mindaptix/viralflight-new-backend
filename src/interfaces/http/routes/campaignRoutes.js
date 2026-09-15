@@ -19,12 +19,12 @@ router.get("/:campaignId", appUserAuth, getCampaignDetail);
 router.post("/:campaignId/invites", ownerAuth, createCampaignInvite);
 
 const management = new ManageCampaignUseCase({ campaignRepository: new CampaignRepository(), reportRepository: CampaignReport });
-router.patch("/:campaignId/status", requireRoles(["agency"]), asyncHandler(async (req, res) => {
-  const campaign = await management.execute({ campaignId: req.params.campaignId, user: req.user, action: req.body.action });
+router.patch("/:campaignId/status", ownerAuth, asyncHandler(async (req, res) => {
+  const campaign = await management.execute({ campaignId: req.params.campaignId, user: req.user, action: req.body?.action });
   sendSuccess(res, { message: "Campaign updated successfully", campaign });
 }));
 router.post("/:campaignId/reports", requireRoles(["influencer", "brand"]), asyncHandler(async (req, res) => {
-  await management.execute({ campaignId: req.params.campaignId, user: req.user, action: "report", reason: req.body.reason });
+  await management.execute({ campaignId: req.params.campaignId, user: req.user, action: "report", reason: req.body?.reason });
   sendSuccess(res, { statusCode: 201, message: "Report submitted successfully" });
 }));
 router.delete("/:campaignId", requireRoles(["agency"]), asyncHandler(async (req, res) => {

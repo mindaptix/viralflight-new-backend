@@ -2,7 +2,8 @@ import mongoose from "mongoose";
 
 import BrandInvite from "../../../models/BrandInvite.js";
 import Notification from "../../../models/Notification.js";
-import { NotFoundError, ValidationError } from "../../../shared/errors/AppError.js";
+import { ForbiddenError, NotFoundError, ValidationError } from "../../../shared/errors/AppError.js";
+import { isCampaignOwner } from "../../../domain/campaigns/CampaignRules.js";
 import { UseCase } from "../../../shared/usecase/UseCase.js";
 
 export class CreateCampaignInviteUseCase extends UseCase {
@@ -24,6 +25,9 @@ export class CreateCampaignInviteUseCase extends UseCase {
     const campaign = await this.campaignRepository.findById(campaignId);
     if (!campaign) {
       throw new NotFoundError("Campaign not found");
+    }
+    if (!isCampaignOwner(campaign, user)) {
+      throw new ForbiddenError("Only the campaign owner can invite creators");
     }
 
     const influencerProfileId = body.influencerProfileId;

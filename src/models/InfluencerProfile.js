@@ -269,6 +269,7 @@ const instagramConnectionSchema = new mongoose.Schema(
 const influencerProfileSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true },
+    claimStatus: { type: String, enum: ["claimed", "unclaimed"], default: "claimed" },
     city: { type: String, enum: ALLOWED_CITIES, trim: true },
 
     userId: {

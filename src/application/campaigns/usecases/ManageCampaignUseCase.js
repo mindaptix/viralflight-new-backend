@@ -20,8 +20,9 @@ export class ManageCampaignUseCase {
       await this.reportRepository.create({ campaignId, reporterUserId: user.userId, reason });
       return;
     }
-    if (!permissions.isOwner || user.role !== "agency") throw new ForbiddenError("Only the agency that created this campaign can manage it");
+    if (!permissions.isOwner || !["agency", "brand"].includes(user.role)) throw new ForbiddenError("Only the campaign owner can manage it");
     if (action === "delete") {
+      if (user.role !== "agency") throw new ForbiddenError("Only the owning agency can delete through this endpoint");
       const deleted = await this.campaignRepository.deleteOwned(campaign);
       if (!deleted) throw new ConflictError("Campaign already deleted. Refresh and try again.");
       return;
