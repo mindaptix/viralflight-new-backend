@@ -1,13 +1,13 @@
 import InfluencerProfile from "../../../models/InfluencerProfile.js";
 import {
-  InstagramApiError,
-  InstagramConfigError,
   buildConnectUrl,
   exchangeCodeAndSync,
+  MetaApiError,
+  MetaConfigError,
   normalizeHandle,
   syncWithStoredToken,
   verifyStateToken,
-} from "../../../infrastructure/external/instagram/InstagramGraphService.js";
+} from "../../../infrastructure/external/meta/MetaGraphService.js";
 import {
   getOrCreateRoleProfile,
   getProfileQuery,
@@ -67,7 +67,7 @@ const applyInstagramSyncToProfile = (profile, syncData, tokenData) => {
   profile.instagram = {
     ...(profile.instagram?.toObject?.() || profile.instagram || {}),
     handle: syncData.handle,
-    instagramUserId: syncData.instagramUserId,
+    instagramUserId: syncData.instagramUserId || syncData.platformUserId,
     facebookPageId: syncData.facebookPageId,
     accountType: syncData.accountType,
     followers: syncData.followers,
@@ -123,7 +123,7 @@ const sendOAuthResult = (res, statusCode, payload) => {
 
 const handleInstagramError = (res, error, fallbackMessage) => {
   const statusCode =
-    error instanceof InstagramConfigError || error instanceof InstagramApiError
+    error instanceof MetaConfigError || error instanceof MetaApiError
       ? error.statusCode
       : 500;
 
@@ -136,7 +136,7 @@ const handleInstagramError = (res, error, fallbackMessage) => {
 
 export const getInstagramConnectUrl = async (req, res) => {
   try {
-    const connectUrl = buildConnectUrl(req.user);
+    const connectUrl = buildConnectUrl(req.user, "instagram");
 
     res.json({
       success: true,
@@ -167,7 +167,7 @@ export const handleInstagramCallback = async (req, res) => {
       });
     }
 
-    const stateUser = verifyStateToken(String(state));
+    const stateUser = verifyStateToken(String(state), "instagram");
 
     if (stateUser.role !== "influencer") {
       return sendOAuthResult(res, 403, {
@@ -178,6 +178,7 @@ export const handleInstagramCallback = async (req, res) => {
 
     const profile = await getOrCreateRoleProfile(stateUser, InfluencerProfile);
     const syncData = await exchangeCodeAndSync({
+      platform: "instagram",
       code: String(code),
       preferredHandle: getManualInstagramHandle(profile),
     });
@@ -217,10 +218,12 @@ export const syncInstagram = async (req, res) => {
     }
 
     try {
-      const syncData = await syncWithStoredToken(
-        profile.instagram.token,
-        getManualInstagramHandle(profile)
-      );
+      const syncData = await syncWithStoredToken({
+        encryptedToken: profile.instagram.token,
+        tokenExpiresAt: profile.instagram.token?.expiresAt,
+        platform: "instagram",
+        preferredHandle: getManualInstagramHandle(profile),
+      });
 
       applyInstagramSyncToProfile(profile, syncData);
       await profile.save();
