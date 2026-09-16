@@ -84,6 +84,11 @@ const connectionRequestSchema = new mongoose.Schema(
       default: "pending",
       index: true,
     },
+    conversationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Conversation",
+      index: true,
+    },
   },
   {
     timestamps: true,

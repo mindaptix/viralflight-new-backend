@@ -4,6 +4,9 @@ import ConnectionRequest from "../../../models/ConnectionRequest.js";
 import InfluencerProfile from "../../../models/InfluencerProfile.js";
 import BrandProfile from "../../../models/BrandProfile.js";
 import AgencyProfile from "../../../models/AgencyProfile.js";
+import Conversation from "../../../models/Conversation.js";
+import { initiateCampaignChat } from "../../../application/chat/ChatService.js";
+import { getChatIO } from "../../../infrastructure/socket/chatSocket.js";
 import { requireRoles } from "../middleware/authMiddleware.js";
 import { asyncHandler } from "../../../shared/http/asyncHandler.js";
 import { ValidationError, NotFoundError, ConflictError } from "../../../shared/errors/AppError.js";
@@ -17,12 +20,41 @@ const scope = user => user.role === "influencer"
   ? { creatorId: user.userId }
   : { brandId: user.userId, brandRole: user.role };
 
+const toId = value => value ? String(value) : "";
+
+const findConversationId = async row => {
+  if (row.conversationId) return toId(row.conversationId);
+  if (!row.brandId || !row.creatorId || row.status !== "accepted") return "";
+  const conversation = await Conversation.findOne({
+    participants: { $all: [row.brandId, row.creatorId], $size: 2 },
+  }).select("_id").lean();
+  return conversation ? toId(conversation._id) : "";
+};
+
+const mapConnectionRow = async (row, user) => {
+  const conversationId = await findConversationId(row);
+  return {
+    ...row,
+    id: toId(row._id),
+    brandId: toId(row.brandId),
+    brand_id: toId(row.brandId),
+    creatorId: toId(row.creatorId),
+    creator_id: toId(row.creatorId || row.creatorProfileId),
+    influencerProfileId: toId(row.creatorProfileId),
+    influencer_profile_id: toId(row.creatorProfileId),
+    conversationId,
+    conversation_id: conversationId,
+    isIncoming: user.role === "influencer",
+    is_incoming: user.role === "influencer",
+    creatorMobile: undefined,
+  };
+};
+
 router.use(requireRoles(["brand", "agency", "influencer"]));
 router.get("/", asyncHandler(async (req, res) => {
   const rows = await ConnectionRequest.find(scope(req.user)).sort({ createdAt: -1 }).limit(100).lean();
-  res.json({ success: true, data: rows.map(row => ({
-    ...row, isIncoming: req.user.role === "influencer", creatorMobile: undefined,
-  })) });
+  const data = await Promise.all(rows.map(row => mapConnectionRow(row, req.user)));
+  res.json({ success: true, data });
 }));
 router.post("/", requireRoles(["brand", "agency"]), asyncHandler(async (req, res) => {
   const body = req.body || {};
@@ -59,6 +91,41 @@ router.patch("/:id/status", asyncHandler(async (req, res) => {
     status, contactConsent: creator && status === "accepted", consentActorId: req.user.userId, consentUpdatedAt: new Date(),
   } }, { new: true, runValidators: true });
   if (!row) throw new ConflictError("Request unavailable or already changed");
-  res.json({ success: true, data: { id: row._id, status: row.status } });
+
+  let conversationId = toId(row.conversationId);
+  if (creator && status === "accepted" && row.brandId && row.creatorId) {
+    const welcomeText =
+      row.kind === "quote"
+        ? "🎉 Quote request accepted! You can now discuss the collaboration details directly here."
+        : "🎉 Connection request accepted! You are now connected and can chat directly here.";
+    const chatResult = await initiateCampaignChat({
+      brandUserId: row.brandId,
+      influencerUserId: row.creatorId,
+      initialMessageText: welcomeText,
+    });
+    conversationId = toId(chatResult.conversation?._id);
+    if (conversationId && toId(row.conversationId) !== conversationId) {
+      row.conversationId = chatResult.conversation._id;
+      await row.save();
+    }
+
+    const io = getChatIO();
+    if (io && chatResult.message) {
+      io.to(`user:${toId(row.brandId)}`).emit("new_message", {
+        conversationId,
+        message: chatResult.message,
+      });
+      io.to(`user:${toId(row.creatorId)}`).emit("new_message", {
+        conversationId,
+        message: chatResult.message,
+      });
+      io.to(`conversation:${conversationId}`).emit("new_message", {
+        conversationId,
+        message: chatResult.message,
+      });
+    }
+  }
+
+  res.json({ success: true, data: { id: row._id, status: row.status, conversationId, conversation_id: conversationId } });
 }));
 export default router;
