@@ -164,6 +164,11 @@ const applyInfluencerPatch = (profile, body) => {
     }
   }
 
+  if (body.showWhatsAppToPublic !== undefined || body.whatsappEnabled !== undefined) {
+    profile.showWhatsAppToPublic =
+      body.showWhatsAppToPublic === true || body.whatsappEnabled === true;
+  }
+
   if (body.instagramHandle !== undefined) {
     const handle = cleanHandle(body.instagramHandle);
     profile.platforms = upsertPlatformHandle(

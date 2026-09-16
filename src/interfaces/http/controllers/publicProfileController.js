@@ -31,11 +31,21 @@ export const getPublicCreatorProfile = asyncHandler(async (req, res) => {
     creatorId: profile.userId, brandId: req.user.userId, brandRole: req.user.role,
     status: "accepted", contactConsent: true, consentActorId: profile.userId,
   });
+  publicProfile.isOwnProfile = Boolean(ownProfile);
   publicProfile.canViewContact = Boolean(ownProfile || consent);
   if (publicProfile.canViewContact) {
-    publicProfile.mobile = profile.mobile || "";
-    publicProfile.whatsapp = profile.mobile || "";
-    publicProfile.contactWhatsApp = profile.mobile || "";
+    const managerMobile = String(profile.managerMobile || "").replace(/[^\d+]/g, "").trim();
+    const mobile = String(profile.mobile || "").replace(/[^\d+]/g, "").trim();
+    const contactWhatsApp = managerMobile || mobile;
+    publicProfile.mobile = mobile;
+    publicProfile.whatsapp = contactWhatsApp;
+    publicProfile.contactWhatsApp = contactWhatsApp;
+    publicProfile.managerMobile = managerMobile;
+    publicProfile.manager = {
+      ...(publicProfile.manager || {}),
+      mobile: managerMobile,
+      whatsapp: managerMobile,
+    };
   }
   res.set("Cache-Control", "no-store");
   publicProfile.platforms = (publicProfile.platforms || []).map((item) => ({

@@ -43,6 +43,7 @@ export const enrichRoleProfileDocument = (profile, role) => {
   const managerName = (plain.managerName || "").trim();
   const managerMobile = normalizePhone(plain.managerMobile || "");
   const contactWhatsApp = managerMobile || normalizePhone(plain.mobile || "");
+  const showWhatsAppToPublic = plain.showWhatsAppToPublic === true;
 
   const instagramHandle =
     cleanHandle(plain.instagramHandle) ||
@@ -89,6 +90,8 @@ export const enrichRoleProfileDocument = (profile, role) => {
     },
     contactWhatsApp,
     whatsapp: contactWhatsApp,
+    showWhatsAppToPublic,
+    whatsappEnabled: showWhatsAppToPublic,
     instagramHandle,
     youtubeHandle,
     contactName: plain.contactName || plain.contactPerson || "",
@@ -176,6 +179,9 @@ export const toPublicCreatorProfile = (profile) => {
     isConnected: Boolean(item.isConnected),
   }));
 
+  const publicWhatsAppEnabled = enriched.showWhatsAppToPublic === true;
+  const publicWhatsApp = publicWhatsAppEnabled ? enriched.contactWhatsApp : "";
+
   return {
     id: enriched._id,
     _id: enriched._id,
@@ -186,11 +192,17 @@ export const toPublicCreatorProfile = (profile) => {
     city: enriched.city,
     bio: enriched.bio,
     mobile: "",
-    whatsapp: "",
-    contactWhatsApp: "",
+    whatsapp: publicWhatsApp,
+    contactWhatsApp: publicWhatsApp,
+    showWhatsAppToPublic: publicWhatsAppEnabled,
+    whatsappEnabled: publicWhatsAppEnabled,
     managerName: enriched.managerName,
-    managerMobile: "",
-    manager: { name: enriched.managerName || "", mobile: "" },
+    managerMobile: publicWhatsAppEnabled ? enriched.managerMobile : "",
+    manager: {
+      name: enriched.managerName || "",
+      mobile: publicWhatsAppEnabled ? enriched.managerMobile : "",
+      whatsapp: publicWhatsAppEnabled ? enriched.managerMobile : "",
+    },
     contentCategories: enriched.contentCategories,
     niches: enriched.niches,
     contentLanguages: enriched.contentLanguages,

@@ -317,6 +317,7 @@ const influencerProfileSchema = new mongoose.Schema(
     profession: { type: String, trim: true },
     managerName: { type: String, trim: true },
     managerMobile: { type: String, trim: true },
+    showWhatsAppToPublic: { type: Boolean, default: false },
     youtubeHandle: { type: String, trim: true },
 
     isProfileComplete: { type: Boolean, default: false },
