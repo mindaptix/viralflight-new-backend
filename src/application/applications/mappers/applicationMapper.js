@@ -27,9 +27,47 @@ export const toApplicationWithCampaignDto = (application, campaign) => ({
   campaignImageUrl: campaign?.coverImageUrl || "",
 });
 
-export const toOwnerApplicationDto = (application) => ({
-  ...toApplicationDto(application),
-  influencerName: application.influencerName || "Creator",
-  followersDisplay: "",
-  matchPercent: 0,
-});
+const resolveInfluencerAvatarUrl = (profile) => {
+  if (!profile) return "";
+  const direct =
+    profile.profileImageUrl || profile.avatarUrl || profile.imageUrl || "";
+  if (typeof direct === "string" && direct.trim()) {
+    return direct.trim();
+  }
+
+  const instagram =
+    profile.instagram?.profilePictureUrl ||
+    profile.instagram?.profilePicture ||
+    "";
+  return typeof instagram === "string" ? instagram.trim() : "";
+};
+
+export const toOwnerApplicationDto = (application, influencerProfile = null) => {
+  const influencerImageUrl = resolveInfluencerAvatarUrl(influencerProfile);
+  const influencerName =
+    application.influencerName ||
+    influencerProfile?.name ||
+    influencerProfile?.displayName ||
+    "Creator";
+
+  return {
+    ...toApplicationDto(application),
+    influencerName,
+    influencerImageUrl,
+    influencerProfileImageUrl: influencerImageUrl,
+    profileImageUrl: influencerImageUrl,
+    avatarUrl: influencerImageUrl,
+    influencer: influencerProfile
+      ? {
+          id: influencerProfile._id,
+          _id: influencerProfile._id,
+          name: influencerName,
+          profileImageUrl: influencerImageUrl,
+          avatarUrl: influencerImageUrl,
+          imageUrl: influencerImageUrl,
+        }
+      : undefined,
+    followersDisplay: "",
+    matchPercent: 0,
+  };
+};

@@ -14,6 +14,7 @@ import {
   normalizeText,
 } from "../../../shared/validation/normalize.js";
 import { UseCase } from "../../../shared/usecase/UseCase.js";
+import InfluencerProfile from "../../../models/InfluencerProfile.js";
 import {
   toApplicationDto,
   toApplicationWithCampaignDto,
@@ -153,9 +154,38 @@ export class ListCampaignApplicationsUseCase extends UseCase {
 
     const applications =
       await this.campaignApplicationRepository.findByCampaign(campaign._id);
+    const profileIds = applications
+      .map((application) => application.influencerProfileId)
+      .filter(Boolean);
+    const userIds = applications
+      .map((application) => application.influencerUserId)
+      .filter(Boolean);
+    const profiles =
+      profileIds.length || userIds.length
+        ? await InfluencerProfile.find({
+            $or: [
+              ...(profileIds.length ? [{ _id: { $in: profileIds } }] : []),
+              ...(userIds.length ? [{ userId: { $in: userIds } }] : []),
+            ],
+          }).lean()
+        : [];
+    const profileById = new Map(
+      profiles.map((profile) => [String(profile._id), profile])
+    );
+    const profileByUserId = new Map(
+      profiles
+        .filter((profile) => profile.userId)
+        .map((profile) => [String(profile.userId), profile])
+    );
 
     return {
-      applications: applications.map(toOwnerApplicationDto),
+      applications: applications.map((application) =>
+        toOwnerApplicationDto(
+          application,
+          profileById.get(String(application.influencerProfileId)) ||
+            profileByUserId.get(String(application.influencerUserId))
+        )
+      ),
     };
   }
 }
