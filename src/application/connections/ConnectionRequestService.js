@@ -320,6 +320,9 @@ export const updateConnectionRequestStatus = async ({
   }
 
   doc.status = nextStatus;
+  doc.contactConsent = (isCreator || creatorMatchesProfile) && nextStatus === "accepted";
+  doc.consentActorId = doc.contactConsent ? user.userId : undefined;
+  doc.consentUpdatedAt = new Date();
   await doc.save();
 
   // When request is accepted, initiate chat conversation between Brand and Creator

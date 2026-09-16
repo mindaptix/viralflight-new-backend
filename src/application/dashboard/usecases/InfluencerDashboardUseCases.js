@@ -15,6 +15,23 @@ const formatCompactCount = (count) => {
   return String(count);
 };
 
+const formatCurrency = (amount, currency = "INR") => {
+  const value = Number(amount);
+  if (!Number.isFinite(value) || value <= 0) {
+    return currency === "INR" ? "₹0" : "0";
+  }
+  if (currency === "INR") {
+    if (value >= 100000) {
+      return `₹${Number((value / 100000).toFixed(1))}L`;
+    }
+    if (value >= 1000) {
+      return `₹${Number((value / 1000).toFixed(1))}K`;
+    }
+    return `₹${Math.round(value)}`;
+  }
+  return `${currency} ${Math.round(value)}`;
+};
+
 const buildInfluencerMatch = (profile, user) => ({
   $or: [
     { influencerProfileId: profile._id },
@@ -51,13 +68,27 @@ export class GetInfluencerDashboardStatsUseCase extends UseCase {
     }
 
     const match = buildInfluencerMatch(profile, user);
-    const [profileViews, brandInvites, activeCollabs] = await Promise.all([
+    const [
+      profileViews,
+      brandInvites,
+      activeCollabs,
+      collabsThisWeek,
+      avgCampaignPay,
+    ] = await Promise.all([
       this.influencerDashboardRepository.countProfileViews(match),
       this.influencerDashboardRepository.countPendingBrandInvites(match),
       this.influencerDashboardRepository.countActiveCollaborations(match),
+      this.influencerDashboardRepository.countWeeklyCollabs(match),
+      this.influencerDashboardRepository.getAverageCampaignPay(match, profile),
     ]);
 
-    const stats = { profileViews, brandInvites, activeCollabs };
+    const stats = {
+      profileViews,
+      brandInvites,
+      activeCollabs,
+      collabsThisWeek,
+      avgCampaignPay,
+    };
 
     return {
       profile,
@@ -80,6 +111,20 @@ export class GetInfluencerDashboardStatsUseCase extends UseCase {
           label: "Active collabs",
           value: activeCollabs,
           displayValue: formatCompactCount(activeCollabs),
+        },
+        {
+          key: "collabsThisWeek",
+          label: "Collabs this week",
+          value: collabsThisWeek,
+          displayValue: formatCompactCount(collabsThisWeek),
+          source: "campaign_applications+collaborations",
+        },
+        {
+          key: "avgCampaignPay",
+          label: "Avg. campaign pay",
+          value: avgCampaignPay,
+          displayValue: formatCurrency(avgCampaignPay),
+          source: "campaign_applications_or_active_campaigns",
         },
       ],
     };
