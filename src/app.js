@@ -10,6 +10,7 @@ import brandRoutes from "./interfaces/http/routes/brandRoutes.js";
 import influencerRoutes from "./interfaces/http/routes/influencerRoutes.js";
 import campaignApplicationRoutes from "./interfaces/http/routes/campaignApplicationRoutes.js";
 import campaignRoutes from "./interfaces/http/routes/campaignRoutes.js";
+import chatRoutes from "./interfaces/http/routes/chatRoutes.js";
 import discoveryRoutes from "./interfaces/http/routes/discoveryRoutes.js";
 import engagementRoutes from "./interfaces/http/routes/engagementRoutes.js";
 import profileRoutes from "./interfaces/http/routes/profileRoutes.js";
@@ -66,6 +67,7 @@ for (const prefix of ["/api/v1", "/api"]) {
   app.use(`${prefix}/influencer`, express.json(), influencerRoutes);
   app.use(`${prefix}/campaign-applications`, express.json(), campaignApplicationRoutes);
   app.use(`${prefix}/campaigns`, express.json(), campaignRoutes);
+  app.use(prefix, express.json(), chatRoutes);
   app.use(`${prefix}/profiles`, express.json(), profileRoutes);
   app.use(`${prefix}/uploads`, uploadRoutes);
   app.use(prefix, discoveryRoutes);

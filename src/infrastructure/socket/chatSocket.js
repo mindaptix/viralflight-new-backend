@@ -5,6 +5,7 @@ import {
   markConversationRead,
   sendMessage,
 } from "../../application/chat/ChatService.js";
+import User from "../../models/User.js";
 
 let io = null;
 const onlineUsers = new Map(); // userId -> Set of socketIds
@@ -27,7 +28,7 @@ export const initChatSocket = (httpServer) => {
   });
 
   // ─── Socket Authentication Middleware ────────────────────────────────────
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     try {
       const authHeader =
         socket.handshake.auth?.token ||
@@ -43,6 +44,10 @@ export const initChatSocket = (httpServer) => {
         : authHeader;
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const isActiveUser = await User.exists({ _id: decoded.userId });
+      if (!isActiveUser) {
+        return next(new Error("Invalid or expired authentication token"));
+      }
       socket.user = decoded;
       next();
     } catch (err) {
@@ -259,4 +264,3 @@ export const emitDealStatusChanged = ({
     io.to(`deal:${dealId}`).emit("deal_status_changed", payload);
   }
 };
-

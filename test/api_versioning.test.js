@@ -20,7 +20,7 @@ test("v1 and legacy routes preserve authentication and role boundaries", async (
           assert.equal((await fetch(url, { headers: { Authorization: `Bearer ${token}` } })).status, 403);
         }
       }
-      for (const path of ["/campaigns/507f1f77bcf86cd799439011", "/profiles/me", "/notifications", "/influencers"]) {
+      for (const path of ["/campaigns/507f1f77bcf86cd799439011", "/profiles/me", "/notifications", "/influencers", "/conversations"]) {
         assert.equal((await fetch(`${base}${prefix}${path}`)).status, 401);
       }
       assert.equal((await fetch(`${base}${prefix}/uploads`, { method: "POST" })).status, 401);

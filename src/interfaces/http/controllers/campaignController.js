@@ -59,9 +59,11 @@ export const listAgencyCampaigns = asyncHandler(async (req, res) => {
 
 export const listCampaignsForInfluencer = asyncHandler(async (req, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
-  const { campaigns } =
+  const page = Math.max(Number(req.query.page) || 1, 1);
+  const { campaigns, pagination } =
     await container.listCampaignsForInfluencerUseCase.execute({
       user: req.user,
+      page,
       limit,
     });
 
@@ -69,6 +71,13 @@ export const listCampaignsForInfluencer = asyncHandler(async (req, res) => {
     message: "Campaigns for influencer fetched successfully",
     count: campaigns.length,
     campaigns,
+    data: campaigns,
+    pagination,
+    page: pagination.page,
+    limit: pagination.limit,
+    total: pagination.total,
+    totalPages: pagination.totalPages,
+    hasMore: pagination.hasMore,
   });
 });
 
@@ -149,4 +158,3 @@ export const listPublicCampaigns = asyncHandler(async (req, res) => {
     hasMore: skip + campaigns.length < total,
   });
 });
-

@@ -1,8 +1,10 @@
 import "dotenv/config";
+import http from "http";
 import next from "next";
 
 import app from "./src/app.js";
 import connectDB from "./src/config/db.js";
+import { initChatSocket } from "./src/infrastructure/socket/chatSocket.js";
 
 const PORT = process.env.PORT || 5000;
 const isDev = process.env.NODE_ENV !== "production";
@@ -16,7 +18,10 @@ const startServer = async () => {
   // Express APIs first, then Payload/Next for /admin and /api/*
   app.use((req, res) => nextHandler(req, res));
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const httpServer = http.createServer(app);
+  initChatSocket(httpServer);
+
+  httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
   });
 };

@@ -11,10 +11,15 @@ export class InfluencerProfileRepository {
     return InfluencerProfile.findOne(query);
   }
 
-  async search({ query, limit = 30 }) {
+  async search({ query, limit = 30, skip = 0 }) {
     return InfluencerProfile.find(query)
       .populate("userId", "avatar mobile role")
       .sort({ updatedAt: -1 })
+      .skip(skip)
       .limit(limit);
+  }
+
+  async count(query) {
+    return InfluencerProfile.countDocuments(query);
   }
 }

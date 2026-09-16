@@ -33,17 +33,29 @@ export class ListCampaignsForInfluencerUseCase extends UseCase {
     this.influencerProfileRepository = influencerProfileRepository;
   }
 
-  async execute({ user, limit = 10 }) {
+  async execute({ user, page = 1, limit = 10 }) {
     const influencerProfile =
       await this.influencerProfileRepository.findByUser(user);
-    const campaigns = await withCampaignOwnerImages(await this.campaignRepository.findActiveForInfluencer({
-      limit,
-    }));
+    const safeLimit = Math.min(Math.max(Number(limit) || 10, 1), 50);
+    const safePage = Math.max(Number(page) || 1, 1);
+    const skip = (safePage - 1) * safeLimit;
+    const [rows, total] = await Promise.all([
+      this.campaignRepository.findActiveForInfluencer({ limit: safeLimit, skip }),
+      this.campaignRepository.countActiveForInfluencer(),
+    ]);
+    const campaigns = await withCampaignOwnerImages(rows);
 
     return {
       campaigns: campaigns.map((campaign) =>
         toCampaignCard(campaign, influencerProfile)
       ),
+      pagination: {
+        page: safePage,
+        limit: safeLimit,
+        total,
+        totalPages: Math.ceil(total / safeLimit),
+        hasMore: skip + campaigns.length < total,
+      },
     };
   }
 }

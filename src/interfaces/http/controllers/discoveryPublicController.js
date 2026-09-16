@@ -3,10 +3,11 @@ import { asyncHandler } from "../../../shared/http/asyncHandler.js";
 import { sendSuccess } from "../../../shared/http/respond.js";
 
 export const searchInfluencersPublic = asyncHandler(async (req, res) => {
-  const { creators } = await container.searchInfluencersUseCase.execute({
+  const { creators, pagination } = await container.searchInfluencersUseCase.execute({
     search: req.query.search || req.query.q || "",
     niche: req.query.niche || req.query.category || "",
     city: req.query.city || "",
+    page: req.query.page,
     limit: req.query.limit,
   });
 
@@ -15,6 +16,12 @@ export const searchInfluencersPublic = asyncHandler(async (req, res) => {
     creators,
     influencers: creators,
     data: creators,
+    pagination,
+    page: pagination.page,
+    limit: pagination.limit,
+    total: pagination.total,
+    totalPages: pagination.totalPages,
+    hasMore: pagination.hasMore,
   });
 });
 

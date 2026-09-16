@@ -42,17 +42,27 @@ export class CampaignRepository {
     }).sort({ createdAt: -1 });
   }
 
-  async findActiveForInfluencer({ limit = 10, now = new Date() }) {
-    return Campaign.find({
+  _activeForInfluencerFilter(now = new Date()) {
+    return {
       status: "active",
+      deletedAt: null,
       $or: [
         { applicationDeadline: { $exists: false } },
         { applicationDeadline: null },
         { applicationDeadline: { $gte: now } },
       ],
-    })
+    };
+  }
+
+  async findActiveForInfluencer({ limit = 10, skip = 0, now = new Date() }) {
+    return Campaign.find(this._activeForInfluencerFilter(now))
       .sort({ createdAt: -1 })
+      .skip(skip)
       .limit(limit);
+  }
+
+  async countActiveForInfluencer({ now = new Date() } = {}) {
+    return Campaign.countDocuments(this._activeForInfluencerFilter(now));
   }
 
   async softDeleteAgencyOwned({ campaignId, agencyUserId }) {
