@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CreateCampaignUseCase } from '../src/application/campaigns/usecases/CreateCampaignUseCase.js';
 const usecase = new CreateCampaignUseCase({campaignRepository: {create: async data => data}, profileRepository: {findOwnerProfile: async () => ({agencyName:'Agency'})}});
-const body = {title:'Campaign', category:'Fashion', budgetAmount:100, status:'draft'};
+const body = {title:'Campaign', category:'Fashion', budgetAmount:100, status:'draft', applicationDeadline:'2030-01-01', startDate:'2030-01-02', endDate:'2030-01-10'};
 const user = {role:'agency', userId:'owner'};
 test('multiple images persist with cover and ownership', async () => {
   const {campaign} = await usecase.execute({body:{...body, coverImageUrl:'https://example.com/cover.jpg', imageUrls:['https://example.com/one.jpg','https://example.com/two.jpg']}, user});

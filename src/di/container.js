@@ -15,6 +15,7 @@ import {
   ListCampaignApplicationsUseCase,
   ListMyApplicationsUseCase,
   UpdateApplicationStatusUseCase,
+  WithdrawApplicationUseCase,
 } from "../application/applications/usecases/CampaignApplicationUseCases.js";
 import {
   LogoutUseCase,
@@ -125,6 +126,9 @@ const createContainer = () => {
     }),
     updateApplicationStatusUseCase: new UpdateApplicationStatusUseCase({
       campaignRepository,
+      campaignApplicationRepository,
+    }),
+    withdrawApplicationUseCase: new WithdrawApplicationUseCase({
       campaignApplicationRepository,
     }),
 

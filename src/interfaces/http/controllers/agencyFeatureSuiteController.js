@@ -5,6 +5,7 @@ import CampaignApplication from "../../../models/CampaignApplication.js";
 import Conversation from "../../../models/Conversation.js";
 import Deal from "../../../models/Deal.js";
 import Collaboration from "../../../models/Collaboration.js";
+import BrandInvite from "../../../models/BrandInvite.js";
 import { asyncHandler } from "../../../shared/http/asyncHandler.js";
 import { sendSuccess, sendFailure } from "../../../shared/http/respond.js";
 import { getOrCreateRoleProfile } from "../../../utils/profileControllerUtils.js";
@@ -25,7 +26,7 @@ export const getAgencyDashboardStats = asyncHandler(async (req, res) => {
   const profile = await getAgencyProfileOrFail(req.user);
   const talentCount = profile ? profile.talent.filter((t) => t.status === "active").length : 0;
 
-  const [activeCampaigns, totalCampaigns, pendingApplications, activeCollabs] =
+  const [activeCampaigns, totalCampaigns, pendingApplications, shortlistedApplications, activeCollabs, invitedInfluencers] =
     await Promise.all([
       Campaign.countDocuments({
         $or: [{ agencyUserId: userId }, { ownerUserId: userId }],
@@ -42,7 +43,12 @@ export const getAgencyDashboardStats = asyncHandler(async (req, res) => {
         },
         status: "applied",
       }),
+      CampaignApplication.countDocuments({
+        campaignId: { $in: await Campaign.find({ $or: [{ agencyUserId: userId }, { ownerUserId: userId }] }).distinct("_id") },
+        status: "shortlisted",
+      }),
       Collaboration.countDocuments({ agencyUserId: userId, status: "active" }),
+      BrandInvite.countDocuments({ brandUserId: userId }),
     ]);
 
   // Deals / escrow
@@ -73,6 +79,10 @@ export const getAgencyDashboardStats = asyncHandler(async (req, res) => {
       totalCampaigns,
       pendingApplications,
       activeCollaborations: activeCollabs,
+      shortlistedInfluencers: shortlistedApplications,
+      confirmedCollaborations: activeCollabs,
+      invitedInfluencers,
+      managedInfluencers: talentCount,
       activeDeals,
       escrowBalance: formatINR(escrowBalance),
       escrowBalanceRaw: escrowBalance,
@@ -81,9 +91,54 @@ export const getAgencyDashboardStats = asyncHandler(async (req, res) => {
     talentCount,
     activeCampaigns,
     pendingApplications,
+    shortlistedInfluencers: shortlistedApplications,
+    confirmedCollaborations: activeCollabs,
+    invitedInfluencers,
+    managedInfluencers: talentCount,
     activeDeals,
     escrowBalance: formatINR(escrowBalance),
   });
+});
+
+export const getAgencyCampaignInvites = asyncHandler(async (req, res) => {
+  const invites = await BrandInvite.find({ brandUserId: req.user.userId }).sort({ createdAt: -1 }).lean();
+  const campaignIds = invites.map((invite) => invite.campaignId).filter(Boolean);
+  const profileIds = invites.map((invite) => invite.influencerProfileId).filter(Boolean);
+  const [campaigns, creators] = await Promise.all([
+    Campaign.find({ _id: { $in: campaignIds } }).select("title coverImageUrl").lean(),
+    InfluencerProfile.find({ _id: { $in: profileIds } }).lean(),
+  ]);
+  const campaignById = new Map(campaigns.map((item) => [toId(item._id), item]));
+  const creatorById = new Map(creators.map((item) => [toId(item._id), item]));
+  const data = invites.map((invite) => {
+    const creator = creatorById.get(toId(invite.influencerProfileId));
+    const campaign = campaignById.get(toId(invite.campaignId));
+    return {
+      id: toId(invite._id),
+      influencerProfileId: toId(invite.influencerProfileId),
+      name: creator?.name || creator?.displayName || "Creator",
+      category: (creator?.contentCategories || [])[0] || "",
+      followers: creator?.platforms?.[0]?.followers || 0,
+      engagement: creator?.platforms?.[0]?.engagement || 0,
+      avatarUrl: creator?.profileImageUrl || creator?.avatarUrl || "",
+      campaignId: toId(invite.campaignId),
+      campaignTitle: campaign?.title || "Campaign invitation",
+      campaignImageUrl: campaign?.coverImageUrl || "",
+      status: invite.status,
+      invitedAt: invite.createdAt,
+    };
+  });
+  sendSuccess(res, { data, invites: data, count: data.length });
+});
+
+export const cancelAgencyCampaignInvite = asyncHandler(async (req, res) => {
+  const invite = await BrandInvite.findOne({ _id: req.params.inviteId, brandUserId: req.user.userId });
+  if (!invite) return sendFailure(res, { statusCode: 404, message: "Campaign invitation not found" });
+  if (invite.status !== "pending") return sendFailure(res, { statusCode: 409, message: `Accepted or declined invitations cannot be cancelled` });
+  invite.status = "cancelled";
+  invite.respondedAt = new Date();
+  await invite.save();
+  sendSuccess(res, { message: "Campaign invitation cancelled", invite });
 });
 
 // ─── 2. Get Talent Roster ────────────────────────────────────────────────────

@@ -11,6 +11,7 @@ import {
   applyToCampaignController,
   getMyApplicationForCampaignController,
   listMyApplicationsController,
+  withdrawApplicationController,
 } from "../controllers/campaignApplicationController.js";
 import {
   getMyProfile,
@@ -27,6 +28,7 @@ import {
   getMediaKit,
   getRateCard,
   listBrandInvites,
+  respondToBrandInvite,
   updateMediaKit,
   updateRateCard,
 } from "../controllers/influencerAssetsController.js";
@@ -40,6 +42,7 @@ router.get("/onboarding-options", authMiddleware, getOnboardingOptions);
 router.get("/profile", authMiddleware, getMyProfile);
 router.get("/dashboard-stats", authMiddleware, getDashboardStats);
 router.get("/brand-invites", authMiddleware, listBrandInvites);
+router.patch("/brand-invites/:inviteId/respond", authMiddleware, respondToBrandInvite);
 router.get("/rate-card", authMiddleware, getRateCard);
 router.put("/rate-card", authMiddleware, updateRateCard);
 router.get("/media-kit", authMiddleware, getMediaKit);
@@ -47,6 +50,11 @@ router.put("/media-kit", authMiddleware, updateMediaKit);
 router.get("/campaigns-for-you", authMiddleware, listCampaignsForInfluencer);
 router.get("/creators", authMiddleware, listAgencyInfluencers);
 router.get("/applications", authMiddleware, listMyApplicationsController);
+router.patch(
+  "/applications/:applicationId/withdraw",
+  authMiddleware,
+  withdrawApplicationController
+);
 router.post(
   "/campaigns/:campaignId/apply",
   authMiddleware,

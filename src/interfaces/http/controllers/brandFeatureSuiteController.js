@@ -3,6 +3,9 @@ import Campaign from "../../../models/Campaign.js";
 import CampaignApplication from "../../../models/CampaignApplication.js";
 import Deal from "../../../models/Deal.js";
 import Collaboration from "../../../models/Collaboration.js";
+import SavedCreator from "../../../models/SavedCreator.js";
+import InfluencerProfile from "../../../models/InfluencerProfile.js";
+import BrandInvite from "../../../models/BrandInvite.js";
 import { asyncHandler } from "../../../shared/http/asyncHandler.js";
 import { sendSuccess, sendFailure } from "../../../shared/http/respond.js";
 import { getOrCreateRoleProfile, normalizeText } from "../../../utils/profileControllerUtils.js";
@@ -11,6 +14,35 @@ const toId = (v) => (v ? String(v) : "");
 
 const getOrCreateBrandProfile = (user) =>
   getOrCreateRoleProfile(user, BrandProfile);
+
+export const listSavedCreators = asyncHandler(async (req, res) => {
+  const rows = await SavedCreator.find({ ownerUserId: req.user.userId }).sort({ updatedAt: -1 }).lean();
+  const profiles = await InfluencerProfile.find({ _id: { $in: rows.map((row) => row.influencerProfileId) } }).lean();
+  const byId = new Map(profiles.map((profile) => [String(profile._id), profile]));
+  sendSuccess(res, { data: rows.map((row) => ({ ...row, creator: byId.get(String(row.influencerProfileId)) || null })) });
+});
+
+export const saveCreator = asyncHandler(async (req, res) => {
+  const status = req.body.status === "shortlisted" ? "shortlisted" : "saved";
+  const profile = await InfluencerProfile.findById(req.params.profileId);
+  if (!profile) return sendFailure(res, { statusCode: 404, message: "Influencer profile not found" });
+  const saved = await SavedCreator.findOneAndUpdate(
+    { ownerUserId: req.user.userId, influencerProfileId: profile._id },
+    { $set: { ownerRole: req.user.role, status, note: normalizeText(req.body.note) } },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+  sendSuccess(res, { message: `Creator ${status}`, savedCreator: saved });
+});
+
+export const removeSavedCreator = asyncHandler(async (req, res) => {
+  await SavedCreator.deleteOne({ ownerUserId: req.user.userId, influencerProfileId: req.params.profileId });
+  sendSuccess(res, { message: "Creator removed from saved list" });
+});
+
+export const listBrandInvites = asyncHandler(async (req, res) => {
+  const invites = await BrandInvite.find({ brandUserId: req.user.userId }).sort({ createdAt: -1 }).lean();
+  sendSuccess(res, { count: invites.length, invites, data: invites });
+});
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -451,7 +483,8 @@ export const updateBrandCampaign = asyncHandler(async (req, res) => {
     "title", "description", "category", "platforms", "deliverables",
     "budgetAmount", "budgetCurrency", "coverImageUrl", "location",
     "applicationDeadline", "status", "campaignType", "targetNiches",
-    "targetScaleTier", "slotsTotal", "slotsRemaining",
+    "targetScaleTier", "slotsTotal", "slotsRemaining", "startDate", "endDate",
+    "termsAndConditions", "specialInstructions",
   ];
 
   for (const key of allowed) {

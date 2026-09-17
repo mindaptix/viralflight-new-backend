@@ -37,6 +37,11 @@ const brandInviteSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    ownerRole: {
+      type: String,
+      enum: ["brand", "agency"],
+      default: "brand",
+    },
     campaignId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Campaign",

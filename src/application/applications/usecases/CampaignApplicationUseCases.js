@@ -229,3 +229,24 @@ export class UpdateApplicationStatusUseCase extends UseCase {
     return { application: toApplicationDto(application) };
   }
 }
+
+export class WithdrawApplicationUseCase extends UseCase {
+  constructor({ campaignApplicationRepository }) {
+    super();
+    this.campaignApplicationRepository = campaignApplicationRepository;
+  }
+
+  async execute({ applicationId, user }) {
+    const application = await this.campaignApplicationRepository.findById(applicationId);
+    if (!application) throw new NotFoundError("Application not found");
+    if (String(application.influencerUserId) !== String(user.userId)) {
+      throw new ForbiddenError("You can only withdraw your own application");
+    }
+    if (!["applied", "shortlisted"].includes(application.status)) {
+      throw new ConflictError("Only applied or shortlisted applications can be withdrawn");
+    }
+    application.status = "withdrawn";
+    await this.campaignApplicationRepository.save(application);
+    return { application: toApplicationDto(application) };
+  }
+}

@@ -57,6 +57,14 @@ export const listCampaignApplicationsController = asyncHandler(
   }
 );
 
+export const withdrawApplicationController = asyncHandler(async (req, res) => {
+  const { application } = await container.withdrawApplicationUseCase.execute({
+    applicationId: req.params.applicationId,
+    user: req.user,
+  });
+  sendSuccess(res, { message: "Application withdrawn", application });
+});
+
 export const updateApplicationStatusController = asyncHandler(
   async (req, res) => {
     const { application } =

@@ -110,6 +110,10 @@ const campaignSchema = new mongoose.Schema(
       type: Date,
       index: true,
     },
+    startDate: { type: Date, index: true },
+    endDate: { type: Date, index: true },
+    termsAndConditions: { type: String, trim: true },
+    specialInstructions: { type: String, trim: true },
     status: {
       type: String,
       enum: CAMPAIGN_STATUSES,

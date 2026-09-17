@@ -7,6 +7,7 @@ import {
 } from "../../../shared/validation/normalize.js";
 import { ValidationError } from "../../../shared/errors/AppError.js";
 import { UseCase } from "../../../shared/usecase/UseCase.js";
+import BrandProfile from "../../../models/BrandProfile.js";
 
 export class CreateCampaignUseCase extends UseCase {
   constructor({ campaignRepository, profileRepository }) {
@@ -30,6 +31,8 @@ export class CreateCampaignUseCase extends UseCase {
     const applicationDeadline = normalizeDate(
       body.applicationDeadline ?? body.deadline
     );
+    const startDate = normalizeDate(body.startDate);
+    const endDate = normalizeDate(body.endDate);
     const status = normalizeText(body.status) || "active";
 
     if (!title || title.length < 2) {
@@ -46,8 +49,17 @@ export class CreateCampaignUseCase extends UseCase {
       throw new ValidationError("Budget amount must be a valid positive number");
     }
 
-    if (applicationDeadline === null) {
+    if (applicationDeadline == null) {
       throw new ValidationError("Application deadline must be a valid date");
+    }
+    if (startDate == null || endDate == null) {
+      throw new ValidationError("Campaign startDate and endDate must be valid dates");
+    }
+    if (endDate < startDate) {
+      throw new ValidationError("Campaign endDate must be on or after startDate");
+    }
+    if (applicationDeadline > startDate) {
+      throw new ValidationError("Application deadline cannot be after campaign startDate");
     }
 
     if (!CAMPAIGN_STATUSES.includes(status)) {
@@ -71,6 +83,16 @@ export class CreateCampaignUseCase extends UseCase {
       normalizeText(body.brandName) ||
       normalizeText(body.agencyName);
     const ownerName = requestOwnerName || profileOwnerName;
+    let representedBrand = null;
+    if (ownerRole === "agency" && body.representedBrandProfileId) {
+      representedBrand = await BrandProfile.findOne({
+        _id: body.representedBrandProfileId,
+        isProfileComplete: true,
+      });
+      if (!representedBrand) {
+        throw new ValidationError("Represented brand profile was not found");
+      }
+    }
 
     const campaign = await this.campaignRepository.create({
       ownerRole,
@@ -78,10 +100,10 @@ export class CreateCampaignUseCase extends UseCase {
       ownerProfileId: ownerProfile?._id,
       ownerMobile: user.mobile,
       ownerName,
-      brandUserId: ownerRole === "brand" ? user.userId : undefined,
-      brandProfileId: ownerRole === "brand" ? ownerProfile?._id : undefined,
-      brandMobile: ownerRole === "brand" ? user.mobile : undefined,
-      brandName: ownerRole === "brand" ? ownerName : undefined,
+      brandUserId: ownerRole === "brand" ? user.userId : representedBrand?.userId,
+      brandProfileId: ownerRole === "brand" ? ownerProfile?._id : representedBrand?._id,
+      brandMobile: ownerRole === "brand" ? user.mobile : representedBrand?.mobile,
+      brandName: ownerRole === "brand" ? ownerName : representedBrand?.brandName,
       agencyUserId: ownerRole === "agency" ? user.userId : undefined,
       agencyProfileId: ownerRole === "agency" ? ownerProfile?._id : undefined,
       agencyMobile: ownerRole === "agency" ? user.mobile : undefined,
@@ -97,6 +119,10 @@ export class CreateCampaignUseCase extends UseCase {
       imageUrls,
       location: normalizeText(body.location ?? body.city),
       applicationDeadline,
+      startDate,
+      endDate,
+      termsAndConditions: normalizeText(body.termsAndConditions ?? body.terms),
+      specialInstructions: normalizeText(body.specialInstructions ?? body.instructions),
       status,
     });
 

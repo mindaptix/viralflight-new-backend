@@ -10,6 +10,8 @@ const NOTIFICATION_TYPES = [
   "connection_request",
   "quote_request",
   "connection",
+  "invite_accepted",
+  "invite_declined",
 ];
 
 const notificationSchema = new mongoose.Schema(

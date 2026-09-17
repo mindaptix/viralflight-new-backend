@@ -53,6 +53,7 @@ export class CreateCampaignInviteUseCase extends UseCase {
       influencerMobile: influencerProfile.mobile,
       brandUserId: user.userId,
       brandMobile: user.mobile,
+      ownerRole: user.role,
       campaignId: campaign._id,
       message,
       status: "pending",

@@ -21,6 +21,10 @@ import {
   getCampaignAnalytics,
   updateBrandCampaign,
   deleteBrandCampaign,
+  listSavedCreators,
+  saveCreator,
+  removeSavedCreator,
+  listBrandInvites,
 } from "../controllers/brandFeatureSuiteController.js";
 import { listCampaignApplicationsController } from "../controllers/campaignApplicationController.js";
 import { listBrandCreators } from "../controllers/discoveryController.js";
@@ -66,6 +70,10 @@ router.get(
 
 // ─── Discovery ────────────────────────────────────────────────────────────────
 router.get("/creators", brandAuth, listBrandCreators);
+router.get("/saved-creators", brandAuth, listSavedCreators);
+router.put("/saved-creators/:profileId", brandAuth, saveCreator);
+router.delete("/saved-creators/:profileId", brandAuth, removeSavedCreator);
+router.get("/campaign-invites", brandAuth, listBrandInvites);
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 router.post("/logout", brandAuth, logout);
