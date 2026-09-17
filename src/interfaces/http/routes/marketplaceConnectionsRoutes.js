@@ -4,6 +4,7 @@ import ConnectionRequest from "../../../models/ConnectionRequest.js";
 import InfluencerProfile from "../../../models/InfluencerProfile.js";
 import BrandProfile from "../../../models/BrandProfile.js";
 import AgencyProfile from "../../../models/AgencyProfile.js";
+import User from "../../../models/User.js";
 import Conversation from "../../../models/Conversation.js";
 import { initiateCampaignChat } from "../../../application/chat/ChatService.js";
 import { getChatIO } from "../../../infrastructure/socket/chatSocket.js";
@@ -33,6 +34,14 @@ const findConversationId = async row => {
 
 const mapConnectionRow = async (row, user) => {
   const conversationId = await findConversationId(row);
+  const ownerModel = row.brandRole === "agency" ? AgencyProfile : BrandProfile;
+  const owner = row.brandId
+    ? await ownerModel.findOne({ userId: row.brandId }).select("profileImageUrl").lean()
+    : null;
+  const ownerUser = row.brandId
+    ? await User.findById(row.brandId).select("avatar").lean()
+    : null;
+  const brandImageUrl = owner?.profileImageUrl || ownerUser?.avatar || "";
   return {
     ...row,
     id: toId(row._id),
@@ -44,6 +53,8 @@ const mapConnectionRow = async (row, user) => {
     influencer_profile_id: toId(row.creatorProfileId),
     conversationId,
     conversation_id: conversationId,
+    brandImageUrl,
+    brand_image_url: brandImageUrl,
     isIncoming: user.role === "influencer",
     is_incoming: user.role === "influencer",
     creatorMobile: undefined,

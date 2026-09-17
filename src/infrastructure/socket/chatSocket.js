@@ -87,6 +87,21 @@ export const initChatSocket = (httpServer) => {
     socket.on("join_conversation", handleJoin);
     socket.on("join_room", handleJoin);
 
+    socket.on("get_presence", async ({ userId: targetUserId } = {}, callback) => {
+      const target = targetUserId ? String(targetUserId) : "";
+      if (!target) return;
+      const targetUser = await User.findById(target).select("lastSeenAt").lean();
+      const payload = {
+        userId: target,
+        isOnline: isUserOnline(target),
+        lastSeenAt: targetUser?.lastSeenAt
+          ? new Date(targetUser.lastSeenAt).toISOString()
+          : null,
+      };
+      socket.emit("user_presence", payload);
+      if (typeof callback === "function") callback(payload);
+    });
+
     // ─── Leave Conversation Room ───────────────────────────────────────────
     socket.on("leave_conversation", ({ conversationId, roomId }, callback) => {
       const targetId = conversationId || roomId;
@@ -217,13 +232,21 @@ export const initChatSocket = (httpServer) => {
     });
 
     // ─── Disconnect ────────────────────────────────────────────────────────
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async () => {
       const userSockets = onlineUsers.get(userId);
       if (userSockets) {
         userSockets.delete(socket.id);
         if (userSockets.size === 0) {
           onlineUsers.delete(userId);
-          io.emit("user_presence", { userId, isOnline: false });
+          const lastSeenAt = new Date();
+          await User.updateOne({ _id: userId }, { $set: { lastSeenAt } }).catch(
+            () => null
+          );
+          io.emit("user_presence", {
+            userId,
+            isOnline: false,
+            lastSeenAt: lastSeenAt.toISOString(),
+          });
         }
       }
     });

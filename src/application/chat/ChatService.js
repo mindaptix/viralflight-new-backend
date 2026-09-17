@@ -27,7 +27,7 @@ export const getParticipantProfile = async (userId) => {
     mobile: user.mobile || "",
     role: user.role,
     name: "",
-    profileImageUrl: "",
+    profileImageUrl: user.avatar || "",
     city: "",
   };
 
@@ -37,7 +37,7 @@ export const getParticipantProfile = async (userId) => {
     }).lean();
     if (infProfile) {
       profile.name = infProfile.name || "";
-      profile.profileImageUrl = infProfile.profileImageUrl || "";
+      profile.profileImageUrl = infProfile.profileImageUrl || profile.profileImageUrl;
       profile.city = infProfile.city || "";
       profile.instagramHandle = infProfile.instagramHandle || "";
     }
@@ -47,7 +47,7 @@ export const getParticipantProfile = async (userId) => {
     }).lean();
     if (brandProfile) {
       profile.name = brandProfile.brandName || brandProfile.contactPerson || "Brand";
-      profile.profileImageUrl = brandProfile.profileImageUrl || "";
+      profile.profileImageUrl = brandProfile.profileImageUrl || profile.profileImageUrl;
       profile.city = brandProfile.city || "";
       profile.industry = brandProfile.industry || "";
     }
@@ -57,7 +57,7 @@ export const getParticipantProfile = async (userId) => {
     }).lean();
     if (agencyProfile) {
       profile.name = agencyProfile.agencyName || agencyProfile.contactPerson || "Agency";
-      profile.profileImageUrl = agencyProfile.profileImageUrl || "";
+      profile.profileImageUrl = agencyProfile.profileImageUrl || profile.profileImageUrl;
       profile.city = agencyProfile.city || "";
     }
   }
@@ -65,6 +65,10 @@ export const getParticipantProfile = async (userId) => {
   if (!profile.name) {
     profile.name = user.role.charAt(0).toUpperCase() + user.role.slice(1);
   }
+
+  profile.lastSeenAt = user.lastSeenAt
+    ? new Date(user.lastSeenAt).toISOString()
+    : null;
 
   return profile;
 };
