@@ -4,7 +4,9 @@ import { initiateCampaignChat } from "../../../application/chat/ChatService.js";
 import { getChatIO } from "../../../infrastructure/socket/chatSocket.js";
 import { asyncHandler } from "../../../shared/http/asyncHandler.js";
 import { sendSuccess } from "../../../shared/http/respond.js";
+import Campaign from "../../../models/Campaign.js";
 import Notification from "../../../models/Notification.js";
+import { sendPushNotificationSafe } from "../../../infrastructure/notifications/pushNotificationService.js";
 
 export const applyToCampaignController = asyncHandler(async (req, res) => {
   const { application } = await container.applyToCampaignUseCase.execute({
@@ -12,6 +14,50 @@ export const applyToCampaignController = asyncHandler(async (req, res) => {
     body: req.body,
     user: req.user,
   });
+
+  // Notify campaign owner (brand/agency) via in-app notification & FCM push
+  try {
+    const campaign = await Campaign.findById(req.params.campaignId).lean();
+    const ownerUserId = campaign?.ownerUserId || campaign?.brandUserId || campaign?.agencyUserId;
+    if (ownerUserId) {
+      const influencerName = application.influencerName || "A creator";
+      const campaignTitle = campaign?.title || "your campaign";
+      const notifTitle = "New Campaign Application! 📥";
+      const notifBody = `${influencerName} applied to "${campaignTitle}".`;
+
+      Notification.create({
+        userId: ownerUserId,
+        role: campaign?.ownerRole || "brand",
+        title: notifTitle,
+        body: notifBody,
+        type: "application_status",
+        targetId: String(campaign._id),
+        metadata: {
+          applicationId: String(application.id || application._id || ""),
+          campaignId: String(campaign._id),
+          influencerUserId: String(req.user.userId || ""),
+        },
+      }).catch((err) =>
+        console.error("Could not create in-app notification for application:", err.message)
+      );
+
+      sendPushNotificationSafe({
+        userId: ownerUserId,
+        notification: {
+          title: notifTitle,
+          body: notifBody,
+        },
+        data: {
+          type: "application_submitted",
+          campaignId: String(campaign._id),
+          applicationId: String(application.id || application._id || ""),
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
+        },
+      });
+    }
+  } catch (notifErr) {
+    console.error("Error triggering application submission notification:", notifErr.message);
+  }
 
   sendSuccess(res, {
     statusCode: 201,
@@ -105,11 +151,29 @@ export const updateApplicationStatusController = asyncHandler(
       }
     }
 
+    let notifTitle = "Application Update";
+    let notifBody = `Your campaign application is now ${application.status}.`;
+    let pushType = `application_${application.status}`;
+
+    if (application.status === "accepted") {
+      notifTitle = "Application Accepted! 🎉";
+      notifBody = `Your application for '${application.campaignTitle || "campaign"}' was approved.`;
+      pushType = "application_accepted";
+    } else if (application.status === "rejected") {
+      notifTitle = "Application Update";
+      notifBody = `Your application for '${application.campaignTitle || "campaign"}' was not accepted.`;
+      pushType = "application_rejected";
+    } else if (application.status === "shortlisted") {
+      notifTitle = "Application Shortlisted! 🌟";
+      notifBody = `Your application for '${application.campaignTitle || "campaign"}' has been shortlisted.`;
+      pushType = "application_shortlisted";
+    }
+
     await Notification.create({
       userId: application.influencerUserId,
       role: "influencer",
-      title: "Application update",
-      body: `Your campaign application is now ${application.status}.`,
+      title: notifTitle,
+      body: notifBody,
       type: "application_status",
       targetId: String(application.campaignId || ""),
       metadata: {
@@ -119,6 +183,21 @@ export const updateApplicationStatusController = asyncHandler(
       },
     }).catch((error) => {
       console.error("Could not create application notification", error);
+    });
+
+    sendPushNotificationSafe({
+      userId: application.influencerUserId,
+      notification: {
+        title: notifTitle,
+        body: notifBody,
+      },
+      data: {
+        type: pushType,
+        campaignId: String(application.campaignId || ""),
+        applicationId: String(application.id || application._id || ""),
+        conversationId: chatConversation ? String(chatConversation._id) : "",
+        click_action: "FLUTTER_NOTIFICATION_CLICK",
+      },
     });
 
     sendSuccess(res, {

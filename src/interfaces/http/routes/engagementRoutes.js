@@ -19,6 +19,10 @@ import {
   unfollowCreator,
   unsaveCampaign,
 } from "../controllers/engagementController.js";
+import {
+  registerDeviceToken,
+  unregisterDeviceToken,
+} from "../controllers/deviceTokenController.js";
 import { requireRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -81,5 +85,8 @@ router.post(
   appUserAuth,
   markNotificationRead
 );
+
+router.post("/notifications/device-token", appUserAuth, registerDeviceToken);
+router.delete("/notifications/device-token", appUserAuth, unregisterDeviceToken);
 
 export default router;

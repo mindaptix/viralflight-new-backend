@@ -52,7 +52,6 @@ GET  /api/brand/campaigns
 POST /api/brand/full-onboarding
 POST /api/brand/campaigns
 POST /api/brand/logout
-<<<<<<< HEAD
 DELETE /api/brand/account
 POST /api/connections/requests
 GET  /api/connections
@@ -64,8 +63,8 @@ GET  /api/chat/conversations
 GET  /api/chat/conversations/:conversationId/messages
 POST /api/chat/conversations/:conversationId/messages
 PATCH /api/chat/conversations/:conversationId/read
-=======
->>>>>>> 542fda10a598293e5d98e294bf7584fb0afbb8bc
+POST /api/v1/notifications/device-token
+DELETE /api/v1/notifications/device-token
 ```
 
 There are no active custom `/api/admin/*` APIs right now. Payload CMS admin is available at:
@@ -1066,4 +1065,80 @@ Fields: creatorId, creatorProfileId, creatorMobile, brandId, brandRole,
 brandName, brandNiche, kind, message, budgetDisplay, deliverable, city,
 status, createdAt, updatedAt
 ```
+
+## Push Notifications (FCM)
+
+### Register Device Token
+
+```txt
+POST /api/v1/notifications/device-token
+```
+
+Headers:
+- `Authorization: Bearer <ACCESS_TOKEN>`
+- `Content-Type: application/json`
+
+Body:
+```json
+{
+  "fcmToken": "cK...token...",
+  "platform": "android"
+}
+```
+
+Response (200):
+```json
+{
+  "success": true,
+  "message": "Device token registered successfully",
+  "data": {
+    "userId": "660c1...",
+    "platform": "android",
+    "updatedAt": "2026-09-18T08:30:00.000Z"
+  }
+}
+```
+
+### Unregister Device Token (Logout)
+
+```txt
+DELETE /api/v1/notifications/device-token
+```
+
+Headers:
+- `Authorization: Bearer <ACCESS_TOKEN>`
+
+Body / Query (Optional):
+```json
+{
+  "fcmToken": "cK...token..."
+}
+```
+
+Response (200):
+```json
+{
+  "success": true,
+  "message": "Device token unregistered successfully"
+}
+```
+
+### FCM Push Payload Standard
+
+Every server-side push notification delivers both `notification` and `data`:
+
+```json
+{
+  "notification": {
+    "title": "Application Accepted! 🎉",
+    "body": "Your application for 'Summer Glow Campaign' was approved."
+  },
+  "data": {
+    "type": "application_accepted",
+    "campaignId": "12345",
+    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+  }
+}
+```
+
 

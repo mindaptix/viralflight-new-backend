@@ -4,12 +4,46 @@ import { withCampaignOwnerImages } from "../../../application/campaigns/mappers/
 import { asyncHandler } from "../../../shared/http/asyncHandler.js";
 import { sendSuccess } from "../../../shared/http/respond.js";
 import Campaign from "../../../models/Campaign.js";
+import CreatorFollow from "../../../models/CreatorFollow.js";
+import { sendPushNotificationSafe } from "../../../infrastructure/notifications/pushNotificationService.js";
+
+const notifyFollowersOfNewCampaign = (campaign) => {
+  const ownerProfileId =
+    campaign.ownerProfileId || campaign.brandProfileId || campaign.agencyProfileId;
+  if (!ownerProfileId) return;
+
+  CreatorFollow.find({ followedProfileId: ownerProfileId })
+    .select("followerUserId")
+    .lean()
+    .then((follows) => {
+      const followerUserIds = follows.map((f) => f.followerUserId).filter(Boolean);
+      if (followerUserIds.length > 0) {
+        sendPushNotificationSafe({
+          userIds: followerUserIds,
+          notification: {
+            title: "New Campaign Alert! 🚀",
+            body: `${campaign.ownerName || "A brand"} launched a new campaign: "${campaign.title}"`,
+          },
+          data: {
+            type: "campaign_created",
+            campaignId: String(campaign._id),
+            click_action: "FLUTTER_NOTIFICATION_CLICK",
+          },
+        });
+      }
+    })
+    .catch((err) => {
+      console.error("Error notifying followers of new campaign:", err.message);
+    });
+};
 
 export const createCampaign = asyncHandler(async (req, res) => {
   const { campaign } = await container.createCampaignUseCase.execute({
     body: req.body,
     user: req.user,
   });
+
+  notifyFollowersOfNewCampaign(campaign);
 
   sendSuccess(res, {
     statusCode: 201,
@@ -24,6 +58,8 @@ export const createAgencyCampaignController = asyncHandler(async (req, res) => {
     body: req.body,
     user: req.user,
   });
+
+  notifyFollowersOfNewCampaign(campaign);
 
   sendSuccess(res, {
     statusCode: 201,

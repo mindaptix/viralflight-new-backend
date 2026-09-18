@@ -2,9 +2,10 @@ import mongoose from "mongoose";
 
 import BrandInvite from "../../../models/BrandInvite.js";
 import Notification from "../../../models/Notification.js";
-import { ForbiddenError, NotFoundError, ValidationError } from "../../../shared/errors/AppError.js";
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from "../../../shared/errors/AppError.js";
 import { isCampaignOwner } from "../../../domain/campaigns/CampaignRules.js";
 import { UseCase } from "../../../shared/usecase/UseCase.js";
+import { sendPushNotificationSafe } from "../../../infrastructure/notifications/pushNotificationService.js";
 
 export class CreateCampaignInviteUseCase extends UseCase {
   constructor({ campaignRepository, influencerProfileRepository }) {
@@ -47,6 +48,16 @@ export class CreateCampaignInviteUseCase extends UseCase {
     const message =
       typeof body.message === "string" ? body.message.trim() : "";
 
+    const existing = await BrandInvite.findOne({
+      influencerProfileId: influencerProfile._id,
+      campaignId: campaign._id,
+      brandUserId: user.userId,
+      status: { $in: ["pending", "accepted"] },
+    });
+    if (existing) {
+      throw new ConflictError("This creator has already been invited to the campaign");
+    }
+
     const invite = await BrandInvite.create({
       influencerProfileId: influencerProfile._id,
       influencerUserId: influencerProfile.userId,
@@ -60,17 +71,37 @@ export class CreateCampaignInviteUseCase extends UseCase {
     });
 
     if (influencerProfile.userId) {
+      const notifTitle = "Campaign Invitation! 💌";
+      const notifBody =
+        message || `${campaign.brandName || "A brand"} invited you to "${campaign.title}"`;
+
       await Notification.create({
         userId: influencerProfile.userId,
         role: "influencer",
-        title: "New brand invite",
-        body: message || `${campaign.brandName || "A brand"} invited you to a campaign`,
+        title: notifTitle,
+        body: notifBody,
         type: "campaign_invite",
         targetId: String(campaign._id),
         metadata: {
           inviteId: String(invite._id),
           campaignId: String(campaign._id),
           brandUserId: String(user.userId),
+        },
+      }).catch((err) => {
+        console.error("Could not create in-app notification for campaign invite:", err.message);
+      });
+
+      sendPushNotificationSafe({
+        userId: influencerProfile.userId,
+        notification: {
+          title: notifTitle,
+          body: notifBody,
+        },
+        data: {
+          type: "campaign_invite",
+          campaignId: String(campaign._id),
+          inviteId: String(invite._id),
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
         },
       });
     }

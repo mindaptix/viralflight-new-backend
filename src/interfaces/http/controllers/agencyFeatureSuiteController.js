@@ -174,18 +174,18 @@ export const getTalentRoster = asyncHandler(async (req, res) => {
             entry.influencerProfileId
           )
             .select(
-              "displayName username instagramHandle followerCount niche profileImageUrl city avgEngagementRate"
+              "name displayName username instagramHandle followerCount niche contentCategories platforms profileImageUrl avatarUrl city avgEngagementRate"
             )
             .lean();
           if (inf) {
             extra = {
-              displayName: inf.displayName || inf.username || entry.name,
+              displayName: inf.name || inf.displayName || inf.username || entry.name,
               instagramHandle: inf.instagramHandle || entry.instagramHandle,
-              followerCount: inf.followerCount || 0,
-              niche: inf.niche || entry.niche,
-              avatarUrl: inf.profileImageUrl || null,
+              followerCount: inf.followerCount || inf.platforms?.[0]?.followers || 0,
+              niche: inf.niche || inf.contentCategories?.[0] || entry.niche,
+              avatarUrl: inf.profileImageUrl || inf.avatarUrl || null,
               city: inf.city || entry.city,
-              avgEngagementRate: inf.avgEngagementRate || 0,
+              avgEngagementRate: inf.avgEngagementRate || inf.platforms?.[0]?.engagement || 0,
             };
           }
         } catch (_) {}

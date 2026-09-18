@@ -13,6 +13,7 @@ import {
   NotFoundError,
   ValidationError,
 } from "../../shared/errors/AppError.js";
+import { sendPushNotificationSafe } from "../../infrastructure/notifications/pushNotificationService.js";
 
 const toId = (val) => (val ? String(val) : "");
 
@@ -415,6 +416,32 @@ export const sendMessage = async ({
   }
 
   await conversation.save();
+
+  // Fire-and-forget push notification to recipient
+  getParticipantProfile(currentUserId)
+    .then((senderProfile) => {
+      const senderName = senderProfile?.name || "New Message";
+      const bodyText =
+        trimmedText ||
+        (mediaType ? `Sent an attachment [${mediaType}]` : "Sent an attachment");
+
+      sendPushNotificationSafe({
+        userId: targetRecipientId,
+        notification: {
+          title: senderName,
+          body: bodyText,
+        },
+        data: {
+          type: "chat_message",
+          conversationId: toId(conversation._id),
+          senderId: currentUserId,
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
+        },
+      });
+    })
+    .catch((err) => {
+      console.error("Error triggering chat message push notification:", err.message);
+    });
 
   return {
     message: mapChatMessageData(chatMessage),

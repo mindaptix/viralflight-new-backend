@@ -16,6 +16,7 @@ import {
   NotFoundError,
   ValidationError,
 } from "../../shared/errors/AppError.js";
+import { sendPushNotificationSafe } from "../../infrastructure/notifications/pushNotificationService.js";
 
 const toId = (val) => (val ? String(val) : "");
 
@@ -201,6 +202,21 @@ export const createConnectionRequest = async ({ user, body = {} }) => {
         budgetDisplay,
         deliverable,
       },
+    }).catch((err) => {
+      console.error("Could not create in-app notification for connection request:", err.message);
+    });
+
+    sendPushNotificationSafe({
+      userId: notifyUserId,
+      notification: {
+        title: notificationTitle,
+        body: notificationBody,
+      },
+      data: {
+        type: isQuote ? "quote_request" : "connection_request",
+        requestId: toId(connectionRequest._id),
+        click_action: "FLUTTER_NOTIFICATION_CLICK",
+      },
     });
   }
 
@@ -377,17 +393,37 @@ export const updateConnectionRequestStatus = async ({
   if (isCreator || creatorMatchesProfile) {
     // Notify Brand/Agency
     if (doc.brandId) {
+      const notifTitle = `Request ${nextStatus}`;
+      const notifBody = `Creator has ${nextStatus} your ${doc.kind} request.`;
+
       await Notification.create({
         userId: doc.brandId,
         role: doc.brandRole,
-        title: `Request ${nextStatus}`,
-        body: `Creator has ${nextStatus} your ${doc.kind} request.`,
+        title: notifTitle,
+        body: notifBody,
         type: doc.kind === "quote" ? "quote_request" : "connection_request",
         targetId: toId(doc._id),
         metadata: {
           requestId: toId(doc._id),
           status: nextStatus,
           conversationId: chatConversation ? toId(chatConversation._id) : undefined,
+        },
+      }).catch((err) => {
+        console.error("Could not create in-app notification for connection status:", err.message);
+      });
+
+      sendPushNotificationSafe({
+        userId: doc.brandId,
+        notification: {
+          title: notifTitle,
+          body: notifBody,
+        },
+        data: {
+          type: "connection_status",
+          requestId: toId(doc._id),
+          status: String(nextStatus),
+          conversationId: chatConversation ? toId(chatConversation._id) : "",
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
         },
       });
     }
@@ -396,16 +432,35 @@ export const updateConnectionRequestStatus = async ({
     const notifyCreatorUserId =
       mongoose.Types.ObjectId.isValid(doc.creatorId) ? doc.creatorId : null;
     if (notifyCreatorUserId) {
+      const notifTitle = `Request ${nextStatus}`;
+      const notifBody = `${doc.brandName || "Brand"} has updated the ${doc.kind} request to ${nextStatus}.`;
+
       await Notification.create({
         userId: notifyCreatorUserId,
         role: "influencer",
-        title: `Request ${nextStatus}`,
-        body: `${doc.brandName || "Brand"} has updated the ${doc.kind} request to ${nextStatus}.`,
+        title: notifTitle,
+        body: notifBody,
         type: doc.kind === "quote" ? "quote_request" : "connection_request",
         targetId: toId(doc._id),
         metadata: {
           requestId: toId(doc._id),
           status: nextStatus,
+        },
+      }).catch((err) => {
+        console.error("Could not create in-app notification for connection status:", err.message);
+      });
+
+      sendPushNotificationSafe({
+        userId: notifyCreatorUserId,
+        notification: {
+          title: notifTitle,
+          body: notifBody,
+        },
+        data: {
+          type: "connection_status",
+          requestId: toId(doc._id),
+          status: String(nextStatus),
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
         },
       });
     }
