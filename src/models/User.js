@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema(
     lastOtpRequestedAt: {
       type: Date,
     },
+    otp: {
+      type: String,
+      default: null,
+    },
     lastLoginAt: {
       type: Date,
     },

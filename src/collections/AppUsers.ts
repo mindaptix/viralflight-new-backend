@@ -73,6 +73,14 @@ export const AppUsers: CollectionConfig = {
       },
     },
     {
+      name: 'otp',
+      type: 'text',
+      label: 'Static / Test OTP',
+      admin: {
+        description: 'Fixed OTP for testing/demo login (e.g. 123456)',
+      },
+    },
+    {
       name: 'lastLoginAt',
       type: 'date',
       label: 'Last Login',

@@ -174,6 +174,25 @@ const vfCrmCampaigns = [
 
 const influencers = [
   {
+    mobile: "+919876543211",
+    otp: "123456",
+    name: "Test Influencer",
+    city: "Mumbai",
+    bio: "Test influencer account for development and demo logins.",
+    contentCategories: ["Fashion", "Lifestyle"],
+    contentLanguages: ["Hindi", "English"],
+    platform: {
+      platform: "instagram",
+      username: "test.influencer",
+      followers: 50000,
+      engagement: 4.5,
+    },
+    rateRange: { min: 10000, max: 30000, currency: "INR" },
+    profession: "Creator",
+    imageUrl:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400&q=80",
+  },
+  {
     mobile: "+919000000001",
     name: "Ananya Sharma",
     city: "Mumbai",
@@ -576,13 +595,14 @@ const campaignTemplates = [
   },
 ];
 
-async function upsertUser({ mobile, role }) {
+async function upsertUser({ mobile, role, otp = null }) {
   return User.findOneAndUpdate(
     { mobile, role },
     {
       mobile,
       role,
       isMobileVerified: true,
+      ...(otp ? { otp } : {}),
       lastLoginAt: new Date(),
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
@@ -590,7 +610,11 @@ async function upsertUser({ mobile, role }) {
 }
 
 async function seedInfluencer(data) {
-  const user = await upsertUser({ mobile: data.mobile, role: "influencer" });
+  const user = await upsertUser({
+    mobile: data.mobile,
+    role: "influencer",
+    otp: data.otp || null,
+  });
   const profile = await InfluencerProfile.findOneAndUpdate(
     { mobile: data.mobile },
     {
@@ -1013,7 +1037,8 @@ async function main() {
   console.log(`App campaigns: ${campaigns.length}`);
   console.log(`VF CRM campaigns: ${vfCount} (Glow Co, SoundZ, FitLife, StyleMint)`);
   console.log("");
-  console.log("Test logins (OTP via Twilio):");
+  console.log("Test logins (OTP via Twilio or Static Bypass):");
+  console.log("  Static Influencer:  9876543211 / OTP: 123456 (Test Influencer - No SMS required)");
   console.log("  Primary influencer: +919000000001 (Ananya Sharma)");
   console.log("  Primary brand:      +919000000101 (Glow Co.)");
   console.log("  Primary agency:     +919000000201 (Creator Hive)");

@@ -5,4 +5,7 @@ export const env = {
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
   twilioVerifyServiceSid: process.env.TWILIO_VERIFY_SERVICE_SID,
   otpResendCooldownMs: Number(process.env.OTP_RESEND_COOLDOWN_MS || 60000),
+  testUserMobile: process.env.TEST_USER_MOBILE || "+919876543211",
+  testUserOtp: process.env.TEST_USER_OTP || "123456",
+  testUserRole: process.env.TEST_USER_ROLE || "influencer",
 };
