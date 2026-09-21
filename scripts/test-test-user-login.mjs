@@ -144,20 +144,22 @@ async function runUnitAndHttpTests() {
   assert.ok(verifyRes.refreshToken);
   console.log("✓ TEST 5 Passed: VerifyOtpUseCase completed successfully with influencer dashboard redirect");
 
-  // 6. Test Express HTTP endpoints
-  console.log("\nTEST 6: HTTP Express integration for /api/auth/send-otp & /api/auth/verify-otp");
+  // 6. Test Express HTTP endpoints for both /api/v1/auth and /api/auth
+  console.log("\nTEST 6: HTTP Express integration for /api/v1/auth and /api/auth");
   const testApp = express();
   testApp.use(express.json());
 
-  testApp.post("/api/auth/send-otp", asyncHandler(async (req, res) => {
-    const result = await sendOtpUseCase.execute(req.body);
-    sendSuccess(res, result);
-  }));
+  for (const prefix of ["/api/v1", "/api"]) {
+    testApp.post(`${prefix}/auth/send-otp`, asyncHandler(async (req, res) => {
+      const result = await sendOtpUseCase.execute(req.body);
+      sendSuccess(res, result);
+    }));
 
-  testApp.post("/api/auth/verify-otp", asyncHandler(async (req, res) => {
-    const result = await verifyOtpUseCase.execute(req.body);
-    sendSuccess(res, result);
-  }));
+    testApp.post(`${prefix}/auth/verify-otp`, asyncHandler(async (req, res) => {
+      const result = await verifyOtpUseCase.execute(req.body);
+      sendSuccess(res, result);
+    }));
+  }
 
   const testServer = http.createServer(testApp);
   await new Promise((resolve) => testServer.listen(0, resolve));
@@ -165,37 +167,70 @@ async function runUnitAndHttpTests() {
   const baseUrl = `http://127.0.0.1:${port}`;
 
   try {
-    const httpSend = await fetch(`${baseUrl}/api/auth/send-otp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mobile: "9876543211" }),
-    });
-    const httpSendJson = await httpSend.json();
-    assert.strictEqual(httpSend.status, 200);
-    assert.strictEqual(httpSendJson.success, true);
-    assert.strictEqual(httpSendJson.selectedRole, "influencer");
+    for (const prefix of ["/api/v1", "/api"]) {
+      // Test send-otp with both formats
+      const sendRes10 = await fetch(`${baseUrl}${prefix}/auth/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mobile: "9876543211" }),
+      });
+      const sendJson10 = await sendRes10.json();
+      assert.strictEqual(sendRes10.status, 200);
+      assert.strictEqual(sendJson10.success, true);
+      assert.strictEqual(sendJson10.selectedRole, "influencer");
+      assert.strictEqual(sendJson10.mobile, "+919876543211");
 
-    const httpVerify = await fetch(`${baseUrl}/api/auth/verify-otp`, {
+      const sendResPlus = await fetch(`${baseUrl}${prefix}/auth/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mobile: "+919876543211" }),
+      });
+      const sendJsonPlus = await sendResPlus.json();
+      assert.strictEqual(sendResPlus.status, 200);
+      assert.strictEqual(sendJsonPlus.success, true);
+
+      // Test verify-otp with valid OTP
+      const verifyRes = await fetch(`${baseUrl}${prefix}/auth/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mobile: "9876543211", otp: "123456" }),
+      });
+      const verifyJson = await verifyRes.json();
+      assert.strictEqual(verifyRes.status, 200);
+      assert.strictEqual(verifyJson.success, true);
+      assert.ok(verifyJson.accessToken, "accessToken should exist");
+      assert.ok(verifyJson.refreshToken, "refreshToken should exist");
+      assert.ok(verifyJson.user, "user object should exist");
+      assert.strictEqual(verifyJson.user.mobile, "+919876543211");
+      assert.strictEqual(verifyJson.user.role, "influencer");
+      assert.strictEqual(verifyJson.user.displayName, "Reviewer Influencer");
+      assert.strictEqual(verifyJson.user.isProfileComplete, true);
+      console.log(`✓ ${prefix} endpoints verified successfully!`);
+    }
+
+    // Direct verify-otp bypass without previous send-otp
+    console.log("\nTEST 7: Direct verify-otp bypass for new test number with no prior send-otp");
+    usersStore = []; // reset store
+    profilesStore = [];
+
+    const directVerify = await fetch(`${baseUrl}/api/v1/auth/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mobile: "9876543211", otp: "123456" }),
+      body: JSON.stringify({ mobile: "+919876543211", otp: "123456" }),
     });
-    const httpVerifyJson = await httpVerify.json();
-    assert.strictEqual(httpVerify.status, 200);
-    assert.strictEqual(httpVerifyJson.success, true);
-    assert.strictEqual(httpVerifyJson.selectedRole, "influencer");
-    assert.strictEqual(httpVerifyJson.dashboard, "influencer");
-    assert.strictEqual(httpVerifyJson.redirectTo, "/dashboard/influencer");
-    assert.strictEqual(httpVerifyJson.isProfileComplete, true);
-    assert.ok(httpVerifyJson.accessToken);
-    assert.ok(httpVerifyJson.refreshToken);
-    console.log("✓ TEST 6 Passed: Full HTTP endpoints verified successfully");
+    const directVerifyJson = await directVerify.json();
+    assert.strictEqual(directVerify.status, 200);
+    assert.strictEqual(directVerifyJson.success, true);
+    assert.strictEqual(directVerifyJson.user.role, "influencer");
+    assert.strictEqual(directVerifyJson.user.displayName, "Reviewer Influencer");
+    assert.strictEqual(directVerifyJson.user.isProfileComplete, true);
+    console.log("✓ TEST 7 Passed: Direct verify-otp bypass created user & returned tokens and user object");
   } finally {
     testServer.close();
   }
 
   console.log("\n==================================================");
-  console.log("🎉 ALL 6 TEST SUITES PASSED WITH 100% SUCCESS! 🎉");
+  console.log("🎉 ALL TEST SUITES PASSED WITH 100% SUCCESS! 🎉");
   console.log("==================================================");
 }
 

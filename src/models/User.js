@@ -24,6 +24,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    displayName: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    isProfileComplete: {
+      type: Boolean,
+      default: false,
+    },
     lastLoginAt: {
       type: Date,
     },

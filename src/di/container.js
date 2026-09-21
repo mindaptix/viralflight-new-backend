@@ -73,7 +73,7 @@ const createContainer = () => {
     otpService,
 
     // auth
-    sendOtpUseCase: new SendOtpUseCase({ userRepository, otpService }),
+    sendOtpUseCase: new SendOtpUseCase({ userRepository, otpService, profileRepository }),
     verifyOtpUseCase: new VerifyOtpUseCase({
       userRepository,
       profileRepository,

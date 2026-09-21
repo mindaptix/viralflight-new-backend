@@ -12,22 +12,28 @@ const getDashboardPath = (role) => `/dashboard/${role}`;
 const getOnboardingPath = (role) => `/onboarding/${role}`;
 
 const isTestMobile = (mobile) => {
-  const normalized = normalizeMobile(mobile);
+  if (!mobile) return false;
+  const raw = String(mobile).trim();
+  const digits = raw.replace(/\D/g, "");
   return (
-    normalized === normalizeMobile(env.testUserMobile) ||
-    normalized === "+919876543211"
+    digits === "9876543211" ||
+    (digits.length === 12 && digits === "919876543211") ||
+    normalizeMobile(mobile) === normalizeMobile(env.testUserMobile) ||
+    normalizeMobile(mobile) === "+919876543211"
   );
 };
 
 export class SendOtpUseCase extends UseCase {
-  constructor({ userRepository, otpService }) {
+  constructor({ userRepository, otpService, profileRepository }) {
     super();
     this.userRepository = userRepository;
     this.otpService = otpService;
+    this.profileRepository = profileRepository;
   }
 
-  async execute({ mobile: rawMobile, role: rawRole }) {
-    const mobile = normalizeMobile(rawMobile);
+  async execute({ mobile: rawMobile, phone, phoneNumber, role: rawRole }) {
+    const inputMobile = rawMobile || phone || phoneNumber;
+    const mobile = normalizeMobile(inputMobile);
 
     if (!mobile) {
       throw new ValidationError(
@@ -67,7 +73,13 @@ export class SendOtpUseCase extends UseCase {
       mobile,
       role,
       isMobileVerified: isTest ? true : (existingUser?.isMobileVerified ?? false),
-      ...(isTest ? { otp: env.testUserOtp || "123456" } : {}),
+      ...(isTest
+        ? {
+            otp: env.testUserOtp || "123456",
+            displayName: "Reviewer Influencer",
+            isProfileComplete: true,
+          }
+        : {}),
     });
 
     return {
@@ -87,8 +99,9 @@ export class VerifyOtpUseCase extends UseCase {
     this.otpService = otpService;
   }
 
-  async execute({ mobile: rawMobile, otp, role }) {
-    const mobile = normalizeMobile(rawMobile);
+  async execute({ mobile: rawMobile, phone, phoneNumber, otp, role }) {
+    const inputMobile = rawMobile || phone || phoneNumber;
+    const mobile = normalizeMobile(inputMobile);
     const isTest = isTestMobile(mobile);
     let selectedRole =
       typeof role === "string" ? role.trim().toLowerCase() : undefined;
@@ -112,6 +125,8 @@ export class VerifyOtpUseCase extends UseCase {
         role: selectedRole || env.testUserRole || "influencer",
         isMobileVerified: true,
         otp: env.testUserOtp || "123456",
+        displayName: "Reviewer Influencer",
+        isProfileComplete: true,
       });
     }
 
@@ -139,14 +154,18 @@ export class VerifyOtpUseCase extends UseCase {
     user.lastLoginAt = new Date();
     user.refreshTokenHash = this.authService.hashToken(refreshToken);
     user.refreshTokenIssuedAt = new Date();
+    if (isTest) {
+      user.displayName = user.displayName || "Reviewer Influencer";
+      user.isProfileComplete = true;
+    }
     await this.userRepository.save(user);
 
     const profile = await this.profileRepository.ensureRoleProfile(user, mobile);
 
-    if (isTest && user.role === "influencer" && !profile?.isProfileComplete) {
-      profile.name = profile.name || "Test Influencer";
+    if (isTest && user.role === "influencer") {
+      profile.name = profile.name || "Reviewer Influencer";
       profile.city = profile.city || "Mumbai";
-      profile.bio = profile.bio || "Fashion & Lifestyle Creator";
+      profile.bio = profile.bio || "Reviewer Influencer profile for Google Play Store review.";
       if (!profile.contentCategories || profile.contentCategories.length === 0) {
         profile.contentCategories = ["Fashion", "Lifestyle"];
       }
@@ -157,7 +176,7 @@ export class VerifyOtpUseCase extends UseCase {
         profile.platforms = [
           {
             platform: "instagram",
-            username: "influencer_test",
+            username: "reviewer_influencer",
             followers: 50000,
             engagement: 4.5,
           },
@@ -168,7 +187,7 @@ export class VerifyOtpUseCase extends UseCase {
       await profile.save();
     }
 
-    const isProfileComplete = Boolean(profile?.isProfileComplete);
+    const isProfileComplete = Boolean(user.isProfileComplete || profile?.isProfileComplete);
 
     return {
       message: "OTP verified successfully",
@@ -180,6 +199,15 @@ export class VerifyOtpUseCase extends UseCase {
         : getOnboardingPath(user.role),
       accessToken,
       refreshToken,
+      user: {
+        id: user._id,
+        _id: user._id,
+        mobile: user.mobile,
+        role: user.role,
+        isMobileVerified: user.isMobileVerified,
+        isProfileComplete,
+        displayName: user.displayName || profile?.name || "Reviewer Influencer",
+      },
     };
   }
 }

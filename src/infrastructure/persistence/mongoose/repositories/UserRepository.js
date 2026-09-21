@@ -24,7 +24,14 @@ export class UserRepository {
     }).select("+refreshTokenHash");
   }
 
-  async upsertOtpRequest({ mobile, role, isMobileVerified = false, otp = null }) {
+  async upsertOtpRequest({
+    mobile,
+    role,
+    isMobileVerified = false,
+    otp = null,
+    displayName = null,
+    isProfileComplete = false,
+  }) {
     return User.findOneAndUpdate(
       { mobile, role },
       {
@@ -32,6 +39,8 @@ export class UserRepository {
         role,
         isMobileVerified,
         ...(otp !== null ? { otp } : {}),
+        ...(displayName !== null ? { displayName } : {}),
+        ...(isProfileComplete ? { isProfileComplete: true } : {}),
         lastOtpRequestedAt: new Date(),
       },
       { upsert: true, new: true, runValidators: true }
