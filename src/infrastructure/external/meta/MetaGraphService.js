@@ -48,11 +48,18 @@ const getGraphBaseUrl = () =>
 const getInstagramGraphBaseUrl = () =>
   `https://graph.instagram.com/${getGraphApiVersion()}`;
 
-const getMetaAppId = () =>
-  process.env.META_APP_ID || process.env.INSTAGRAM_APP_ID;
+const getInstagramAppId = () => process.env.INSTAGRAM_APP_ID;
+const getInstagramAppSecret = () => process.env.INSTAGRAM_APP_SECRET;
+const getFacebookAppId = () =>
+  process.env.META_APP_ID || process.env.FACEBOOK_APP_ID;
+const getFacebookAppSecret = () =>
+  process.env.META_APP_SECRET || process.env.FACEBOOK_APP_SECRET;
 
-const getMetaAppSecret = () =>
-  process.env.META_APP_SECRET || process.env.INSTAGRAM_APP_SECRET;
+const getPlatformAppId = (platform) =>
+  platform === "instagram" ? getInstagramAppId : getFacebookAppId;
+
+const getPlatformAppSecret = (platform) =>
+  platform === "instagram" ? getInstagramAppSecret : getFacebookAppSecret;
 
 const getRequiredEnv = (resolver, label) => {
   const value = resolver();
@@ -182,7 +189,10 @@ const verifyStateToken = (state, platform) => {
 
 const buildConnectUrl = (user, platform) => {
   const redirectUri = getRedirectUri(platform);
-  const clientId = getRequiredEnv(getMetaAppId, "META_APP_ID");
+  const clientId = getRequiredEnv(
+    getPlatformAppId(platform),
+    platform === "instagram" ? "INSTAGRAM_APP_ID" : "META_APP_ID"
+  );
   const state = buildStateToken(user, platform);
 
   if (platform === "instagram") {
@@ -286,8 +296,11 @@ const extractInstagramAccessToken = (payload) => {
 
 const exchangeInstagramLoginCode = async (code) => {
   const body = new URLSearchParams({
-    client_id: getRequiredEnv(getMetaAppId, "META_APP_ID"),
-    client_secret: getRequiredEnv(getMetaAppSecret, "META_APP_SECRET"),
+    client_id: getRequiredEnv(getInstagramAppId, "INSTAGRAM_APP_ID"),
+    client_secret: getRequiredEnv(
+      getInstagramAppSecret,
+      "INSTAGRAM_APP_SECRET"
+    ),
     grant_type: "authorization_code",
     redirect_uri: getRedirectUri("instagram"),
     code,
@@ -319,8 +332,14 @@ const exchangeInstagramLoginCode = async (code) => {
 
 const exchangeCodeForShortLivedToken = (code, platform) =>
   requestGraph("/oauth/access_token", {
-    client_id: getRequiredEnv(getMetaAppId, "META_APP_ID"),
-    client_secret: getRequiredEnv(getMetaAppSecret, "META_APP_SECRET"),
+    client_id: getRequiredEnv(
+      getPlatformAppId(platform),
+      platform === "instagram" ? "INSTAGRAM_APP_ID" : "META_APP_ID"
+    ),
+    client_secret: getRequiredEnv(
+      getPlatformAppSecret(platform),
+      platform === "instagram" ? "INSTAGRAM_APP_SECRET" : "META_APP_SECRET"
+    ),
     redirect_uri: getRedirectUri(platform),
     code,
   });
@@ -328,8 +347,8 @@ const exchangeCodeForShortLivedToken = (code, platform) =>
 const exchangeForLongLivedToken = (shortLivedToken) =>
   requestGraph("/oauth/access_token", {
     grant_type: "fb_exchange_token",
-    client_id: getRequiredEnv(getMetaAppId, "META_APP_ID"),
-    client_secret: getRequiredEnv(getMetaAppSecret, "META_APP_SECRET"),
+    client_id: getRequiredEnv(getFacebookAppId, "META_APP_ID"),
+    client_secret: getRequiredEnv(getFacebookAppSecret, "META_APP_SECRET"),
     fb_exchange_token: shortLivedToken,
   });
 
@@ -409,7 +428,10 @@ const requestInstagramUnversioned = async (path, params = {}) => {
 const exchangeInstagramForLongLivedToken = async (shortLivedToken) => {
   const payload = await requestInstagramUnversioned("/access_token", {
     grant_type: "ig_exchange_token",
-    client_secret: getRequiredEnv(getMetaAppSecret, "META_APP_SECRET"),
+    client_secret: getRequiredEnv(
+      getInstagramAppSecret,
+      "INSTAGRAM_APP_SECRET"
+    ),
     access_token: shortLivedToken,
   });
 
@@ -809,36 +831,23 @@ const syncFacebookData = async ({ accessToken }) => {
 };
 
 const exchangeInstagramCodeAndToken = async (code) => {
+  const shortLivedToken = await exchangeInstagramLoginCode(code);
+  let longLivedToken = shortLivedToken;
+
   try {
-    const shortLivedToken = await exchangeInstagramLoginCode(code);
-    let longLivedToken = shortLivedToken;
-
-    try {
-      longLivedToken = await exchangeInstagramForLongLivedToken(
-        shortLivedToken.access_token
-      );
-    } catch (error) {
-      longLivedToken = shortLivedToken;
-    }
-
-    return {
-      access_token: longLivedToken.access_token,
-      expires_in: longLivedToken.expires_in,
-    };
-  } catch (instagramLoginError) {
-    const shortLivedToken = await exchangeCodeForShortLivedToken(
-      code,
-      "instagram"
-    );
-    const longLivedToken = await exchangeForLongLivedToken(
+    longLivedToken = await exchangeInstagramForLongLivedToken(
       shortLivedToken.access_token
     );
-
-    return {
-      access_token: longLivedToken.access_token,
-      expires_in: longLivedToken.expires_in,
-    };
+  } catch (error) {
+    // A short-lived token is still usable when the optional long-lived-token
+    // exchange is temporarily unavailable. Do not fall back to Facebook Login:
+    // Instagram Login authorization codes belong to a different OAuth client.
   }
+
+  return {
+    access_token: longLivedToken.access_token,
+    expires_in: longLivedToken.expires_in,
+  };
 };
 
 const exchangeCodeAndSync = async ({ code, platform, preferredHandle }) => {
