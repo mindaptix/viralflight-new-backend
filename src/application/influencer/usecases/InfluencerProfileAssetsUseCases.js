@@ -1,6 +1,7 @@
 import BrandInvite from "../../../models/BrandInvite.js";
 import BrandProfile from "../../../models/BrandProfile.js";
 import InfluencerProfile from "../../../models/InfluencerProfile.js";
+import InfluencerSocialConnection from "../../../models/InfluencerSocialConnection.js";
 import { toDiscoveryBrandDto } from "../../discovery/mappers/brandDiscoveryMapper.js";
 import { ValidationError } from "../../../shared/errors/AppError.js";
 import { UseCase } from "../../../shared/usecase/UseCase.js";
@@ -19,6 +20,21 @@ const defaultMediaKit = () => ({
   },
   caseStudies: [],
   portfolioImages: [],
+  socialConnections: [],
+});
+
+const toMediaKitSocialConnection = (connection) => ({
+  platform: connection.platform,
+  isConnected: connection.isConnected === true,
+  handle: connection.handle || "",
+  displayName:
+    connection.channelName || connection.pageName || connection.handle || "",
+  followers: connection.followers || 0,
+  views: connection.views || 0,
+  contentCount: connection.videoCount || connection.mediaCount || 0,
+  engagementRate: connection.engagementRate,
+  profilePictureUrl: connection.profilePictureUrl,
+  lastSyncedAt: connection.lastSyncedAt,
 });
 
 const findInfluencerProfile = async (user) =>
@@ -77,11 +93,21 @@ export class GetMediaKitUseCase extends UseCase {
       return { mediaKit: defaultMediaKit() };
     }
 
+    const storedMediaKit = profile.mediaKit?.toObject?.() || profile.mediaKit;
     const mediaKit = profile.mediaKit?.about
-      ? profile.mediaKit
+      ? storedMediaKit
       : defaultMediaKit();
+    const socialConnections = await InfluencerSocialConnection.find({
+      userId: profile.userId,
+      isConnected: true,
+    }).lean();
 
-    return { mediaKit };
+    return {
+      mediaKit: {
+        ...mediaKit,
+        socialConnections: socialConnections.map(toMediaKitSocialConnection),
+      },
+    };
   }
 }
 

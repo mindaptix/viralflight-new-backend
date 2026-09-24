@@ -25,6 +25,13 @@ import {
   syncInstagram,
 } from "../controllers/instagramController.js";
 import {
+  disconnectYoutube,
+  getYoutubeConnectUrl,
+  getYoutubeStats,
+  handleYoutubeCallback,
+  syncYoutube,
+} from "../controllers/youtubeController.js";
+import {
   getMediaKit,
   getRateCard,
   listBrandInvites,
@@ -69,6 +76,11 @@ router.get("/instagram/connect-url", authMiddleware, getInstagramConnectUrl);
 router.get("/instagram/callback", handleInstagramCallback);
 router.get("/instagram/stats", authMiddleware, getInstagramStats);
 router.post("/instagram/sync", authMiddleware, syncInstagram);
+router.get("/youtube/connect-url", authMiddleware, getYoutubeConnectUrl);
+router.get("/youtube/callback", handleYoutubeCallback);
+router.get("/youtube/stats", authMiddleware, getYoutubeStats);
+router.post("/youtube/sync", authMiddleware, syncYoutube);
+router.delete("/youtube/disconnect", authMiddleware, disconnectYoutube);
 router.post("/full-onboarding", authMiddleware, saveFullOnboarding);
 router.post("/profile-views", profileViewerAuth, recordProfileView);
 router.post("/logout", authMiddleware, logout);

@@ -130,9 +130,14 @@ const buildYoutubeResponse = (connection) => {
     isConnected: true,
     handle: connection.handle || connection.channelName || "",
     channelName: connection.channelName || connection.handle || "",
+    channelTitle: connection.channelName || connection.handle || "",
+    channelId: connection.youtubeChannelId || connection.platformUserId,
     youtubeChannelId: connection.youtubeChannelId || connection.platformUserId,
     followers: connection.followers ?? 0,
+    subscribers: connection.followers ?? 0,
     followersDisplay: formatFollowersDisplay(connection.followers),
+    views: connection.views ?? 0,
+    videoCount: connection.videoCount ?? connection.mediaCount ?? 0,
     profilePictureUrl: connection.profilePictureUrl,
     accountType: connection.accountType || "CHANNEL",
     lastSyncedAt: connection.lastSyncedAt,
@@ -278,6 +283,8 @@ const upsertConnection = async (userId, platform, syncData, tokenData) => {
     followers: syncData.followers,
     follows: syncData.follows,
     mediaCount: syncData.mediaCount,
+    views: syncData.views,
+    videoCount: syncData.videoCount,
     likes: syncData.likes,
     engagementRate: syncData.engagementRate,
     profilePictureUrl: syncData.profilePictureUrl,
@@ -341,6 +348,8 @@ const applySyncToConnection = async (connection, syncData) => {
   connection.followers = syncData.followers;
   connection.follows = syncData.follows;
   connection.mediaCount = syncData.mediaCount;
+  connection.views = syncData.views;
+  connection.videoCount = syncData.videoCount;
   connection.likes = syncData.likes;
   connection.engagementRate = syncData.engagementRate;
   connection.profilePictureUrl = syncData.profilePictureUrl;
