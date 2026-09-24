@@ -121,6 +121,53 @@ const sendOAuthResult = (res, statusCode, payload) => {
   return res.redirect(redirectUrl.toString());
 };
 
+const escapeHtml = (value) =>
+  String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+
+const renderOAuthLandingPage = (res, { success, message }) => {
+  const title = success ? "Instagram connected" : "Instagram connection failed";
+  const safeMessage = escapeHtml(
+    message ||
+      (success
+        ? "Your Instagram account is now connected to ViralFlight."
+        : "We could not connect your Instagram account. Please return to ViralFlight and try again.")
+  );
+
+  res.set("Cache-Control", "no-store");
+  return res.status(success ? 200 : 400).type("html").send(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${title} | ViralFlight</title>
+    <style>
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0f172a; color: #e2e8f0; font-family: system-ui, sans-serif; }
+      main { width: min(90%, 520px); padding: 32px; border-radius: 20px; background: #1e293b; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+      h1 { margin: 0 0 12px; color: ${success ? "#4ade80" : "#fb7185"}; }
+      p { line-height: 1.6; }
+    </style>
+  </head>
+  <body><main><h1>${title}</h1><p>${safeMessage}</p><p>You can close this window and return to the ViralFlight app.</p></main></body>
+</html>`);
+};
+
+export const showInstagramCallbackSuccess = (req, res) =>
+  renderOAuthLandingPage(res, {
+    success: true,
+    message: "Your Instagram account is now connected to ViralFlight.",
+  });
+
+export const showInstagramCallbackError = (req, res) =>
+  renderOAuthLandingPage(res, {
+    success: false,
+    message: req.query.error,
+  });
+
 const handleInstagramError = (res, error, fallbackMessage) => {
   const statusCode =
     error instanceof MetaConfigError || error instanceof MetaApiError

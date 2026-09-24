@@ -22,6 +22,8 @@ import {
   getInstagramConnectUrl,
   getInstagramStats,
   handleInstagramCallback,
+  showInstagramCallbackError,
+  showInstagramCallbackSuccess,
   syncInstagram,
 } from "../controllers/instagramController.js";
 import {
@@ -74,6 +76,8 @@ router.get(
 );
 router.get("/instagram/connect-url", authMiddleware, getInstagramConnectUrl);
 router.get("/instagram/callback", handleInstagramCallback);
+router.get("/instagram/callback-success", showInstagramCallbackSuccess);
+router.get("/instagram/callback-error", showInstagramCallbackError);
 router.get("/instagram/stats", authMiddleware, getInstagramStats);
 router.post("/instagram/sync", authMiddleware, syncInstagram);
 router.get("/youtube/connect-url", authMiddleware, getYoutubeConnectUrl);
