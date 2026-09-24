@@ -41,6 +41,7 @@ export const toDiscoveryCreatorDto = (profile) => {
     id: profile._id,
     _id: profile._id,
     profileId: profile._id,
+    userId: profile.userId?._id || profile.userId || "",
     name: profile.name || "Creator",
     displayName: profile.name || "Creator",
     niche: niche || "Creator",

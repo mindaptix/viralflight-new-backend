@@ -87,11 +87,13 @@ const applyInfluencerPatch = (profile, body) => {
 
   if (body.city !== undefined) {
     const city = normalizeText(body.city);
-    if (city && ALLOWED_CITIES.includes(city)) {
+    if (city && city.length >= 2 && city.length <= 100) {
       profile.city = city;
-    } else if (city === null || city === "") {
-      // keep existing if invalid empty; ignore invalid city names
     }
+  }
+
+  if (["regional", "community"].includes(body.profileType)) {
+    profile.profileType = body.profileType;
   }
 
   if (body.bio !== undefined) {

@@ -75,6 +75,26 @@ const toCommunityDto = (community, membership, joinedCount = 0) => ({
   isFollowing: membership?.isFollowing === true,
 });
 
+const recommendationScore = (community, profile) => {
+  if (!profile) return 0;
+  const categories = new Set(
+    (profile.contentCategories || []).map((item) => String(item).toLowerCase())
+  );
+  const tags = (community.tags || []).map((item) => String(item).toLowerCase());
+  const category = String(community.category || "").toLowerCase();
+  const city = String(community.city || "").toLowerCase();
+  let score = categories.has(category) ? 60 : 0;
+  score += tags.filter((tag) => categories.has(tag)).length * 20;
+  if (profile.profileType === "regional" && city === String(profile.city || "").toLowerCase()) {
+    score += 35;
+  }
+  if (profile.profileType === "community" && tags.some((tag) =>
+    ["community", "meme", "niche", "page"].includes(tag))) {
+    score += 25;
+  }
+  return score;
+};
+
 const setCommunityState = async ({
   req,
   communityId,
@@ -90,6 +110,10 @@ const setCommunityState = async ({
 
   const userId = userIdOf(req);
   const profile = await findMyInfluencerProfile(userId);
+  const existingMembership = await CommunityMembership.findOne({ communityId, userId });
+  if (existingMembership?.isBanned) {
+    throw new ForbiddenError("You are banned from this community");
+  }
   const now = new Date();
   const set = {
     profileId: profile?._id,
@@ -136,26 +160,30 @@ export const listCommunities = asyncHandler(async (req, res) => {
     query._id = { $in: joined };
   }
 
-  const [communities, total] = await Promise.all([
+  const [communities, total, profile] = await Promise.all([
     Community.find(query)
       .sort({ sortOrder: 1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean(),
     Community.countDocuments(query),
+    findMyInfluencerProfile(userId).lean(),
   ]);
   const ids = communities.map((item) => item._id);
   const [memberships, joinedCounts] = await Promise.all([
     membershipMapFor(ids, userId),
     joinedCountsFor(ids),
   ]);
-  const data = communities.map((community) =>
-    toCommunityDto(
-      community,
-      memberships.get(String(community._id)),
-      joinedCounts.get(String(community._id)) || 0
-    )
-  );
+  const data = communities
+    .map((community) => ({
+      ...toCommunityDto(
+        community,
+        memberships.get(String(community._id)),
+        joinedCounts.get(String(community._id)) || 0
+      ),
+      recommendationScore: recommendationScore(community, profile),
+    }))
+    .sort((a, b) => b.recommendationScore - a.recommendationScore);
 
   sendSuccess(res, {
     data,

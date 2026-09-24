@@ -35,6 +35,9 @@ const getOnboardingSettings = async () => {
   return {
     ...defaults,
     ...stored,
+    platforms: defaults.platforms,
+    primaryPlatforms: defaults.primaryPlatforms,
+    secondaryPlatforms: defaults.secondaryPlatforms,
     cities: mergeLists(defaults.cities, stored.cities),
     contentCategories: mergeLists(
       defaults.contentCategories,

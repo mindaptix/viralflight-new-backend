@@ -14,6 +14,7 @@ import {
   ValidationError,
 } from "../../shared/errors/AppError.js";
 import { sendPushNotificationSafe } from "../../infrastructure/notifications/pushNotificationService.js";
+import { moderateCommunityMessage } from "./communityModerationService.js";
 
 const toId = (val) => (val ? String(val) : "");
 
@@ -382,6 +383,13 @@ export const sendMessage = async ({
   } else {
     throw new ValidationError("Either conversation_id or recipient_id is required");
   }
+
+  await moderateCommunityMessage({
+    communityId: metadata?.communityId,
+    userId: currentUserId,
+    conversationId: conversation._id,
+    text: trimmedText,
+  });
 
   const chatMessage = await ChatMessage.create({
     conversationId: conversation._id,

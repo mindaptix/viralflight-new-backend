@@ -71,6 +71,7 @@ export const enrichRoleProfileDocument = (profile, role) => {
       plain.agencyName || (role === "agency" ? displayName : plain.agencyName),
     displayName,
     city: plain.city || "",
+    profileType: plain.profileType || "regional",
     bio: plain.bio || plain.description || "",
     description: plain.description || plain.bio || "",
     profession: plain.profession || "",

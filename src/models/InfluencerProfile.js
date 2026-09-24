@@ -23,7 +23,7 @@ const ALLOWED_CITIES = [
   "Guwahati",
 ];
 
-const PRIMARY_PLATFORMS = ["instagram", "youtube", "tiktok"];
+const PRIMARY_PLATFORMS = ["instagram", "youtube"];
 const SECONDARY_PLATFORMS = ["twitter", "snapchat", "linkedin", "facebook"];
 
 const PLATFORM_OPTIONS = [
@@ -31,19 +31,13 @@ const PLATFORM_OPTIONS = [
     platform: "instagram",
     label: "Instagram",
     isPrimary: true,
-    fields: ["username", "followers", "engagement"],
+    fields: ["username"],
   },
   {
     platform: "youtube",
     label: "YouTube",
     isPrimary: true,
-    fields: ["channelName", "subscribers", "engagement"],
-  },
-  {
-    platform: "tiktok",
-    label: "TikTok",
-    isPrimary: true,
-    fields: ["username", "followers", "engagement"],
+    fields: ["username"],
   },
   {
     platform: "twitter",
@@ -168,7 +162,7 @@ const platformSchema = new mongoose.Schema(
       type: Number,
       min: 0,
       max: 100,
-      required: true,
+      default: 0,
     },
   },
   { _id: false }
@@ -270,7 +264,13 @@ const influencerProfileSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true },
     claimStatus: { type: String, enum: ["claimed", "unclaimed"], default: "claimed" },
-    city: { type: String, enum: ALLOWED_CITIES, trim: true },
+    city: { type: String, trim: true, maxlength: 100 },
+    profileType: {
+      type: String,
+      enum: ["regional", "community"],
+      default: "regional",
+      index: true,
+    },
 
     userId: {
       type: mongoose.Schema.Types.ObjectId,

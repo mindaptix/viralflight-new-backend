@@ -36,7 +36,7 @@ const normalizeCity = (city, cities) => {
   return (
     allowedCities.find(
       (allowedCity) => allowedCity.toLowerCase() === candidate.toLowerCase()
-    ) || null
+    ) || (candidate.length >= 2 && candidate.length <= 100 ? candidate : null)
   );
 };
 
@@ -152,9 +152,7 @@ const getOnboardingStep = (profile, settings) => {
   }
   if (
     !profile.contentCategories ||
-    profile.contentCategories.length < 1 ||
-    !profile.contentLanguages ||
-    profile.contentLanguages.length === 0
+    profile.contentCategories.length < 1
   ) {
     return "content-preferences";
   }
@@ -648,34 +646,21 @@ export const saveFullOnboarding = async (req, res) => {
       });
     }
 
-    if (contentLanguages.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select at least 1 content language",
-      });
-    }
-
-    const { profileData, error: profileError } = buildFinishProfileData(
-      req.body,
-      settings
-    );
-
-    if (profileError) {
-      return res.status(400).json({ success: false, message: profileError });
-    }
+    const profileType = ["regional", "community"].includes(req.body.profileType)
+      ? req.body.profileType
+      : profile.profileType || "regional";
 
     profile.userId = req.user.userId;
     profile.mobile = req.user.mobile;
     profile.name = name.trim();
     profile.city = selectedCity;
+    profile.profileType = profileType;
     profile.platforms = [platformData];
     profile.contentCategories = contentCategories;
     profile.contentLanguages = contentLanguages;
-    profile.bio = profileData.bio;
-    profile.collaborationPreference = profileData.collaborationPreference;
-    profile.rateRange = profileData.rateRange;
-    profile.pastCollaborations = profileData.pastCollaborations;
-    profile.portfolioLink = profileData.portfolioLink;
+    if (typeof req.body.bio === "string" && req.body.bio.trim()) {
+      profile.bio = req.body.bio.trim();
+    }
     profile.isProfileComplete = true;
     profile.completedAt = new Date();
 
