@@ -223,6 +223,20 @@ const buildPlatformData = (body, settings) => {
       typeof value === "string" ? value.trim() : Number(value);
   }
 
+  const optionalFields = [
+    "followers",
+    "subscribers",
+    "engagement",
+    "channelName",
+  ];
+  for (const field of optionalFields) {
+    const value = body[field];
+    if (value !== undefined && value !== null && value !== "") {
+      platformData[field] =
+        typeof value === "string" ? value.trim() : Number(value);
+    }
+  }
+
   if (
     platformData.followers !== undefined &&
     (!Number.isFinite(platformData.followers) || platformData.followers < 0)
@@ -239,9 +253,10 @@ const buildPlatformData = (body, settings) => {
   }
 
   if (
-    !Number.isFinite(platformData.engagement) ||
-    platformData.engagement < 0 ||
-    platformData.engagement > 100
+    platformData.engagement !== undefined &&
+    (!Number.isFinite(platformData.engagement) ||
+      platformData.engagement < 0 ||
+      platformData.engagement > 100)
   ) {
     return { error: "Engagement must be a valid percentage from 0 to 100" };
   }
