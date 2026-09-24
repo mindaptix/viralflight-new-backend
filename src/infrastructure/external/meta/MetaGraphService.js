@@ -786,13 +786,8 @@ const syncInstagramViaFacebookPages = async ({
   });
 };
 
-const syncInstagramData = async ({ accessToken, preferredHandle }) => {
-  try {
-    return await syncInstagramViaLogin(accessToken);
-  } catch (error) {
-    return syncInstagramViaFacebookPages({ accessToken, preferredHandle });
-  }
-};
+const syncInstagramData = async ({ accessToken }) =>
+  syncInstagramViaLogin(accessToken);
 
 const syncFacebookData = async ({ accessToken }) => {
   const pages = await getPages(accessToken);
