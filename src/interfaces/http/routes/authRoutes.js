@@ -6,6 +6,7 @@ import {
   verifyOtp,
   refreshToken,
   deleteAccount,
+  showDataDeletionInstructions,
 } from "../controllers/authController.js";
 import { requireRoles } from "../middleware/authMiddleware.js";
 
@@ -15,6 +16,7 @@ const requireAuth = requireRoles(["agency", "influencer", "brand"]);
 router.post("/send-otp", sendOtp);
 router.post("/verify-otp", verifyOtp);
 router.post("/refresh-token", refreshToken);
+router.get("/data-deletion", showDataDeletionInstructions);
 router.post("/logout", requireAuth, logout);
 router.delete('/account', requireAuth, deleteAccount);
 
