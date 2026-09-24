@@ -52,7 +52,7 @@ export const moderateCommunityMessage = async ({
     },
     { upsert: true, new: true }
   );
-  const shouldBan = updated.moderationStrikes >= 3;
+  const shouldBan = updated.moderationStrikes >= 1;
   if (shouldBan) {
     updated.isBanned = true;
     updated.isJoined = false;
@@ -70,7 +70,7 @@ export const moderateCommunityMessage = async ({
 
   throw new ValidationError(
     shouldBan
-      ? "Message blocked and community access suspended after repeated abusive language"
+      ? "Message blocked and community access suspended for abusive language"
       : "Message blocked because it contains abusive language"
   );
 };

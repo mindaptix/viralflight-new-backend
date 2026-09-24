@@ -21,6 +21,12 @@ const conversationSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    communityId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Community",
+      default: null,
+      index: true,
+    },
     status: {
       type: String,
       enum: ["active", "closed", "archived"],

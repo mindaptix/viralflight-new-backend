@@ -5,6 +5,7 @@ import BrandProfile from "../../models/BrandProfile.js";
 import Campaign from "../../models/Campaign.js";
 import ChatMessage from "../../models/ChatMessage.js";
 import Conversation from "../../models/Conversation.js";
+import CommunityMembership from "../../models/CommunityMembership.js";
 import InfluencerProfile from "../../models/InfluencerProfile.js";
 import Notification from "../../models/Notification.js";
 import User from "../../models/User.js";
@@ -384,8 +385,25 @@ export const sendMessage = async ({
     throw new ValidationError("Either conversation_id or recipient_id is required");
   }
 
+  // Persist community context so reopening the chat cannot bypass moderation.
+  if (!conversation.communityId && metadata?.communityId) {
+    if (!mongoose.Types.ObjectId.isValid(metadata.communityId)) {
+      throw new ValidationError("Invalid community id");
+    }
+    const membership = await CommunityMembership.findOne({
+      communityId: metadata.communityId,
+      userId: currentUserId,
+      isJoined: true,
+      isBanned: { $ne: true },
+    });
+    if (!membership) {
+      throw new ForbiddenError("Join this community before messaging its members");
+    }
+    conversation.communityId = metadata.communityId;
+    await conversation.save();
+  }
   await moderateCommunityMessage({
-    communityId: metadata?.communityId,
+    communityId: conversation.communityId,
     userId: currentUserId,
     conversationId: conversation._id,
     text: trimmedText,

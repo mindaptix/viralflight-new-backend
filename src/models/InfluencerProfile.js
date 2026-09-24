@@ -298,6 +298,18 @@ const influencerProfileSchema = new mongoose.Schema(
     },
 
     bio: { type: String, trim: true },
+    communityRecommendations: {
+      topics: { type: [String], default: [] },
+      contentSource: { type: String },
+      scannedAt: { type: Date },
+      consentedAt: { type: Date },
+      consentVersion: { type: String },
+    },
+    communityAiScan: {
+      id: { type: String },
+      until: { type: Date },
+    },
+    communityAiLastAttemptAt: { type: Date },
     collaborationPreference: {
       type: String,
       enum: COLLABORATION_PREFERENCES,

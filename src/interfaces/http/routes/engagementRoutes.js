@@ -1,4 +1,5 @@
 import express from "express";
+import { getAiRecommendationStatus, scanRecommendations, clearRecommendations } from '../controllers/communityAiController.js';
 
 import {
   followCommunity,
@@ -30,6 +31,9 @@ const influencerAuth = requireRoles(["influencer"]);
 const appUserAuth = requireRoles(["influencer", "brand", "agency"]);
 
 router.get("/communities", influencerAuth, listCommunities);
+router.get('/communities/recommendations/scan', influencerAuth, getAiRecommendationStatus);
+router.post('/communities/recommendations/scan', influencerAuth, scanRecommendations);
+router.delete('/communities/recommendations/scan', influencerAuth, clearRecommendations);
 router.get("/communities/:communityId", influencerAuth, getCommunity);
 router.get(
   "/communities/:communityId/members",
