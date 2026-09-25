@@ -5,6 +5,13 @@ const cleanText = (value, max) => typeof value === 'string' ? value.trim().slice
 const cleanList = (value) => Array.isArray(value)
   ? value.slice(0, 5).map((item) => cleanText(item, 80)).filter(Boolean)
   : [];
+const responseText = (content) => {
+  if (typeof content === 'string') return content.trim();
+  if (Array.isArray(content)) return content
+    .filter((part) => part?.type === 'text' && typeof part.text === 'string')
+    .map((part) => part.text).join('').trim();
+  return '';
+};
 
 export const generateBio = async ({ input, fetchImpl = fetch }) => {
   const apiKey = getGroqApiKey();
@@ -66,7 +73,7 @@ export const generateBio = async ({ input, fetchImpl = fetch }) => {
     let bio;
     try {
       const payload = await response.json();
-      bio = payload.choices?.[0]?.message?.content?.trim();
+      bio = responseText(payload.choices?.[0]?.message?.content);
       if (bio && bio.length >= 20) return bio.slice(0, 220);
       console.error('[AI bio] Groq returned no usable text', {
         model,
@@ -75,7 +82,14 @@ export const generateBio = async ({ input, fetchImpl = fetch }) => {
         contentLength: bio?.length ?? 0,
         completionTokens: payload.usage?.completion_tokens,
       });
-    } catch { /* Invalid provider response: retry once. */ }
+    } catch (error) {
+      // Do not log the provider payload: it can contain creator profile data.
+      console.error('[AI bio] Could not parse Groq response', {
+        model,
+        attempt: attempt + 1,
+        error: error?.name || 'UnknownError',
+      });
+    }
   }
   throw new AppError('AI did not return a usable bio. Please try again.', 502);
 };

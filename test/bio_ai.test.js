@@ -119,3 +119,23 @@ test('bio generation retries an empty reasoning-only response once', async () =>
     else process.env.GROQ_MODEL = previousModel;
   }
 });
+
+test('bio generation accepts text parts in a provider response', async () => {
+  const previous = process.env.GROQ_API_KEY;
+  process.env.GROQ_API_KEY = 'test-key';
+  try {
+    const bio = await generateBio({
+      input: { name: 'Vishal' },
+      fetchImpl: async () => ({ ok: true, json: async () => ({
+        choices: [{ message: { content: [
+          { type: 'text', text: 'I share fashion and ' },
+          { type: 'text', text: 'travel stories from Chandigarh.' },
+        ] } }],
+      }) }),
+    });
+    assert.equal(bio, 'I share fashion and travel stories from Chandigarh.');
+  } finally {
+    if (previous === undefined) delete process.env.GROQ_API_KEY;
+    else process.env.GROQ_API_KEY = previous;
+  }
+});
