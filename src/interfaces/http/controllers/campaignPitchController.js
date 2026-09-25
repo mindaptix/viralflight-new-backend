@@ -27,6 +27,14 @@ export const generateCampaignPitch = asyncHandler(async (req, res) => {
     }
     throw new TooManyRequestsError('Please wait a minute before generating another pitch.');
   }
-  const pitch = await generatePitch({ campaign });
-  sendSuccess(res, { pitch });
+  try {
+    const pitch = await generatePitch({ campaign });
+    sendSuccess(res, { pitch });
+  } catch (error) {
+    await InfluencerProfile.updateOne(
+      { _id: profile._id, pitchAiLastAttemptAt: now },
+      { $unset: { pitchAiLastAttemptAt: 1 } },
+    ).catch(() => {});
+    throw error;
+  }
 });

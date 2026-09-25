@@ -24,7 +24,7 @@ export const generateBio = async ({ input, fetchImpl = fetch }) => {
     response = await fetchImpl('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(18000),
+      signal: AbortSignal.timeout(10000),
       body: JSON.stringify({
         model: getGroqModel(),
         temperature: 0.7,
@@ -35,7 +35,10 @@ export const generateBio = async ({ input, fetchImpl = fetch }) => {
         ],
       }),
     });
-  } catch {
+  } catch (error) {
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
+      throw new AppError('AI bio generation timed out. Please try again.', 504);
+    }
     throw new AppError('AI bio generation is temporarily unavailable. Please try again.', 502);
   }
   if (!response.ok) throw new AppError('AI bio generation is temporarily unavailable. Please try again.', 502);

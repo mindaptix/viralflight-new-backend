@@ -31,3 +31,19 @@ test('pitch generation sends only bounded campaign details and returns editable 
     else process.env.GROQ_MODEL = previousModel;
   }
 });
+
+test('pitch generation reports provider timeouts promptly', async () => {
+  const previous = process.env.GROQ_API_KEY;
+  process.env.GROQ_API_KEY = 'test-key';
+  try {
+    await assert.rejects(
+      generatePitch({ campaign: { title: 'Campaign' }, fetchImpl: async () => {
+        throw new DOMException('Timed out', 'TimeoutError');
+      } }),
+      { statusCode: 504, message: 'AI pitch generation timed out. Please try again.' },
+    );
+  } finally {
+    if (previous === undefined) delete process.env.GROQ_API_KEY;
+    else process.env.GROQ_API_KEY = previous;
+  }
+});

@@ -30,3 +30,19 @@ test('bio generation sends only approved fields with bounded values', async () =
     else process.env.GROQ_API_KEY = previous;
   }
 });
+
+test('bio generation reports provider timeouts promptly', async () => {
+  const previous = process.env.GROQ_API_KEY;
+  process.env.GROQ_API_KEY = 'test-key';
+  try {
+    await assert.rejects(
+      generateBio({ input: { name: 'Creator' }, fetchImpl: async () => {
+        throw new DOMException('Timed out', 'TimeoutError');
+      } }),
+      { statusCode: 504, message: 'AI bio generation timed out. Please try again.' },
+    );
+  } finally {
+    if (previous === undefined) delete process.env.GROQ_API_KEY;
+    else process.env.GROQ_API_KEY = previous;
+  }
+});

@@ -19,6 +19,15 @@ export const generateCreatorBio = asyncHandler(async (req, res) => {
     if (!await InfluencerProfile.exists({ userId: req.user.userId })) throw new NotFoundError('Complete your influencer profile first');
     throw new TooManyRequestsError('Please wait a minute before generating another bio.');
   }
-  const bio = await generateBio({ input: req.body });
-  sendSuccess(res, { bio });
+  try {
+    const bio = await generateBio({ input: req.body });
+    sendSuccess(res, { bio });
+  } catch (error) {
+    // A failed provider call must not consume the user's successful-generation cooldown.
+    await InfluencerProfile.updateOne(
+      { _id: profile._id, bioAiLastAttemptAt: now },
+      { $unset: { bioAiLastAttemptAt: 1 } },
+    ).catch(() => {});
+    throw error;
+  }
 });
