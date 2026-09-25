@@ -54,7 +54,7 @@ test("Instagram connect URL uses Instagram credentials and exact callback", () =
       assert.equal(connectUrl.searchParams.get("enable_fb_login"), "0");
       assert.deepEqual(
         connectUrl.searchParams.get("scope").split(",").sort(),
-        ["instagram_business_basic", "instagram_business_manage_insights"].sort()
+        ["instagram_business_basic"]
       );
 
       const state = verifyStateToken(

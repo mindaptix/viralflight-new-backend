@@ -7,7 +7,6 @@ const MAX_RETRIES = 3;
 
 const INSTAGRAM_LOGIN_SCOPES = [
   "instagram_business_basic",
-  "instagram_business_manage_insights",
 ];
 
 const INSTAGRAM_SCOPES = INSTAGRAM_LOGIN_SCOPES;
