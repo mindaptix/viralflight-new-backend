@@ -1,6 +1,7 @@
 import { UseCase } from "../../../shared/usecase/UseCase.js";
 import { toCampaignCard } from "../mappers/campaignMapper.js";
 import { withCampaignOwnerImages } from '../mappers/campaignOwnerImages.js';
+import { withViewerApplicationStatuses } from '../withViewerApplicationStatuses.js';
 
 export class ListBrandCampaignsUseCase extends UseCase {
   constructor({ campaignRepository }) {
@@ -46,8 +47,9 @@ export class ListCampaignsForInfluencerUseCase extends UseCase {
     const campaigns = await withCampaignOwnerImages(rows);
 
     return {
-      campaigns: campaigns.map((campaign) =>
-        toCampaignCard(campaign, influencerProfile)
+      campaigns: await withViewerApplicationStatuses(
+        campaigns.map((campaign) => toCampaignCard(campaign, influencerProfile)),
+        user,
       ),
       pagination: {
         page: safePage,

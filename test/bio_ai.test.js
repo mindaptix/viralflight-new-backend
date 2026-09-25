@@ -72,3 +72,34 @@ test('GPT-OSS bio generation reserves room for its final answer', async () => {
     else process.env.GROQ_MODEL = previousModel;
   }
 });
+
+test('bio generation retries an empty reasoning-only response once', async () => {
+  const previousKey = process.env.GROQ_API_KEY;
+  const previousModel = process.env.GROQ_MODEL;
+  process.env.GROQ_API_KEY = 'test-key';
+  process.env.GROQ_MODEL = 'openai/gpt-oss-20b';
+  let calls = 0;
+  try {
+    const bio = await generateBio({
+      input: { name: 'Vishal', categories: ['Travel'] },
+      fetchImpl: async (_url, options) => {
+        calls += 1;
+        const body = JSON.parse(options.body);
+        assert.equal(body.reasoning_format, 'hidden');
+        assert.equal(body.max_completion_tokens, calls === 1 ? 500 : 1200);
+        return { ok: true, json: async () => ({
+          choices: [{ finish_reason: calls === 1 ? 'length' : 'stop', message: {
+            content: calls === 1 ? '' : 'I share travel discoveries and stories with my community.',
+          } }],
+        }) };
+      },
+    });
+    assert.equal(calls, 2);
+    assert.match(bio, /travel discoveries/);
+  } finally {
+    if (previousKey === undefined) delete process.env.GROQ_API_KEY;
+    else process.env.GROQ_API_KEY = previousKey;
+    if (previousModel === undefined) delete process.env.GROQ_MODEL;
+    else process.env.GROQ_MODEL = previousModel;
+  }
+});

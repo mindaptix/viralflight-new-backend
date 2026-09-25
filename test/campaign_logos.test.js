@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import jwt from "jsonwebtoken";
 import app from "../src/app.js";
 import Campaign from "../src/models/Campaign.js";
+import CampaignApplication from "../src/models/CampaignApplication.js";
 import AgencyProfile from "../src/models/AgencyProfile.js";
 import BrandProfile from "../src/models/BrandProfile.js";
 import { toCampaignCard } from "../src/application/campaigns/mappers/campaignMapper.js";
@@ -130,6 +131,14 @@ test("GET /api/v1/campaigns endpoint returns enriched campaignCards with logos",
     }));
 
     t.mock.method(Campaign, "countDocuments", () => Promise.resolve(1));
+    t.mock.method(CampaignApplication, "find", () => ({
+      select: () => ({
+        lean: async () => [{
+          campaignId: "507f1f77bcf86cd799439055",
+          status: "applied",
+        }],
+      }),
+    }));
 
     const res = await fetch(`${base}/api/v1/campaigns`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -141,6 +150,7 @@ test("GET /api/v1/campaigns endpoint returns enriched campaignCards with logos",
     assert.equal(data.campaigns.length, 1);
     assert.equal(data.campaigns[0].agencyLogoUrl, "https://example.com/agency.png");
     assert.equal(data.campaigns[0].brandLogoUrl, "https://example.com/brand.png");
+    assert.equal(data.campaigns[0].applicationStatus, "applied");
   } finally {
     await new Promise((resolve) => server.close(resolve));
     if (previousSecret === undefined) delete process.env.JWT_SECRET;

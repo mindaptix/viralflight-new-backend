@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { communityRecommendationScore } from '../../../application/community/categoryRecommendations.js';
 
 import { toCampaignCard } from "../../../application/campaigns/mappers/campaignMapper.js";
+import { withViewerApplicationStatuses } from "../../../application/campaigns/withViewerApplicationStatuses.js";
 import { toDiscoveryCreatorDto } from "../../../application/discovery/mappers/discoveryMapper.js";
 import Campaign from "../../../models/Campaign.js";
 import Community from "../../../models/Community.js";
@@ -459,10 +460,10 @@ export const listSavedCampaigns = asyncHandler(async (req, res) => {
   const ids = savedRows.map((item) => item.campaignId);
   const campaigns = await Campaign.find({ _id: { $in: ids } }).lean();
   const byId = new Map(campaigns.map((item) => [String(item._id), item]));
-  const data = ids
+  const data = await withViewerApplicationStatuses(ids
     .map((id) => byId.get(String(id)))
     .filter(Boolean)
-    .map((campaign) => toCampaignCard(campaign, profile));
+    .map((campaign) => toCampaignCard(campaign, profile)), req.user);
 
   sendSuccess(res, {
     data,

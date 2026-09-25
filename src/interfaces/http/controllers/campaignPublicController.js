@@ -1,19 +1,22 @@
 import { campaignPermissions } from "../../../domain/campaigns/CampaignRules.js";
 import { container } from "../../../di/container.js";
+import { withViewerApplicationStatuses } from "../../../application/campaigns/withViewerApplicationStatuses.js";
 import { asyncHandler } from "../../../shared/http/asyncHandler.js";
 import { sendSuccess } from "../../../shared/http/respond.js";
 
 export const getCampaignDetail = asyncHandler(async (req, res) => {
-  const { campaign, campaignCard } = await container.getCampaignDetailUseCase.execute({
+  const { campaign, campaignCard: baseCard } = await container.getCampaignDetailUseCase.execute({
     campaignId: req.params.campaignId,
     user: req.user,
   });
+  const [campaignCard] = await withViewerApplicationStatuses([baseCard], req.user);
 
   const publicCampaign = {
     ...campaign.toObject(),
     brandLogoUrl: campaignCard.brandLogoUrl,
     agencyLogoUrl: campaignCard.agencyLogoUrl,
     ownerLogoUrl: campaignCard.ownerLogoUrl,
+    applicationStatus: campaignCard.applicationStatus || '',
     ...campaignPermissions(campaign, req.user),
   };
   sendSuccess(res, {

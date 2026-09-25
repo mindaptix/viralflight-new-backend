@@ -1,6 +1,7 @@
 import { container } from "../../../di/container.js";
 import { toCampaignCard } from "../../../application/campaigns/mappers/campaignMapper.js";
 import { withCampaignOwnerImages } from "../../../application/campaigns/mappers/campaignOwnerImages.js";
+import { withViewerApplicationStatuses } from "../../../application/campaigns/withViewerApplicationStatuses.js";
 import { asyncHandler } from "../../../shared/http/asyncHandler.js";
 import { sendSuccess } from "../../../shared/http/respond.js";
 import Campaign from "../../../models/Campaign.js";
@@ -180,7 +181,9 @@ export const listPublicCampaigns = asyncHandler(async (req, res) => {
   ]);
 
   const enrichedCampaigns = await withCampaignOwnerImages(campaigns);
-  const campaignCards = enrichedCampaigns.map((c) => toCampaignCard(c));
+  const campaignCards = await withViewerApplicationStatuses(
+    enrichedCampaigns.map((c) => toCampaignCard(c)), req.user,
+  );
 
   sendSuccess(res, {
     message: "Campaign marketplace fetched successfully",
