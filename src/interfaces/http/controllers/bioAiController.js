@@ -1,5 +1,6 @@
 import InfluencerProfile from '../../../models/InfluencerProfile.js';
 import { generateBio } from '../../../application/profile/generateBio.js';
+import { buildBioInput } from '../../../application/profile/buildBioInput.js';
 import { AppError, NotFoundError, TooManyRequestsError } from '../../../shared/errors/AppError.js';
 import { getGroqApiKey } from '../../../application/ai/groqConfig.js';
 import { asyncHandler } from '../../../shared/http/asyncHandler.js';
@@ -20,7 +21,7 @@ export const generateCreatorBio = asyncHandler(async (req, res) => {
     throw new TooManyRequestsError('Please wait a minute before generating another bio.');
   }
   try {
-    const bio = await generateBio({ input: req.body });
+    const bio = await generateBio({ input: buildBioInput(req.body, profile) });
     sendSuccess(res, { bio });
   } catch (error) {
     // A failed provider call must not consume the user's successful-generation cooldown.

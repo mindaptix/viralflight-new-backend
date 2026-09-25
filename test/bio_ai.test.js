@@ -1,6 +1,19 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { generateBio } from '../src/application/profile/generateBio.js';
+import { buildBioInput } from '../src/application/profile/buildBioInput.js';
+
+test('empty bio request uses the authenticated creator profile', () => {
+  assert.deepEqual(buildBioInput({}, {
+    name: 'Vishal', city: 'Mumbai', profileType: 'community',
+    contentCategories: ['Fashion', 'Travel'], profession: 'Creator',
+    contentLanguages: ['English'], mobile: 'private-number',
+  }), {
+    name: 'Vishal', location: 'Mumbai', profileType: 'community',
+    categories: ['Fashion', 'Travel'], profession: 'Creator',
+    languages: ['English'],
+  });
+});
 
 test('bio generation sends only approved fields with bounded values', async () => {
   const previous = process.env.GROQ_API_KEY;
@@ -8,14 +21,16 @@ test('bio generation sends only approved fields with bounded values', async () =
   try {
     const bio = await generateBio({
       input: {
-        name: 'A Creator', categories: ['Lifestyle'], profession: 'Photographer',
+        name: 'A Creator', location: 'Delhi', profileType: 'regional',
+        categories: ['Lifestyle'], profession: 'Photographer',
         languages: ['English'], mobile: 'private-number', token: 'private-token',
       },
       fetchImpl: async (_url, options) => {
         const request = JSON.parse(options.body);
         assert.deepEqual(JSON.parse(request.messages[1].content), {
           creator: {
-            name: 'A Creator', categories: ['Lifestyle'],
+            name: 'A Creator', location: 'Delhi', profileType: 'regional',
+            categories: ['Lifestyle'],
             profession: 'Photographer', languages: ['English'],
           },
         });
