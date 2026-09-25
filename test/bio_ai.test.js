@@ -46,3 +46,29 @@ test('bio generation reports provider timeouts promptly', async () => {
     else process.env.GROQ_API_KEY = previous;
   }
 });
+
+test('GPT-OSS bio generation reserves room for its final answer', async () => {
+  const previousKey = process.env.GROQ_API_KEY;
+  const previousModel = process.env.GROQ_MODEL;
+  process.env.GROQ_API_KEY = 'test-key';
+  process.env.GROQ_MODEL = 'openai/gpt-oss-20b';
+  try {
+    const bio = await generateBio({
+      input: { name: 'Vishal', categories: ['Fashion', 'Travel'] },
+      fetchImpl: async (_url, options) => {
+        const body = JSON.parse(options.body);
+        assert.equal(body.reasoning_effort, 'low');
+        assert.equal(body.max_completion_tokens, 500);
+        return { ok: true, json: async () => ({ choices: [{ message: {
+          content: 'I share fashion and travel stories with my community.',
+        } }] }) };
+      },
+    });
+    assert.match(bio, /fashion and travel/);
+  } finally {
+    if (previousKey === undefined) delete process.env.GROQ_API_KEY;
+    else process.env.GROQ_API_KEY = previousKey;
+    if (previousModel === undefined) delete process.env.GROQ_MODEL;
+    else process.env.GROQ_MODEL = previousModel;
+  }
+});
