@@ -310,6 +310,8 @@ const influencerProfileSchema = new mongoose.Schema(
       until: { type: Date },
     },
     communityAiLastAttemptAt: { type: Date },
+    pitchAiLastAttemptAt: { type: Date },
+    bioAiLastAttemptAt: { type: Date },
     collaborationPreference: {
       type: String,
       enum: COLLABORATION_PREFERENCES,

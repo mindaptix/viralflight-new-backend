@@ -42,6 +42,8 @@ import {
   updateRateCard,
 } from "../controllers/influencerAssetsController.js";
 import { listAgencyInfluencers } from "../controllers/discoveryController.js";
+import { generateCampaignPitch } from "../controllers/campaignPitchController.js";
+import { generateCreatorBio } from "../controllers/bioAiController.js";
 import { requireRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -49,6 +51,7 @@ const profileViewerAuth = requireRoles(["agency", "brand"]);
 
 router.get("/onboarding-options", authMiddleware, getOnboardingOptions);
 router.get("/profile", authMiddleware, getMyProfile);
+router.post('/profile/generate-bio', authMiddleware, generateCreatorBio);
 router.get("/dashboard-stats", authMiddleware, getDashboardStats);
 router.get("/brand-invites", authMiddleware, listBrandInvites);
 router.patch("/brand-invites/:inviteId/respond", authMiddleware, respondToBrandInvite);
@@ -69,6 +72,7 @@ router.post(
   authMiddleware,
   applyToCampaignController
 );
+router.post('/campaigns/:campaignId/generate-pitch', authMiddleware, generateCampaignPitch);
 router.get(
   "/campaigns/:campaignId/application",
   authMiddleware,
