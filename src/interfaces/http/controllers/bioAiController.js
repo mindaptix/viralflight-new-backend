@@ -1,11 +1,12 @@
 import InfluencerProfile from '../../../models/InfluencerProfile.js';
 import { generateBio } from '../../../application/profile/generateBio.js';
 import { AppError, NotFoundError, TooManyRequestsError } from '../../../shared/errors/AppError.js';
+import { getGroqApiKey } from '../../../application/ai/groqConfig.js';
 import { asyncHandler } from '../../../shared/http/asyncHandler.js';
 import { sendSuccess } from '../../../shared/http/respond.js';
 
 export const generateCreatorBio = asyncHandler(async (req, res) => {
-  if (!process.env.GROQ_API_KEY?.trim()) throw new AppError('AI bio generation is not configured yet.', 503);
+  if (!getGroqApiKey()) throw new AppError('AI bio generation is not configured yet.', 503);
   const now = new Date();
   const profile = await InfluencerProfile.findOneAndUpdate({
     userId: req.user.userId,

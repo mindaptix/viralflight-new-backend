@@ -1,7 +1,8 @@
 import { AppError } from '../../shared/errors/AppError.js';
+import { getGroqApiKey, getGroqModel } from '../ai/groqConfig.js';
 
 export const generatePitch = async ({ campaign, fetchImpl = fetch }) => {
-  const apiKey = process.env.GROQ_API_KEY?.trim();
+  const apiKey = getGroqApiKey();
   if (!apiKey) throw new AppError('AI pitch generation is not configured yet.', 503);
 
   const brief = {
@@ -19,7 +20,7 @@ export const generatePitch = async ({ campaign, fetchImpl = fetch }) => {
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(18000),
       body: JSON.stringify({
-        model: process.env.GROQ_MODEL?.trim() || 'openai/gpt-oss-20b',
+        model: getGroqModel(),
         temperature: 0.7,
         max_completion_tokens: 350,
         messages: [

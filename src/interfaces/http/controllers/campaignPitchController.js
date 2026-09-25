@@ -3,11 +3,12 @@ import Campaign from '../../../models/Campaign.js';
 import InfluencerProfile from '../../../models/InfluencerProfile.js';
 import { generatePitch } from '../../../application/campaigns/generatePitch.js';
 import { AppError, NotFoundError, ValidationError, TooManyRequestsError } from '../../../shared/errors/AppError.js';
+import { getGroqApiKey } from '../../../application/ai/groqConfig.js';
 import { asyncHandler } from '../../../shared/http/asyncHandler.js';
 import { sendSuccess } from '../../../shared/http/respond.js';
 
 export const generateCampaignPitch = asyncHandler(async (req, res) => {
-  if (!process.env.GROQ_API_KEY?.trim()) throw new AppError('AI pitch generation is not configured yet.', 503);
+  if (!getGroqApiKey()) throw new AppError('AI pitch generation is not configured yet.', 503);
   if (!mongoose.isValidObjectId(req.params.campaignId)) throw new ValidationError('Invalid campaign');
   const campaign = await Campaign.findOne({ _id: req.params.campaignId, deletedAt: null })
     .select('title brandName ownerName category description deliverables').lean();

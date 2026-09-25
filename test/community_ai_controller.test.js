@@ -55,7 +55,7 @@ test('clearing suggestions during an active scan prevents results from being sav
   const scan = invoke(scanRecommendations);
   await fetchStarted;
   await invoke(clearRecommendations);
-  resolveFetch({ ok: true, json: async () => ({ status: 'completed', output: [{ content: [{ type: 'output_text', text: '{"topics":["Parenting"]}' }] }] }) });
+  resolveFetch({ ok: true, json: async () => ({ choices: [{ finish_reason: 'stop', message: { content: '{"topics":["Parenting"]}' } }] }) });
   await assert.rejects(scan, /not saved/);
   assert.equal(saved, false);
 });
