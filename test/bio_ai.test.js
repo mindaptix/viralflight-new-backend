@@ -73,7 +73,7 @@ test('GPT-OSS bio generation reserves room for its final answer', async () => {
       fetchImpl: async (_url, options) => {
         const body = JSON.parse(options.body);
         assert.equal(body.reasoning_effort, 'low');
-        assert.equal(body.max_completion_tokens, 500);
+        assert.equal(body.max_completion_tokens, 1000);
         return { ok: true, json: async () => ({ choices: [{ message: {
           content: 'I share fashion and travel stories with my community.',
         } }] }) };
@@ -100,8 +100,9 @@ test('bio generation retries an empty reasoning-only response once', async () =>
       fetchImpl: async (_url, options) => {
         calls += 1;
         const body = JSON.parse(options.body);
-        assert.equal(body.reasoning_format, 'hidden');
-        assert.equal(body.max_completion_tokens, calls === 1 ? 500 : 1200);
+        assert.equal(body.include_reasoning, false);
+        assert.equal(body.reasoning_format, undefined);
+        assert.equal(body.max_completion_tokens, calls === 1 ? 1000 : 2400);
         return { ok: true, json: async () => ({
           choices: [{ finish_reason: calls === 1 ? 'length' : 'stop', message: {
             content: calls === 1 ? '' : 'I share travel discoveries and stories with my community.',
