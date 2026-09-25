@@ -750,7 +750,14 @@ const mapInstagramAccountToSyncData = async ({
 };
 
 const syncInstagramViaLogin = async (accessToken) => {
+  console.log("[MetaGraphService] 👤 syncInstagramViaLogin: Fetching Instagram Login profile from Meta Graph API...");
   const account = await getInstagramLoginProfile(accessToken);
+  console.log("[MetaGraphService] 👤 Instagram profile response:", {
+    id: account.id,
+    username: account.username,
+    account_type: account.account_type,
+    media_count: account.media_count,
+  });
 
   return mapInstagramAccountToSyncData({
     account,
@@ -846,13 +853,16 @@ const exchangeInstagramCodeAndToken = async (code) => {
 };
 
 const exchangeCodeAndSync = async ({ code, platform, preferredHandle }) => {
+  console.log(`[MetaGraphService] 🔄 exchangeCodeAndSync starting for platform: ${platform}`);
   let accessToken;
   let expiresIn;
 
   if (platform === "instagram") {
+    console.log("[MetaGraphService] 🔑 Exchanging Instagram OAuth code for token...");
     const token = await exchangeInstagramCodeAndToken(code);
     accessToken = token.access_token;
     expiresIn = token.expires_in;
+    console.log(`[MetaGraphService] 🔑 Instagram token received (expires in: ${expiresIn}s)`);
   } else {
     const shortLivedToken = await exchangeCodeForShortLivedToken(code, platform);
     const longLivedToken = await exchangeForLongLivedToken(

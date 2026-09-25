@@ -183,7 +183,10 @@ const handleInstagramError = (res, error, fallbackMessage) => {
 
 export const getInstagramConnectUrl = async (req, res) => {
   try {
+    const userId = req.user?._id || req.user?.id || req.user?.userId;
+    console.log(`[InstagramController] 🔗 getInstagramConnectUrl requested by user: ${userId}`);
     const connectUrl = buildConnectUrl(req.user, "instagram");
+    console.log(`[InstagramController] ✅ Generated connect URL: ${connectUrl}`);
 
     res.json({
       success: true,
@@ -192,6 +195,7 @@ export const getInstagramConnectUrl = async (req, res) => {
       expiresInSeconds: 600,
     });
   } catch (error) {
+    console.error("[InstagramController] ❌ getInstagramConnectUrl error:", error);
     handleInstagramError(res, error, "Unable to generate Instagram connect URL");
   }
 };
@@ -199,8 +203,15 @@ export const getInstagramConnectUrl = async (req, res) => {
 export const handleInstagramCallback = async (req, res) => {
   try {
     const { code, state, error, error_description: errorDescription } = req.query;
+    console.log("[InstagramController] 📩 handleInstagramCallback received:", {
+      hasCode: Boolean(code),
+      state: state ? `${String(state).substring(0, 15)}...` : undefined,
+      error,
+      errorDescription,
+    });
 
     if (error) {
+      console.warn(`[InstagramController] ⚠️ Instagram callback returned error: ${error} - ${errorDescription}`);
       return sendOAuthResult(res, 400, {
         success: false,
         message: errorDescription || String(error),
@@ -208,15 +219,19 @@ export const handleInstagramCallback = async (req, res) => {
     }
 
     if (!code || !state) {
+      console.warn("[InstagramController] ⚠️ Instagram callback missing code or state parameter");
       return sendOAuthResult(res, 400, {
         success: false,
         message: "Instagram callback requires code and state",
       });
     }
 
+    console.log("[InstagramController] 🔍 Verifying state token...");
     const stateUser = verifyStateToken(String(state), "instagram");
+    console.log(`[InstagramController] 🔍 State verified for user: ${stateUser?.userId}, role: ${stateUser?.role}`);
 
     if (stateUser.role !== "influencer") {
+      console.warn(`[InstagramController] ⚠️ Non-influencer role attempted Instagram connection: ${stateUser.role}`);
       return sendOAuthResult(res, 403, {
         success: false,
         message: "Only influencer accounts can connect Instagram",
@@ -224,11 +239,13 @@ export const handleInstagramCallback = async (req, res) => {
     }
 
     const profile = await getOrCreateRoleProfile(stateUser, InfluencerProfile);
+    console.log(`[InstagramController] 👤 Found profile: ${profile._id}. Exchanging code with Meta Graph API...`);
     const syncData = await exchangeCodeAndSync({
       platform: "instagram",
       code: String(code),
       preferredHandle: getManualInstagramHandle(profile),
     });
+    console.log(`[InstagramController] 📊 Code exchanged successfully! Synced handle: ${syncData.handle}, followers: ${syncData.followers}, engagement: ${syncData.engagementRate}`);
 
     applyInstagramSyncToProfile(profile, syncData, {
       ...syncData.encryptedToken,
@@ -236,6 +253,7 @@ export const handleInstagramCallback = async (req, res) => {
     });
 
     await profile.save();
+    console.log(`[InstagramController] ✅ Profile ${profile._id} updated with Instagram connection successfully!`);
 
     return sendOAuthResult(res, 200, {
       success: true,
@@ -243,6 +261,7 @@ export const handleInstagramCallback = async (req, res) => {
       instagram: buildInstagramStats(profile),
     });
   } catch (error) {
+    console.error("[InstagramController] ❌ handleInstagramCallback error:", error);
     return sendOAuthResult(res, error.statusCode || 500, {
       success: false,
       message: error.message || "Unable to connect Instagram",
@@ -253,11 +272,14 @@ export const handleInstagramCallback = async (req, res) => {
 
 export const syncInstagram = async (req, res) => {
   try {
+    const userId = req.user?._id || req.user?.id || req.user?.userId;
+    console.log(`[InstagramController] 🔄 syncInstagram requested by user: ${userId}`);
     const profile = await InfluencerProfile.findOne(getProfileQuery(req.user))
       .select("+instagram.token.iv +instagram.token.tag +instagram.token.value")
       .exec();
 
     if (!profile?.instagram?.isConnected) {
+      console.warn(`[InstagramController] ⚠️ Instagram is not connected for profile: ${profile?._id}`);
       return res.status(400).json({
         success: false,
         message: "Instagram is not connected for this influencer profile",
@@ -265,6 +287,7 @@ export const syncInstagram = async (req, res) => {
     }
 
     try {
+      console.log(`[InstagramController] 🔄 Calling syncWithStoredToken for handle: ${profile.instagram?.handle}...`);
       const syncData = await syncWithStoredToken({
         encryptedToken: profile.instagram.token,
         tokenExpiresAt: profile.instagram.token?.expiresAt,
@@ -274,6 +297,7 @@ export const syncInstagram = async (req, res) => {
 
       applyInstagramSyncToProfile(profile, syncData);
       await profile.save();
+      console.log(`[InstagramController] ✅ Instagram sync complete. Followers: ${syncData.followers}, engagement: ${syncData.engagementRate}`);
 
       return res.json({
         success: true,
@@ -281,6 +305,7 @@ export const syncInstagram = async (req, res) => {
         instagram: buildInstagramStats(profile),
       });
     } catch (error) {
+      console.error("[InstagramController] ❌ syncWithStoredToken failed:", error);
       profile.instagram.syncError = {
         message: error.message,
         code: error.code,
@@ -290,13 +315,17 @@ export const syncInstagram = async (req, res) => {
       throw error;
     }
   } catch (error) {
+    console.error("[InstagramController] ❌ syncInstagram error:", error);
     handleInstagramError(res, error, "Unable to sync Instagram");
   }
 };
 
 export const getInstagramStats = async (req, res) => {
   try {
+    const userId = req.user?._id || req.user?.id || req.user?.userId;
+    console.log(`[InstagramController] 📊 getInstagramStats requested by user: ${userId}`);
     const profile = await getOrCreateRoleProfile(req.user, InfluencerProfile);
+    console.log(`[InstagramController] 📊 Returning stats: isConnected=${profile.instagram?.isConnected}, handle=${profile.instagram?.handle}, followers=${profile.instagram?.followers}`);
 
     res.json({
       success: true,
@@ -304,6 +333,7 @@ export const getInstagramStats = async (req, res) => {
       instagram: buildInstagramStats(profile),
     });
   } catch (error) {
+    console.error("[InstagramController] ❌ getInstagramStats error:", error);
     handleInstagramError(res, error, "Unable to fetch Instagram stats");
   }
 };
