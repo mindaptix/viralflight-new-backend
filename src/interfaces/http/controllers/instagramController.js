@@ -63,6 +63,7 @@ const buildInstagramStats = (profile) => {
 
 const applyInstagramSyncToProfile = (profile, syncData, tokenData) => {
   const now = new Date();
+  console.log(`[InstagramController] 📝 Applying sync data to profile ${profile._id || profile.userId}: handle=@${syncData.handle}, followers=${syncData.followers}, mediaCount=${syncData.mediaCount}, engagement=${syncData.engagementRate}`);
 
   profile.instagram = {
     ...(profile.instagram?.toObject?.() || profile.instagram || {}),
@@ -107,6 +108,8 @@ const sendOAuthResult = (res, statusCode, payload) => {
     ? process.env.INSTAGRAM_OAUTH_SUCCESS_REDIRECT
     : process.env.INSTAGRAM_OAUTH_ERROR_REDIRECT;
 
+  console.log(`[InstagramController] 📤 Dispatching OAuth result: status=${statusCode}, success=${payload.success}, redirectBase=${redirectBase || "(none, returning JSON)"}`);
+
   if (!redirectBase) {
     return res.status(statusCode).json(payload);
   }
@@ -118,6 +121,7 @@ const sendOAuthResult = (res, statusCode, payload) => {
     redirectUrl.searchParams.set("error", payload.message);
   }
 
+  console.log(`[InstagramController] 📤 Redirecting user to: ${redirectUrl.toString()}`);
   return res.redirect(redirectUrl.toString());
 };
 
@@ -130,6 +134,7 @@ const escapeHtml = (value) =>
     .replaceAll("'", "&#39;");
 
 const renderOAuthLandingPage = (res, { success, message }) => {
+  console.log(`[InstagramController] 🖼️ Rendering OAuth landing page (success=${success})`);
   const title = success ? "Instagram connected" : "Instagram connection failed";
   const safeMessage = escapeHtml(
     message ||
@@ -156,23 +161,29 @@ const renderOAuthLandingPage = (res, { success, message }) => {
 </html>`);
 };
 
-export const showInstagramCallbackSuccess = (req, res) =>
-  renderOAuthLandingPage(res, {
+export const showInstagramCallbackSuccess = (req, res) => {
+  console.log("[InstagramController] 🌐 showInstagramCallbackSuccess rendering landing page");
+  return renderOAuthLandingPage(res, {
     success: true,
     message: "Your Instagram account is now connected to ViralFlight.",
   });
+};
 
-export const showInstagramCallbackError = (req, res) =>
-  renderOAuthLandingPage(res, {
+export const showInstagramCallbackError = (req, res) => {
+  console.warn(`[InstagramController] ⚠️ showInstagramCallbackError rendering landing page with error: ${req.query.error}`);
+  return renderOAuthLandingPage(res, {
     success: false,
     message: req.query.error,
   });
+};
 
 const handleInstagramError = (res, error, fallbackMessage) => {
   const statusCode =
     error instanceof MetaConfigError || error instanceof MetaApiError
       ? error.statusCode
       : 500;
+
+  console.error(`[InstagramController] ❌ Controller error: status=${statusCode}, code=${error.code}, message=${error.message || fallbackMessage}`);
 
   return res.status(statusCode).json({
     success: false,

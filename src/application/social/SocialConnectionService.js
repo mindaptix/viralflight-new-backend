@@ -19,14 +19,17 @@ const tokenSelectFields =
   "+accessToken.iv +accessToken.tag +accessToken.value +refreshToken.iv +refreshToken.tag +refreshToken.value";
 
 const migrateLegacyInstagramConnection = async (userId) => {
+  console.log(`[SocialConnection:Instagram] 🔄 Checking legacy Instagram connection migration for user: ${userId}`);
   const profile = await InfluencerProfile.findOne({ userId })
     .select("+instagram.token.iv +instagram.token.tag +instagram.token.value")
     .exec();
 
   if (!profile?.instagram?.isConnected || !profile.instagram.token?.value) {
+    console.log(`[SocialConnection:Instagram] No connected legacy Instagram profile found for user: ${userId}`);
     return null;
   }
 
+  console.log(`[SocialConnection:Instagram] 📦 Migrating legacy Instagram connection for user: ${userId} (@${profile.instagram.handle})`);
   return InfluencerSocialConnection.findOneAndUpdate(
     { userId, platform: "instagram" },
     {
@@ -317,6 +320,9 @@ const upsertConnection = async (userId, platform, syncData, tokenData) => {
 };
 
 const connectFromOAuth = async ({ user, platform, code }) => {
+  if (platform === "instagram") {
+    console.log(`[SocialConnection:Instagram] 🔗 connectFromOAuth initiated for user: ${user?.userId}`);
+  }
   const profile = await getOrCreateRoleProfile(user, InfluencerProfile);
   const preferredHandle =
     platform === "instagram" ? getPreferredInstagramHandle(profile) : undefined;
@@ -330,15 +336,26 @@ const connectFromOAuth = async ({ user, platform, code }) => {
           preferredHandle,
         });
 
+  if (platform === "instagram") {
+    console.log(`[SocialConnection:Instagram] 💾 Upserting connection record for user: ${user.userId} (@${syncData.handle})`);
+  }
+
   await upsertConnection(user.userId, platform, syncData, {
     encryptedToken: syncData.encryptedToken,
     encryptedRefreshToken: syncData.encryptedRefreshToken,
     expiresAt: syncData.expiresAt,
   });
 
+  if (platform === "instagram") {
+    console.log(`[SocialConnection:Instagram] 👤 Updating influencer profile for user: ${user.userId}`);
+  }
+
   await updateInfluencerProfileFromConnection(user, platform, syncData);
 
   const connection = await getConnection(user.userId, platform);
+  if (platform === "instagram") {
+    console.log(`[SocialConnection:Instagram] ✅ Instagram connected successfully for user: ${user.userId}`);
+  }
   return buildPlatformResponse(platform, connection);
 };
 
@@ -380,9 +397,15 @@ const applySyncToConnection = async (connection, syncData) => {
 };
 
 const syncConnection = async ({ user, platform }) => {
+  if (platform === "instagram") {
+    console.log(`[SocialConnection:Instagram] 🔄 syncConnection initiated for user: ${user?.userId}`);
+  }
   const connection = await getConnection(user.userId, platform, true);
 
   if (!connection?.isConnected) {
+    if (platform === "instagram") {
+      console.warn(`[SocialConnection:Instagram] ⚠️ Cannot sync: Instagram is not connected for user: ${user?.userId}`);
+    }
     throw new MetaApiError(
       `${PLATFORM_LABELS[platform] || platform} is not connected`,
       { statusCode: 400, code: "NOT_CONNECTED" }
@@ -411,8 +434,15 @@ const syncConnection = async ({ user, platform }) => {
     await applySyncToConnection(connection, syncData);
     await updateInfluencerProfileFromConnection(user, platform, syncData);
 
+    if (platform === "instagram") {
+      console.log(`[SocialConnection:Instagram] ✅ syncConnection completed successfully for user: ${user?.userId} (@${syncData.handle})`);
+    }
+
     return buildPlatformResponse(platform, connection);
   } catch (error) {
+    if (platform === "instagram") {
+      console.error(`[SocialConnection:Instagram] ❌ syncConnection failed for user ${user?.userId}:`, error.message);
+    }
     connection.syncError = {
       message: error.message,
       code: error.code,
@@ -538,6 +568,9 @@ const syncAllConnectedAccounts = async () => {
 
 
 const disconnectConnection = async ({ user, platform }) => {
+  if (platform === "instagram") {
+    console.log(`[SocialConnection:Instagram] 🔌 disconnectConnection requested for user: ${user?.userId}`);
+  }
   const connection = await InfluencerSocialConnection.findOne({
     userId: user.userId,
     platform,
@@ -565,6 +598,10 @@ const disconnectConnection = async ({ user, platform }) => {
       profile.youtube.isConnected = false;
       await profile.save();
     }
+  }
+
+  if (platform === "instagram") {
+    console.log(`[SocialConnection:Instagram] ✅ Instagram disconnected successfully for user: ${user?.userId}`);
   }
 
   return buildPlatformResponse(
