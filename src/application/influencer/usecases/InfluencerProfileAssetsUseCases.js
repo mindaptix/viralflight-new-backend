@@ -102,10 +102,32 @@ export class GetMediaKitUseCase extends UseCase {
       isConnected: true,
     }).lean();
 
+    const resultConnections = socialConnections.map(toMediaKitSocialConnection);
+
+    if (
+      profile.instagram?.isConnected &&
+      !resultConnections.some((c) => c.platform === "instagram")
+    ) {
+      resultConnections.push({
+        platform: "instagram",
+        isConnected: true,
+        handle: profile.instagram.handle || "",
+        displayName: profile.instagram.handle
+          ? "@" + profile.instagram.handle.replace(/^@/, "")
+          : "Instagram",
+        followers: profile.instagram.followers || 0,
+        views: 0,
+        contentCount: profile.instagram.mediaCount || 0,
+        engagementRate: profile.instagram.engagementRate,
+        profilePictureUrl: profile.instagram.profilePictureUrl,
+        lastSyncedAt: profile.instagram.lastSyncedAt,
+      });
+    }
+
     return {
       mediaKit: {
         ...mediaKit,
-        socialConnections: socialConnections.map(toMediaKitSocialConnection),
+        socialConnections: resultConnections,
       },
     };
   }
