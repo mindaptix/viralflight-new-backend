@@ -1,3 +1,6 @@
+import multer from 'multer';
+import { analyzeCampaignImage } from '../../../application/campaigns/analyzeCampaignImage.js';
+import { ValidationError, TooManyRequestsError } from '../../../shared/errors/AppError.js';
 import { ManageCampaignUseCase } from "../../../application/campaigns/usecases/ManageCampaignUseCase.js";
 import { CampaignRepository } from "../../../infrastructure/persistence/mongoose/repositories/CampaignRepository.js";
 import CampaignReport from "../../../models/CampaignReport.js";
@@ -15,6 +18,22 @@ import { requireRoles } from "../middleware/authMiddleware.js";
 const router = express.Router();
 const appUserAuth = requireRoles(["influencer", "brand", "agency"]);
 const ownerAuth = requireRoles(["brand", "agency"]);
+
+const analysisUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 0 } });
+const analysisAttempts = new Map();
+const analysisThrottle = (req, _res, next) => {
+  const now = Date.now();
+  for (const [id, expires] of analysisAttempts) if (expires <= now) analysisAttempts.delete(id);
+  const id = String(req.user.userId);
+  if (analysisAttempts.has(id)) return next(new TooManyRequestsError('Please wait a moment before analyzing another image.'));
+  analysisAttempts.set(id, now + 15000);
+  next();
+};
+router.post('/analyze-image', requireRoles(['agency']), analysisThrottle, analysisUpload.single('file'), asyncHandler(async (req, res) => {
+  if (!req.file) throw new ValidationError('A campaign image is required.');
+  const suggestions = await analyzeCampaignImage({ buffer: req.file.buffer });
+  sendSuccess(res, { suggestions });
+}));
 
 router.get("/", appUserAuth, listPublicCampaigns);
 router.get("/:campaignId", appUserAuth, getCampaignDetail);
