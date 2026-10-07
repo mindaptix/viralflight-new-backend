@@ -164,9 +164,38 @@ export const buildMeProfileResponse = ({ user, profile, role, onboardingStep }) 
   };
 };
 
-export const toPublicCreatorProfile = (profile) => {
+export const toPublicCreatorProfile = (profile, socialConnections = []) => {
   const enriched = enrichRoleProfileDocument(profile, "influencer");
-  const platforms = (profile.platforms || []).map((item) => ({
+  const platformMap = new Map((profile.platforms || []).map((item) => [
+    String(item.platform).toLowerCase(), {
+      platform: item.platform, username: item.username, channelName: item.channelName,
+      followers: item.followers, subscribers: item.subscribers,
+      engagement: item.engagement, engagementRate: item.engagementRate,
+      isConnected: item.isConnected === true,
+    },
+  ]));
+  // Older Instagram connections are stored on the profile itself.
+  if (profile.instagram?.isConnected === true) {
+    const previous = platformMap.get("instagram") || {};
+    platformMap.set("instagram", {
+      ...previous, platform: "instagram", isConnected: true,
+      username: profile.instagram.handle || previous.username,
+      followers: profile.instagram.followers ?? previous.followers,
+      engagement: profile.instagram.engagementRate ?? previous.engagement,
+    });
+  }
+  // Connection records are authoritative, including explicit disconnections.
+  for (const connection of socialConnections) {
+    const platform = String(connection.platform).toLowerCase();
+    const previous = platformMap.get(platform) || {};
+    platformMap.set(platform, {
+      ...previous, platform, isConnected: connection.isConnected === true,
+      username: connection.handle || connection.channelName || previous.username,
+      followers: connection.followers ?? previous.followers,
+      engagement: connection.engagementRate ?? previous.engagement,
+    });
+  }
+  const platforms = [...platformMap.values()].map((item) => ({
     platform: item.platform,
     username: item.username || item.channelName || "",
     handle: item.username || item.channelName || "",

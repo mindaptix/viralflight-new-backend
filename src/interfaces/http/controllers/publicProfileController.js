@@ -1,3 +1,4 @@
+import InfluencerSocialConnection from "../../../models/InfluencerSocialConnection.js";
 import InfluencerProfile from "../../../models/InfluencerProfile.js";
 import ConnectionRequest from "../../../models/ConnectionRequest.js";
 import { asyncHandler } from "../../../shared/http/asyncHandler.js";
@@ -25,7 +26,10 @@ export const getPublicCreatorProfile = asyncHandler(async (req, res) => {
     throw new NotFoundError("Creator profile not found");
   }
 
-  const publicProfile = toPublicCreatorProfile(profile);
+  const socialConnections = await InfluencerSocialConnection.find({ userId: profile.userId })
+    .select("platform handle channelName followers engagementRate isConnected")
+    .lean();
+  const publicProfile = toPublicCreatorProfile(profile, socialConnections);
   const ownProfile = req.user.role === "influencer" && String(profile.userId) === String(req.user.userId);
   const consent = ["brand", "agency"].includes(req.user.role) && await ConnectionRequest.exists({
     creatorId: profile.userId, brandId: req.user.userId, brandRole: req.user.role,
