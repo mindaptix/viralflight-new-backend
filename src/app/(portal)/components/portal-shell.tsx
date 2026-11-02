@@ -16,7 +16,8 @@ type IconName =
   | "users"
   | "agencies"
   | "settings"
-  | "database";
+  | "database"
+  | "communities";
 
 const navGroups: Array<{
   label: string;
@@ -59,6 +60,12 @@ const navGroups: Array<{
     items: [
       { href: "/users", key: "users", label: "App users", icon: "users" },
       {
+        href: "/communities",
+        key: "communities",
+        label: "Communities",
+        icon: "communities",
+      },
+      {
         href: "/agencies",
         key: "agencies",
         label: "Agencies",
@@ -95,6 +102,7 @@ const titles: Record<string, string> = {
   settings: "Settings",
   users: "App Users",
   system: "System Data",
+  communities: "Communities",
 };
 
 export type ShellActive =
@@ -109,7 +117,8 @@ export type ShellActive =
   | "reports"
   | "decks"
   | "users"
-  | "system";
+  | "system"
+  | "communities";
 
 function NavIcon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -183,6 +192,13 @@ function NavIcon({ name }: { name: IconName }) {
       <>
         <ellipse cx="12" cy="5" rx="8" ry="3" />
         <path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7" />
+      </>
+    ),
+    communities: (
+      <>
+        <circle cx="8" cy="8" r="3" />
+        <circle cx="17" cy="9" r="2.5" />
+        <path d="M2 20a6 6 0 0 1 12 0M13.5 16a5 5 0 0 1 8.5 3.5" />
       </>
     ),
   };

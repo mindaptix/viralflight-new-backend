@@ -58,7 +58,7 @@ export default async function SystemPage() {
       label: "Communities",
       value: communities.totalDocs,
       detail: "Creator communities",
-      href: "/settings",
+      href: "/communities",
     },
     {
       label: "Administrators",
