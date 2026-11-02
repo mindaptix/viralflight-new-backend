@@ -67,7 +67,10 @@ for (const prefix of ["/api/v1", "/api"]) {
   app.use(`${prefix}/influencer`, express.json(), influencerRoutes);
   app.use(`${prefix}/campaign-applications`, express.json(), campaignApplicationRoutes);
   app.use(`${prefix}/campaigns`, express.json(), campaignRoutes);
-  app.use(prefix, express.json(), chatRoutes);
+  // This router is mounted at the API root, so its parser must skip Payload
+  // endpoints such as /api/cms-users/login. A global express.json() here would
+  // consume the request stream before Next/Payload can read it.
+  app.use(prefix, jsonForMobileApi, chatRoutes);
   app.use(`${prefix}/profiles`, express.json(), profileRoutes);
   app.use(`${prefix}/uploads`, uploadRoutes);
   app.use(prefix, discoveryRoutes);

@@ -1,16 +1,16 @@
-import config from '@payload-config'
-import { headers } from 'next/headers'
-import Link from 'next/link'
-import { getPayload } from 'payload'
+import config from "@payload-config";
+import { headers } from "next/headers";
+import Link from "next/link";
+import { getPayload } from "payload";
 
-import { LoginForm, LogoutButton } from './auth-controls'
-import { Avatar } from './components/avatar'
-import { InsightCharts } from './components/insight-charts'
-import { PortalShell, Brand } from './components/portal-shell'
-import { getAgencyDashboard } from './dashboard-home'
-import { formatNumber } from './lib/format'
+import { LoginForm, LogoutButton } from "./auth-controls";
+import { Avatar } from "./components/avatar";
+import { InsightCharts } from "./components/insight-charts";
+import { PortalShell, Brand } from "./components/portal-shell";
+import { getAgencyDashboard } from "./dashboard-home";
+import { formatNumber } from "./lib/format";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 function LoginPage() {
   return (
@@ -21,8 +21,8 @@ function LoginPage() {
           <p className="eyebrow">Super admin command centre</p>
           <h1>See every signal. Grow every connection.</h1>
           <p>
-            Find influencers, filter creators, open full profiles, and manage agencies
-            registered on Viral Flight.
+            Find influencers, filter creators, open full profiles, and manage
+            agencies registered on Viral Flight.
           </p>
           <div className="story-points">
             <div className="story-point">
@@ -39,7 +39,9 @@ function LoginPage() {
             </div>
           </div>
         </div>
-        <span className="login-footnote">Restricted access · Viral Flight operations</span>
+        <span className="login-footnote">
+          Restricted access · Viral Flight operations
+        </span>
       </section>
       <section className="login-panel">
         <div className="login-card">
@@ -50,41 +52,45 @@ function LoginPage() {
         </div>
       </section>
     </main>
-  )
+  );
 }
 
 function compact(value: number) {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
-  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}K`
-  return formatNumber(value)
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000)
+    return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}K`;
+  return formatNumber(value);
 }
 
 function statusClass(status: string) {
-  if (status === 'Completed') return 'done'
-  if (status === 'On Hold') return 'hold'
-  return 'progress'
+  if (status === "Completed") return "done";
+  if (status === "On Hold") return "hold";
+  return "progress";
 }
 
 export default async function Page() {
-  const payload = await getPayload({ config })
-  const { user } = await payload.auth({ headers: await headers() })
+  const payload = await getPayload({ config });
+  const { user } = await payload.auth({ headers: await headers() });
 
-  if (!user) return <LoginPage />
+  if (!user) return <LoginPage />;
 
-  if (user.role !== 'super_admin') {
+  if (user.role !== "super_admin") {
     return (
       <main className="restricted">
         <Brand />
         <p className="eyebrow">Access restricted</p>
         <h1>Super admin access required</h1>
-        <p>This account can use Payload Admin, but it cannot open the operations portal.</p>
+        <p>
+          This account can use Payload Admin, but it cannot open the operations
+          portal.
+        </p>
         <LogoutButton />
       </main>
-    )
+    );
   }
 
-  const data = await getAgencyDashboard()
-  const firstCampaign = data.campaigns[0]?.title || 'your next campaign'
+  const data = await getAgencyDashboard();
+  const firstCampaign = data.campaigns[0]?.title || "your next campaign";
 
   return (
     <PortalShell
@@ -96,23 +102,98 @@ export default async function Page() {
         role: user.role,
       }}
     >
+      <section className="admin-hero">
+        <div>
+          <span className="admin-eyebrow">Admin control centre</span>
+          <h2>Welcome back, {user.name?.split(" ")[0] || "Admin"}.</h2>
+          <p>
+            Review today&apos;s activity, manage the creator network, and keep
+            every campaign moving.
+          </p>
+        </div>
+        <div className="admin-hero-actions">
+          <Link className="admin-primary-action" href="/campaigns/new">
+            Create campaign
+          </Link>
+          <Link className="admin-secondary-action" href="/approvals">
+            Review approvals
+          </Link>
+        </div>
+      </section>
+
       <section className="dash-metrics">
-        <article>
-          <span>Live campaigns</span>
-          <strong>{formatNumber(data.metrics.liveCampaigns)}</strong>
+        <article className="metric-campaigns">
+          <span className="metric-icon">C</span>
+          <div>
+            <span>Live campaigns</span>
+            <strong>{formatNumber(data.metrics.liveCampaigns)}</strong>
+          </div>
         </article>
-        <article>
-          <span>Active influencers</span>
-          <strong>{formatNumber(data.metrics.influencers)}</strong>
+        <article className="metric-creators">
+          <span className="metric-icon">I</span>
+          <div>
+            <span>Active influencers</span>
+            <strong>{formatNumber(data.metrics.influencers)}</strong>
+          </div>
         </article>
-        <article>
-          <span>Pending approvals</span>
-          <strong>{formatNumber(data.metrics.pendingApprovals)}</strong>
+        <article className="metric-approvals">
+          <span className="metric-icon">A</span>
+          <div>
+            <span>Pending approvals</span>
+            <strong>{formatNumber(data.metrics.pendingApprovals)}</strong>
+          </div>
         </article>
-        <article>
-          <span>Client live links</span>
-          <strong>{formatNumber(data.metrics.clientLinks)}</strong>
+        <article className="metric-links">
+          <span className="metric-icon">L</span>
+          <div>
+            <span>Client live links</span>
+            <strong>{formatNumber(data.metrics.clientLinks)}</strong>
+          </div>
         </article>
+      </section>
+
+      <section className="admin-tools" aria-label="Admin essentials">
+        <div className="section-heading">
+          <div>
+            <span>Quick access</span>
+            <h2>Admin essentials</h2>
+          </div>
+          <p>Manage core Viral Flight records and operations.</p>
+        </div>
+        <div className="admin-tool-grid">
+          <Link href="/admin/collections/app-users">
+            <span>01</span>
+            <div>
+              <strong>App users</strong>
+              <em>Accounts, roles and access</em>
+            </div>
+            <b>→</b>
+          </Link>
+          <Link href="/influencers">
+            <span>02</span>
+            <div>
+              <strong>Creator network</strong>
+              <em>Profiles, stats and shortlists</em>
+            </div>
+            <b>→</b>
+          </Link>
+          <Link href="/agencies">
+            <span>03</span>
+            <div>
+              <strong>Agency directory</strong>
+              <em>Partners and registrations</em>
+            </div>
+            <b>→</b>
+          </Link>
+          <Link href="/admin">
+            <span>04</span>
+            <div>
+              <strong>System data</strong>
+              <em>Collections and configuration</em>
+            </div>
+            <b>→</b>
+          </Link>
+        </div>
       </section>
 
       <InsightCharts
@@ -145,7 +226,10 @@ export default async function Page() {
                   {data.campaigns.map((row) => (
                     <tr key={row.id}>
                       <td>
-                        <Link className="campaign-cell" href={`/campaigns/${row.id}`}>
+                        <Link
+                          className="campaign-cell"
+                          href={`/campaigns/${row.id}`}
+                        >
                           <span className="campaign-mark">◎</span>
                           <span>
                             <strong>{row.title}</strong>
@@ -166,7 +250,9 @@ export default async function Page() {
                         </div>
                       </td>
                       <td>
-                        <span className={`status-pill ${statusClass(row.status)}`}>
+                        <span
+                          className={`status-pill ${statusClass(row.status)}`}
+                        >
                           {row.status}
                         </span>
                       </td>
@@ -178,7 +264,7 @@ export default async function Page() {
             </div>
           ) : (
             <div className="empty-state">
-              No campaigns yet.{' '}
+              No campaigns yet.{" "}
               <Link href="/campaigns/new">Create Campaign +</Link>
             </div>
           )}
@@ -198,8 +284,10 @@ export default async function Page() {
                     <span>
                       <strong>{person.name}</strong>
                       <em>
-                        {person.handle ? `@${person.handle}` : person.city || 'India'} ·{' '}
-                        {compact(person.followers)} · {person.niche}
+                        {person.handle
+                          ? `@${person.handle}`
+                          : person.city || "India"}{" "}
+                        · {compact(person.followers)} · {person.niche}
                       </em>
                     </span>
                     <b>{person.match} Match</b>
@@ -217,7 +305,9 @@ export default async function Page() {
               <h2>AI Assistant</h2>
             </div>
             <div className="assist-prompts">
-              <Link href={`/agent?q=${encodeURIComponent(`Generate a creative brief for ${firstCampaign}`)}`}>
+              <Link
+                href={`/agent?q=${encodeURIComponent(`Generate a creative brief for ${firstCampaign}`)}`}
+              >
                 Generate creative brief for {firstCampaign}
               </Link>
               <Link href="/agent?q=Suggest%20influencers%20for%20a%20skincare%20campaign">
@@ -275,12 +365,14 @@ export default async function Page() {
               <li key={item.id}>
                 <strong>{item.client}</strong>
                 <a href={item.url} rel="noreferrer" target="_blank">
-                  {item.url.replace(/^https?:\/\//, '')}
+                  {item.url.replace(/^https?:\/\//, "")}
                 </a>
               </li>
             ))}
             {!data.clientLinks.length ? (
-              <li className="empty-state">Create a campaign to generate a live client link.</li>
+              <li className="empty-state">
+                Create a campaign to generate a live client link.
+              </li>
             ) : null}
           </ul>
         </article>
@@ -315,5 +407,5 @@ export default async function Page() {
         </div>
       </article>
     </PortalShell>
-  )
+  );
 }
