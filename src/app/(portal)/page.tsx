@@ -161,7 +161,7 @@ export default async function Page() {
           <p>Manage core Viral Flight records and operations.</p>
         </div>
         <div className="admin-tool-grid">
-          <Link href="/admin/collections/app-users">
+          <Link href="/users">
             <span>01</span>
             <div>
               <strong>App users</strong>
@@ -185,7 +185,7 @@ export default async function Page() {
             </div>
             <b>→</b>
           </Link>
-          <Link href="/admin">
+          <Link href="/system">
             <span>04</span>
             <div>
               <strong>System data</strong>

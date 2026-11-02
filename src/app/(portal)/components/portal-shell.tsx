@@ -57,12 +57,7 @@ const navGroups: Array<{
   {
     label: "Admin tools",
     items: [
-      {
-        href: "/admin/collections/app-users",
-        label: "App users",
-        icon: "users",
-        external: true,
-      },
+      { href: "/users", key: "users", label: "App users", icon: "users" },
       {
         href: "/agencies",
         key: "agencies",
@@ -78,10 +73,10 @@ const navGroups: Array<{
         icon: "settings",
       },
       {
-        href: "/admin",
+        href: "/system",
+        key: "system",
         label: "System data",
         icon: "database",
-        external: true,
       },
     ],
   },
@@ -98,6 +93,8 @@ const titles: Record<string, string> = {
   agent: "AI Studio",
   agencies: "Agencies",
   settings: "Settings",
+  users: "App Users",
+  system: "System Data",
 };
 
 export type ShellActive =
@@ -110,7 +107,9 @@ export type ShellActive =
   | "approvals"
   | "links"
   | "reports"
-  | "decks";
+  | "decks"
+  | "users"
+  | "system";
 
 function NavIcon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {

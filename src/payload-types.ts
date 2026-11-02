@@ -72,6 +72,7 @@ export interface Config {
     'agency-profiles': AgencyProfile;
     'brand-profiles': BrandProfile;
     'influencer-profiles': InfluencerProfile;
+    communities: Community;
     'onboarding-settings': OnboardingSetting;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -89,6 +90,7 @@ export interface Config {
     'agency-profiles': AgencyProfilesSelect<false> | AgencyProfilesSelect<true>;
     'brand-profiles': BrandProfilesSelect<false> | BrandProfilesSelect<true>;
     'influencer-profiles': InfluencerProfilesSelect<false> | InfluencerProfilesSelect<true>;
+    communities: CommunitiesSelect<false> | CommunitiesSelect<true>;
     'onboarding-settings': OnboardingSettingsSelect<false> | OnboardingSettingsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -171,6 +173,10 @@ export interface AppUser {
   role: 'agency' | 'influencer' | 'brand';
   isMobileVerified?: boolean | null;
   lastOtpRequestedAt?: string | null;
+  /**
+   * Fixed OTP for testing/demo login (e.g. 123456)
+   */
+  otp?: string | null;
   lastLoginAt?: string | null;
   influencerProfile?: {
     docs?: (string | InfluencerProfile)[];
@@ -181,7 +187,7 @@ export interface AppUser {
   createdAt: string;
 }
 /**
- * Complete influencer profile — all 4 onboarding screens in one schema.
+ * Complete influencer profile in one schema.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "influencer-profiles".
@@ -189,12 +195,35 @@ export interface AppUser {
 export interface InfluencerProfile {
   id: string;
   name?: string | null;
-  city?: ('Mumbai' | 'Delhi' | 'Bengaluru' | 'Hyderabad' | 'Chennai' | 'Kolkata') | null;
+  city?:
+    | (
+        | 'Mumbai'
+        | 'Delhi'
+        | 'Bengaluru'
+        | 'Hyderabad'
+        | 'Chennai'
+        | 'Kolkata'
+        | 'Pune'
+        | 'Ahmedabad'
+        | 'Jaipur'
+        | 'Lucknow'
+        | 'Chandigarh'
+        | 'Kochi'
+        | 'Indore'
+        | 'Bhopal'
+        | 'Nagpur'
+        | 'Surat'
+        | 'Goa'
+        | 'Dehradun'
+        | 'Patna'
+        | 'Guwahati'
+      )
+    | null;
   userId?: (string | null) | AppUser;
   mobile: string;
   platforms?:
     | {
-        platform: 'instagram' | 'youtube' | 'tiktok' | 'twitter' | 'facebook' | 'linkedin' | 'snapchat';
+        platform: 'instagram' | 'youtube' | 'twitter' | 'facebook' | 'linkedin' | 'snapchat';
         username?: string | null;
         channelName?: string | null;
         followers?: number | null;
@@ -256,24 +285,46 @@ export interface InfluencerProfile {
   };
   pastCollaborations?: string[] | null;
   portfolioLink?: string | null;
+  /**
+   * Synced from Meta Instagram Graph API. Token payload is intentionally hidden from CMS.
+   */
+  instagram?: {
+    handle?: string | null;
+    instagramUserId?: string | null;
+    facebookPageId?: string | null;
+    accountType?: string | null;
+    followers?: number | null;
+    follows?: number | null;
+    mediaCount?: number | null;
+    engagementRate?: number | null;
+    profilePictureUrl?: string | null;
+    lastSyncedAt?: string | null;
+    connectedAt?: string | null;
+    isConnected?: boolean | null;
+    syncError?: {
+      message?: string | null;
+      code?: string | null;
+      occurredAt?: string | null;
+    };
+  };
   isProfileComplete?: boolean | null;
   completedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
- * Complete agency profile — all 3 onboarding screens in one schema.
+ * Complete agency profile in one schema.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "agency-profiles".
  */
 export interface AgencyProfile {
   id: string;
-  userId?: (string | null) | AppUser;
-  mobile: string;
   agencyName?: string | null;
   contactPerson?: string | null;
   city?: string | null;
+  userId?: (string | null) | AppUser;
+  mobile: string;
   agencyType?:
     | (
         | 'Talent Management'
@@ -312,18 +363,18 @@ export interface AgencyProfile {
   createdAt: string;
 }
 /**
- * Complete brand profile — all 3 onboarding screens in one schema.
+ * Complete brand profile in one schema.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "brand-profiles".
  */
 export interface BrandProfile {
   id: string;
-  userId?: (string | null) | AppUser;
-  mobile: string;
   brandName?: string | null;
   contactPerson?: string | null;
   city?: string | null;
+  userId?: (string | null) | AppUser;
+  mobile: string;
   industry?:
     | (
         | 'Fashion & Apparel'
@@ -360,6 +411,29 @@ export interface BrandProfile {
   description?: string | null;
   isProfileComplete?: boolean | null;
   completedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Creator communities shown in the influencer app.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "communities".
+ */
+export interface Community {
+  id: string;
+  name: string;
+  tagline: string;
+  category: string;
+  city: string;
+  imageUrl?: string | null;
+  tags?: string[] | null;
+  /**
+   * Displayed member count starts here; real in-app joins are added automatically.
+   */
+  baseMemberCount?: number | null;
+  isActive?: boolean | null;
+  sortOrder?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -430,6 +504,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'influencer-profiles';
         value: string | InfluencerProfile;
+      } | null)
+    | ({
+        relationTo: 'communities';
+        value: string | Community;
       } | null)
     | ({
         relationTo: 'onboarding-settings';
@@ -510,6 +588,7 @@ export interface AppUsersSelect<T extends boolean = true> {
   role?: T;
   isMobileVerified?: T;
   lastOtpRequestedAt?: T;
+  otp?: T;
   lastLoginAt?: T;
   influencerProfile?: T;
   updatedAt?: T;
@@ -520,11 +599,11 @@ export interface AppUsersSelect<T extends boolean = true> {
  * via the `definition` "agency-profiles_select".
  */
 export interface AgencyProfilesSelect<T extends boolean = true> {
-  userId?: T;
-  mobile?: T;
   agencyName?: T;
   contactPerson?: T;
   city?: T;
+  userId?: T;
+  mobile?: T;
   agencyType?: T;
   teamSize?: T;
   creatorsManaged?: T;
@@ -541,11 +620,11 @@ export interface AgencyProfilesSelect<T extends boolean = true> {
  * via the `definition` "brand-profiles_select".
  */
 export interface BrandProfilesSelect<T extends boolean = true> {
-  userId?: T;
-  mobile?: T;
   brandName?: T;
   contactPerson?: T;
   city?: T;
+  userId?: T;
+  mobile?: T;
   industry?: T;
   website?: T;
   instagramHandle?: T;
@@ -590,8 +669,48 @@ export interface InfluencerProfilesSelect<T extends boolean = true> {
       };
   pastCollaborations?: T;
   portfolioLink?: T;
+  instagram?:
+    | T
+    | {
+        handle?: T;
+        instagramUserId?: T;
+        facebookPageId?: T;
+        accountType?: T;
+        followers?: T;
+        follows?: T;
+        mediaCount?: T;
+        engagementRate?: T;
+        profilePictureUrl?: T;
+        lastSyncedAt?: T;
+        connectedAt?: T;
+        isConnected?: T;
+        syncError?:
+          | T
+          | {
+              message?: T;
+              code?: T;
+              occurredAt?: T;
+            };
+      };
   isProfileComplete?: T;
   completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "communities_select".
+ */
+export interface CommunitiesSelect<T extends boolean = true> {
+  name?: T;
+  tagline?: T;
+  category?: T;
+  city?: T;
+  imageUrl?: T;
+  tags?: T;
+  baseMemberCount?: T;
+  isActive?: T;
+  sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;
 }
