@@ -20,25 +20,45 @@ export default async function CommunitiesPage() {
 
   return (
     <PortalShell active="communities" user={user}>
-      <div className="dashboard-heading">
+      <section className="community-hero">
         <div>
-          <p className="eyebrow">Creator network</p>
+          <span className="community-hero-kicker">Creator network</span>
           <h1>Communities</h1>
           <p>
-            Create and control the communities shown inside the influencer app.
+            Build spaces where creators discover opportunities, connect locally,
+            and grow together.
           </p>
+          <div className="community-hero-points">
+            <span>
+              <i>✓</i> Visible in the influencer app
+            </span>
+            <span>
+              <i>✓</i> Organised by city and niche
+            </span>
+          </div>
         </div>
-        <span className="live-badge">
-          <i className="live-dot" />
-          {formatNumber(data.totalDocs)} communities
-        </span>
-      </div>
+        <div className="community-hero-stat">
+          <span>Active network</span>
+          <strong>{formatNumber(data.totalDocs)}</strong>
+          <em>{data.totalDocs === 1 ? "community" : "communities"}</em>
+        </div>
+        <div className="community-orb community-orb-one" />
+        <div className="community-orb community-orb-two" />
+      </section>
 
       <div className="community-layout">
-        <article className="panel community-create-panel">
+        <article className="panel community-create-panel" id="create-community">
           <div className="panel-header">
-            <h2>Create community</h2>
-            <span>Published to the app</span>
+            <div className="community-panel-title">
+              <span>01</span>
+              <div>
+                <h2>Create community</h2>
+                <p>Set up how it appears in the app</p>
+              </div>
+            </div>
+            <span className="community-publish-badge">
+              <i /> Ready to publish
+            </span>
           </div>
           <form
             action={createCommunityAction}
@@ -145,8 +165,22 @@ export default async function CommunitiesPage() {
             </article>
           ))}
           {!data.docs.length ? (
-            <div className="empty-state panel">
-              No communities yet. Create the first one.
+            <div className="community-empty panel">
+              <div className="community-empty-art" aria-hidden>
+                <span className="empty-person p-one" />
+                <span className="empty-person p-two" />
+                <span className="empty-person p-three" />
+                <i />
+              </div>
+              <span className="community-empty-kicker">Start your network</span>
+              <h2>Your first community begins here</h2>
+              <p>
+                Create a city or niche-based group that creators can discover
+                inside the Viral Flight app.
+              </p>
+              <a className="community-empty-action" href="#create-community">
+                Create first community <span>→</span>
+              </a>
             </div>
           ) : null}
         </section>
