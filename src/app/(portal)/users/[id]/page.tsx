@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPayload } from "payload";
 
+import { Avatar } from "../../components/avatar";
 import { PortalShell } from "../../components/portal-shell";
+import { getAccountProfileSummaries } from "../../crm/data";
 import { requireSuperAdmin } from "../../lib/auth";
 import { formatDate } from "../../lib/format";
 
@@ -21,6 +23,14 @@ export default async function UserDetailPage({
     .findByID({ collection: "app-users", id, depth: 0 })
     .catch(() => null);
   if (!account) notFound();
+  const profileSummaries = await getAccountProfileSummaries([
+    {
+      id: String(account.id),
+      mobile: account.mobile,
+      role: account.role,
+    },
+  ]);
+  const profile = profileSummaries.get(String(account.id));
 
   const profileHref =
     account.role === "influencer"
@@ -36,7 +46,14 @@ export default async function UserDetailPage({
           <p className="eyebrow">
             <Link href="/users">App users</Link> / Account
           </p>
-          <h1>{account.mobile}</h1>
+          <h1 className="profile-title">
+            <Avatar
+              name={profile?.name || account.mobile}
+              size="lg"
+              src={profile?.imageUrl}
+            />
+            {profile?.name || account.mobile}
+          </h1>
           <p>Login activity and account status.</p>
         </div>
         {profileHref ? (

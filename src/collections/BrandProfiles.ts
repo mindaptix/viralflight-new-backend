@@ -72,6 +72,7 @@ export const BrandProfiles: CollectionConfig = {
       options: monthlyCampaignBudgetOptions,
     },
     { name: 'description', type: 'textarea', label: 'About Your Brand' },
+    { name: 'profileImageUrl', type: 'text', label: 'Profile Image URL', maxLength: 1_000_000 },
     { name: 'isProfileComplete', type: 'checkbox', defaultValue: false, label: 'Profile Complete' },
     { name: 'completedAt', type: 'date', label: 'Completed At' },
   ],

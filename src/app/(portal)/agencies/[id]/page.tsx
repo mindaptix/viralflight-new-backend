@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { Avatar } from '../../components/avatar'
 import { PortalShell } from '../../components/portal-shell'
 import { addNoteAction, saveCrmMetaAction } from '../../crm/actions'
 import { getAgencyDetail, listStaffMembers } from '../../crm/data'
@@ -29,7 +30,10 @@ export default async function AgencyDetailPage({ params }: PageProps) {
           <p className="eyebrow">
             <Link href="/agencies">← Agencies</Link>
           </p>
-          <h1>{profile.name}</h1>
+          <h1 className="profile-title">
+            <Avatar name={profile.name} size="lg" src={profile.profileImageUrl} />
+            {profile.name}
+          </h1>
           <p>
             {profile.city || 'City not set'} · {profile.mobile || 'No mobile'} · Joined{' '}
             {formatDate(profile.createdAt)}

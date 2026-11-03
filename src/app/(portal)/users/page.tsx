@@ -2,7 +2,9 @@ import config from "@payload-config";
 import Link from "next/link";
 import { getPayload, type Where } from "payload";
 
+import { Avatar } from "../components/avatar";
 import { PortalShell } from "../components/portal-shell";
+import { getAccountProfileSummaries } from "../crm/data";
 import { requireSuperAdmin } from "../lib/auth";
 import { firstParam, formatDate, formatNumber } from "../lib/format";
 
@@ -38,6 +40,13 @@ export default async function UsersPage({ searchParams }: PageProps) {
     sort: "-createdAt",
     where: clauses.length ? { and: clauses } : undefined,
   });
+  const profileSummaries = await getAccountProfileSummaries(
+    data.docs.map((account) => ({
+      id: String(account.id),
+      mobile: account.mobile,
+      role: account.role,
+    })),
+  );
 
   const queryFor = (nextPage: number) =>
     new URLSearchParams({
@@ -96,51 +105,44 @@ export default async function UsersPage({ searchParams }: PageProps) {
         </a>
       </form>
 
-      <article className="panel">
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Mobile number</th>
-                <th>Role</th>
-                <th>Verification</th>
-                <th>Last login</th>
-                <th>Joined</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {data.docs.map((account) => (
-                <tr key={account.id}>
-                  <td className="person-cell">
-                    <strong>{account.mobile}</strong>
-                    <span>Account ID: {account.id}</span>
-                  </td>
-                  <td>
-                    <span className="role-badge">{account.role}</span>
-                  </td>
-                  <td>
-                    <span
-                      className={`status-badge ${account.isMobileVerified ? "complete" : "incomplete"}`}
-                    >
-                      {account.isMobileVerified ? "Verified" : "Pending"}
-                    </span>
-                  </td>
-                  <td>
-                    {account.lastLoginAt
-                      ? formatDate(account.lastLoginAt)
-                      : "Never"}
-                  </td>
-                  <td>{formatDate(account.createdAt)}</td>
-                  <td>
-                    <Link className="table-link" href={`/users/${account.id}`}>
-                      Open
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <article className="directory-panel">
+        <div className="account-card-grid">
+          {data.docs.map((account) => {
+            const summary = profileSummaries.get(String(account.id));
+            const displayName = summary?.name || account.mobile;
+
+            return (
+              <Link className="account-card" href={`/users/${account.id}`} key={account.id}>
+                <div className="account-card-top">
+                  <Avatar name={displayName} size="lg" src={summary?.imageUrl} />
+                  <span
+                    className={`status-badge ${account.isMobileVerified ? "complete" : "incomplete"}`}
+                  >
+                    {account.isMobileVerified ? "Verified" : "Pending"}
+                  </span>
+                </div>
+                <div className="account-card-identity">
+                  <span className="role-badge">{account.role}</span>
+                  <h2>{displayName}</h2>
+                  <p>{account.mobile}</p>
+                </div>
+                <div className="account-card-meta">
+                  <div>
+                    <span>Last active</span>
+                    <strong>{account.lastLoginAt ? formatDate(account.lastLoginAt) : "Never"}</strong>
+                  </div>
+                  <div>
+                    <span>Joined</span>
+                    <strong>{formatDate(account.createdAt)}</strong>
+                  </div>
+                </div>
+                <div className="account-card-footer">
+                  <span>ID · {String(account.id).slice(-8)}</span>
+                  <strong>View profile <b>→</b></strong>
+                </div>
+              </Link>
+            );
+          })}
           {!data.docs.length ? (
             <div className="empty-state">No users match these filters.</div>
           ) : null}

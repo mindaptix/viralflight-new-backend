@@ -223,7 +223,13 @@ export function Brand() {
   return (
     <Link className="brand-lockup vf-brand" href="/">
       <span className="vf-mark">
-        <img alt="" src="/logo-mark.png" />
+        <svg aria-hidden viewBox="0 0 64 40">
+          <path d="M3 11.5 27 8l5 4.5-29 3z" fill="#f59e0b" />
+          <path d="m61 7-24 3.5-5 4.5 29-3z" fill="#f59e0b" />
+          <path d="m3 28.5 24-3.5 5 4.5-29 3z" fill="#22c55e" />
+          <path d="m61 24-24 3.5-5 4.5 29-3z" fill="#22c55e" />
+          <circle cx="32" cy="20" fill="#17356d" r="4" />
+        </svg>
       </span>
       <span>
         Viral Flight <em>Admin</em>

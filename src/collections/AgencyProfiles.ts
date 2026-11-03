@@ -79,6 +79,7 @@ export const AgencyProfiles: CollectionConfig = {
     },
     { name: 'website', type: 'text', label: 'Website' },
     { name: 'description', type: 'textarea', label: 'About Your Agency' },
+    { name: 'profileImageUrl', type: 'text', label: 'Profile Image URL', maxLength: 1_000_000 },
     { name: 'isProfileComplete', type: 'checkbox', defaultValue: false, label: 'Profile Complete' },
     { name: 'completedAt', type: 'date', label: 'Completed At' },
   ],

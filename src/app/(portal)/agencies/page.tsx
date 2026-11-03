@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { Avatar } from '../components/avatar'
 import { PortalShell } from '../components/portal-shell'
 import { listAgencies, listStaffMembers } from '../crm/data'
 import { requireSuperAdmin } from '../lib/auth'
@@ -133,49 +134,38 @@ export default async function AgenciesPage({ searchParams }: PageProps) {
         </a>
       </form>
 
-      <article className="panel">
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Agency</th>
-                <th>Contact</th>
-                <th>City</th>
-                <th>Type</th>
-                <th>Focus</th>
-                <th>Status</th>
-                <th>CRM</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.rows.map((row) => (
-                <tr key={row.id}>
-                  <td className="person-cell">
-                    <strong>{row.name}</strong>
-                    <span>{row.mobile || 'No mobile'}</span>
-                  </td>
-                  <td>{row.contactPerson || '—'}</td>
-                  <td>{row.city || '—'}</td>
-                  <td>{row.agencyType || '—'}</td>
-                  <td>{row.focusAreas.slice(0, 2).join(', ') || '—'}</td>
-                  <td>
-                    <span className={`status-badge ${row.complete ? 'complete' : 'incomplete'}`}>
-                      {row.complete ? 'Complete' : 'Incomplete'}
-                    </span>
-                  </td>
-                  <td>
-                    <span className="role-badge">{row.crm.status}</span>
-                  </td>
-                  <td>
-                    <Link className="table-link" href={`/agencies/${row.id}`}>
-                      Open
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <article className="directory-panel">
+        <div className="agency-card-grid">
+          {data.rows.map((row) => (
+            <Link className="agency-directory-card" href={`/agencies/${row.id}`} key={row.id}>
+              <div className="agency-card-accent" />
+              <div className="agency-card-top">
+                <Avatar name={row.name} size="lg" src={row.profileImageUrl} />
+                <span className={`status-badge ${row.complete ? 'complete' : 'incomplete'}`}>
+                  {row.complete ? 'Complete' : 'Incomplete'}
+                </span>
+              </div>
+              <div className="agency-card-title">
+                <span>{row.agencyType || 'Agency partner'}</span>
+                <h2>{row.name}</h2>
+                <p>{row.city || 'Location not set'} · {row.mobile || 'No mobile'}</p>
+              </div>
+              <div className="agency-card-focus">
+                {row.focusAreas.slice(0, 3).map((focus) => (
+                  <span key={focus}>{focus}</span>
+                ))}
+                {!row.focusAreas.length ? <span>Focus not added</span> : null}
+              </div>
+              <div className="agency-card-meta">
+                <div><span>Contact</span><strong>{row.contactPerson || 'Not set'}</strong></div>
+                <div><span>CRM stage</span><strong>{row.crm.status}</strong></div>
+              </div>
+              <div className="agency-card-footer">
+                <span>Joined {formatDate(row.createdAt)}</span>
+                <strong>Open agency <b>→</b></strong>
+              </div>
+            </Link>
+          ))}
           {!data.rows.length ? (
             <div className="empty-state">No agencies match these filters.</div>
           ) : null}

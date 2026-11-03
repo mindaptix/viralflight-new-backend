@@ -48,6 +48,24 @@ function toObjectId(id: string) {
   }
 }
 
+function roleProfileImage(doc: Record<string, unknown>): string {
+  const brandKit =
+    doc.brandKit && typeof doc.brandKit === 'object'
+      ? (doc.brandKit as Record<string, unknown>)
+      : {}
+  const candidates = [
+    doc.profileImageUrl,
+    doc.avatarUrl,
+    doc.imageUrl,
+    doc.logoUrl,
+    doc.brandLogoUrl,
+    doc.agencyLogoUrl,
+    brandKit.logoUrlLight,
+    brandKit.logoUrlDark,
+  ]
+  return String(candidates.find((value) => typeof value === 'string' && value.trim()) || '')
+}
+
 function normalizeTags(tags: unknown): string[] {
   if (!Array.isArray(tags)) return []
   return [
@@ -494,6 +512,7 @@ export type AgencyListItem = {
   focusAreas: string[]
   complete: boolean
   website: string
+  profileImageUrl: string
   createdAt: string
   crm: CrmRecord
 }
@@ -564,6 +583,7 @@ export async function listAgencies(filters: AgencyListFilters) {
           : [],
       complete: doc.isProfileComplete === true,
       website: String(doc.website || ''),
+      profileImageUrl: roleProfileImage(doc as Record<string, unknown>),
       createdAt: asIso(doc.createdAt),
       crm,
     }
@@ -596,9 +616,66 @@ export async function getAgencyDetail(id: string) {
         ? doc.niches.map(String)
         : [],
     complete: doc.isProfileComplete === true,
-    profileImageUrl: String(doc.profileImageUrl || ''),
+    profileImageUrl: roleProfileImage(doc as Record<string, unknown>),
     createdAt: asIso(doc.createdAt),
     updatedAt: asIso(doc.updatedAt),
     crm,
   }
+}
+
+export type AccountProfileSummary = {
+  profileId: string
+  name: string
+  imageUrl: string
+}
+
+export async function getAccountProfileSummaries(
+  accounts: Array<{ id: string; mobile: string; role: string }>,
+): Promise<Map<string, AccountProfileSummary>> {
+  const output = new Map<string, AccountProfileSummary>()
+  const collections = {
+    agency: 'agency_profiles',
+    brand: 'brand_profiles',
+    influencer: 'influencer_profiles',
+  } as const
+
+  await Promise.all(
+    Object.entries(collections).map(async ([role, collectionName]) => {
+      const matching = accounts.filter((account) => account.role === role)
+      if (!matching.length) return
+
+      const objectIds = matching
+        .map((account) => toObjectId(account.id))
+        .filter((id): id is ObjectId => Boolean(id))
+      const mobiles = matching.map((account) => account.mobile).filter(Boolean)
+      const clauses: Record<string, unknown>[] = []
+      if (objectIds.length) clauses.push({ userId: { $in: objectIds } })
+      if (mobiles.length) clauses.push({ mobile: { $in: mobiles } })
+      if (!clauses.length) return
+
+      const docs = await db()
+        .collection(collectionName)
+        .find({ $or: clauses })
+        .toArray()
+
+      for (const account of matching) {
+        const doc = docs.find(
+          (item) =>
+            String(item.userId || '') === account.id ||
+            String(item.mobile || '') === account.mobile,
+        )
+        if (!doc) continue
+        const name = String(
+          doc.agencyName || doc.brandName || doc.name || account.mobile,
+        )
+        output.set(account.id, {
+          profileId: String(doc._id),
+          name,
+          imageUrl: roleProfileImage(doc as Record<string, unknown>),
+        })
+      }
+    }),
+  )
+
+  return output
 }

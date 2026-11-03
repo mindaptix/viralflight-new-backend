@@ -73,6 +73,39 @@ async function callOpenAi(input: {
   return json.choices?.[0]?.message?.content || ''
 }
 
+async function callGroq(input: {
+  system: string
+  user: string
+}) {
+  const apiKey = String(
+    process.env.GROQ_API_KEY || process.env.COMMUNITY_AI_API_KEY || '',
+  ).trim()
+  if (!apiKey) return null
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: String(process.env.GROQ_MODEL || 'openai/gpt-oss-20b'),
+      temperature: 0.35,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: input.system },
+        { role: 'user', content: input.user },
+      ],
+    }),
+  })
+  const json = (await response.json()) as {
+    error?: { message?: string }
+    choices?: Array<{ message?: { content?: string } }>
+  }
+  if (!response.ok) throw new Error(json.error?.message || 'Groq AI request failed')
+  return json.choices?.[0]?.message?.content || ''
+}
+
 export async function completeJsonText(input: {
   system: string
   user: string
@@ -83,14 +116,19 @@ export async function completeJsonText(input: {
   const models = MODELS[input.kind]
   const order =
     input.kind === 'ui'
-      ? (['claude', 'openai'] as const)
-      : (['openai', 'claude'] as const)
+      ? (['groq', 'claude', 'openai'] as const)
+      : (['groq', 'openai', 'claude'] as const)
 
   let lastError: Error | null = null
   for (const vendor of order) {
     try {
       const text =
-        vendor === 'claude'
+        vendor === 'groq'
+          ? await callGroq({
+              system: input.system,
+              user: input.user,
+            })
+          : vendor === 'claude'
           ? await callClaude({
               system: input.system,
               user: input.user,

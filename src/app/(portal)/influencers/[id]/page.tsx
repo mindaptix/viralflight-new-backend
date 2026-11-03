@@ -32,34 +32,39 @@ export default async function InfluencerDetailPage({ params }: PageProps) {
     profile.instagram && typeof profile.instagram === 'object'
       ? (profile.instagram as Record<string, unknown>)
       : {}
+  const assignee = staff.find((member) => member.id === profile.crm.assigneeId)?.name || 'Unassigned'
 
   return (
     <PortalShell active="influencers" user={user}>
-      <div className="dashboard-heading">
-        <div>
-          <p className="eyebrow">
-            <Link href="/influencers">← Influencers</Link>
-          </p>
-          <h1 className="profile-title">
+      <section className="creator-detail-hero">
+        <Link className="creator-back-link" href="/influencers">← Creator directory</Link>
+        <div className="creator-hero-main">
+          <div className="creator-identity">
             <Avatar name={profile.name} size="lg" src={profile.profileImageUrl} />
-            {profile.name}
-          </h1>
-          <p>
-            {profile.city || 'City not set'} · {profile.mobile || 'No mobile'} · Joined{' '}
-            {formatDate(profile.createdAt)}
-          </p>
+            <div>
+              <span className="creator-kicker">Creator profile</span>
+              <h1>{profile.name}</h1>
+              <p>{profile.profession || 'Creator'} · {profile.city || 'City not set'}</p>
+            </div>
+          </div>
+          <span className={`creator-status ${profile.complete ? 'complete' : 'incomplete'}`}>
+            {profile.complete ? '✓ Profile complete' : 'Profile incomplete'}
+          </span>
         </div>
-        <span className={`status-badge ${profile.complete ? 'complete' : 'incomplete'}`}>
-          {profile.complete ? 'Profile complete' : 'Incomplete'}
-        </span>
-      </div>
+        <div className="creator-hero-stats">
+          <div><span>Audience</span><strong>{formatNumber(profile.followers)}</strong><small>Total followers</small></div>
+          <div><span>Platforms</span><strong>{profile.platforms.length}</strong><small>Connected accounts</small></div>
+          <div><span>Brand work</span><strong>{vfWork.length}</strong><small>ViralFlight campaigns</small></div>
+          <div><span>CRM stage</span><strong>{profile.crm.status}</strong><small>{assignee}</small></div>
+        </div>
+      </section>
 
-      <section className="detail-grid">
+      <section className="detail-grid creator-detail-grid">
         <div className="detail-stack">
-          <article className="panel">
+          <article className="panel creator-profile-card">
             <div className="panel-header">
-              <h2>Profile</h2>
-              <span>{formatNumber(profile.followers)} followers</span>
+              <div><span className="panel-kicker">Creator overview</span><h2>Profile details</h2></div>
+              <span>Joined {formatDate(profile.createdAt)}</span>
             </div>
             <div className="detail-kv">
               <div><span>Profession</span><strong>{profile.profession || '—'}</strong></div>
@@ -167,7 +172,7 @@ export default async function InfluencerDetailPage({ params }: PageProps) {
         </div>
 
         <aside className="detail-side">
-          <article className="panel sticky-panel">
+          <article className="panel sticky-panel creator-crm-card">
             <div className="panel-header">
               <h2>CRM controls</h2>
               <span>Internal only</span>
