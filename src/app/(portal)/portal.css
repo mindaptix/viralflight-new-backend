@@ -2640,7 +2640,7 @@ a.clear-button {
 
 .community-layout {
   display: grid;
-  grid-template-columns: minmax(320px, 0.8fr) minmax(0, 1.45fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -2773,8 +2773,7 @@ a.clear-button {
 }
 
 .community-create-panel {
-  position: sticky;
-  top: 92px;
+  position: static;
   padding: 20px;
   overflow: hidden;
   border-color: #dbe7f8;
@@ -2839,7 +2838,7 @@ a.clear-button {
 
 .community-form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 13px;
 }
 
@@ -3244,6 +3243,10 @@ a.clear-button {
     grid-template-columns: 1fr;
   }
 
+  .community-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .community-hero {
     padding: 26px;
   }
@@ -3254,6 +3257,10 @@ a.clear-button {
 }
 
 @media (max-width: 760px) {
+  .community-form-grid {
+    grid-template-columns: 1fr;
+  }
+
   .vf-side {
     padding: 15px;
   }
