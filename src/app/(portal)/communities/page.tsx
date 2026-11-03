@@ -9,8 +9,15 @@ import { CommunityCoverUpload } from "./community-cover-upload";
 
 export const dynamic = "force-dynamic";
 
-export default async function CommunitiesPage() {
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function CommunitiesPage({ searchParams }: PageProps) {
   const user = await requireSuperAdmin();
+  const query = await searchParams;
+  const error = typeof query.error === "string" ? query.error : "";
+  const created = query.created === "1";
   const payload = await getPayload({ config });
   const data = await payload.find({
     collection: "communities",
@@ -46,6 +53,19 @@ export default async function CommunitiesPage() {
         <div className="community-orb community-orb-one" />
         <div className="community-orb community-orb-two" />
       </section>
+
+      {error ? (
+        <div className="community-feedback error" role="alert">
+          <strong>Community not created</strong>
+          <span>{error}</span>
+        </div>
+      ) : null}
+      {created ? (
+        <div className="community-feedback success" role="status">
+          <strong>Community created</strong>
+          <span>It is now available in the community list and influencer app.</span>
+        </div>
+      ) : null}
 
       <div className="community-layout">
         <article className="panel community-create-panel" id="create-community">
