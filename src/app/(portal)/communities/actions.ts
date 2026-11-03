@@ -68,4 +68,5 @@ export async function setCommunityStatusAction(formData: FormData) {
     data: { isActive: String(formData.get("isActive")) === "true" },
   });
   revalidatePath("/communities");
+  revalidatePath(`/communities/${String(formData.get("communityId") || "")}`);
 }

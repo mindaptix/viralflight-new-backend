@@ -46,8 +46,9 @@ export async function saveCrmMetaAction(formData: FormData) {
     assigneeName: assignee?.name || '',
   })
 
-  revalidatePath(`/${role === 'influencer' ? 'influencers' : 'agencies'}/${profileId}`)
-  revalidatePath(`/${role === 'influencer' ? 'influencers' : 'agencies'}`)
+  const section = role === 'influencer' ? 'influencers' : role === 'agency' ? 'agencies' : 'brands'
+  revalidatePath(`/${section}/${profileId}`)
+  revalidatePath(`/${section}`)
 }
 
 export async function addNoteAction(formData: FormData) {
@@ -68,5 +69,6 @@ export async function addNoteAction(formData: FormData) {
     authorName: user.name || user.email || 'Super Admin',
   })
 
-  revalidatePath(`/${role === 'influencer' ? 'influencers' : 'agencies'}/${profileId}`)
+  const section = role === 'influencer' ? 'influencers' : role === 'agency' ? 'agencies' : 'brands'
+  revalidatePath(`/${section}/${profileId}`)
 }

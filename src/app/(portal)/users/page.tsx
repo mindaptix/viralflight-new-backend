@@ -110,9 +110,16 @@ export default async function UsersPage({ searchParams }: PageProps) {
           {data.docs.map((account) => {
             const summary = profileSummaries.get(String(account.id));
             const displayName = summary?.name || account.mobile;
+            const profileHref = summary?.profileId
+              ? account.role === "influencer"
+                ? `/influencers/${summary.profileId}`
+                : account.role === "agency"
+                  ? `/agencies/${summary.profileId}`
+                  : `/brands/${summary.profileId}`
+              : `/users/${account.id}`;
 
             return (
-              <Link className="account-card" href={`/users/${account.id}`} key={account.id}>
+              <Link className="account-card" href={profileHref} key={account.id}>
                 <div className="account-card-top">
                   <Avatar name={displayName} size="lg" src={summary?.imageUrl} />
                   <span

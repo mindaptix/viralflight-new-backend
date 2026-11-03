@@ -22,34 +22,33 @@ export default async function AgencyDetailPage({ params }: PageProps) {
     listStaffMembers(),
   ])
   if (!profile) notFound()
+  const assignee = staff.find((member) => member.id === profile.crm.assigneeId)?.name || 'Unassigned'
 
   return (
     <PortalShell active="agencies" user={user}>
-      <div className="dashboard-heading">
-        <div>
-          <p className="eyebrow">
-            <Link href="/agencies">← Agencies</Link>
-          </p>
-          <h1 className="profile-title">
+      <section className="creator-detail-hero partner-detail-hero">
+        <Link className="creator-back-link" href="/agencies">← Agency directory</Link>
+        <div className="creator-hero-main">
+          <div className="creator-identity">
             <Avatar name={profile.name} size="lg" src={profile.profileImageUrl} />
-            {profile.name}
-          </h1>
-          <p>
-            {profile.city || 'City not set'} · {profile.mobile || 'No mobile'} · Joined{' '}
-            {formatDate(profile.createdAt)}
-          </p>
+            <div><span className="creator-kicker">Agency partner</span><h1>{profile.name}</h1><p>{profile.agencyType || 'Agency'} · {profile.city || 'City not set'}</p></div>
+          </div>
+          <span className={`creator-status ${profile.complete ? 'complete' : 'incomplete'}`}>{profile.complete ? '✓ Profile complete' : 'Profile incomplete'}</span>
         </div>
-        <span className={`status-badge ${profile.complete ? 'complete' : 'incomplete'}`}>
-          {profile.complete ? 'Profile complete' : 'Incomplete'}
-        </span>
-      </div>
+        <div className="creator-hero-stats">
+          <div><span>Creators managed</span><strong>{profile.creatorsManaged || '—'}</strong><small>Creator network</small></div>
+          <div><span>Team size</span><strong>{profile.teamSize || '—'}</strong><small>Agency team</small></div>
+          <div><span>Focus areas</span><strong>{profile.focusAreas.length}</strong><small>Specialisations</small></div>
+          <div><span>CRM stage</span><strong>{profile.crm.status}</strong><small>{assignee}</small></div>
+        </div>
+      </section>
 
       <section className="detail-grid">
         <div className="detail-stack">
-          <article className="panel">
+          <article className="panel creator-profile-card">
             <div className="panel-header">
-              <h2>Agency profile</h2>
-              <span>{profile.agencyType || 'Type not set'}</span>
+              <div><span className="panel-kicker">Partner overview</span><h2>Agency profile</h2></div>
+              <span>Joined {formatDate(profile.createdAt)}</span>
             </div>
             <div className="detail-kv">
               <div><span>Contact person</span><strong>{profile.contactPerson || '—'}</strong></div>
@@ -116,7 +115,7 @@ export default async function AgencyDetailPage({ params }: PageProps) {
         </div>
 
         <aside className="detail-side">
-          <article className="panel sticky-panel">
+          <article className="panel sticky-panel creator-crm-card">
             <div className="panel-header">
               <h2>CRM controls</h2>
               <span>Internal only</span>

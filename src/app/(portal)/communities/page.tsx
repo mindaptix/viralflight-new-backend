@@ -1,4 +1,5 @@
 import config from "@payload-config";
+import Link from "next/link";
 import { getPayload } from "payload";
 
 import { PortalShell } from "../components/portal-shell";
@@ -139,36 +140,35 @@ export default async function CommunitiesPage({ searchParams }: PageProps) {
         <section className="community-list">
           {data.docs.map((community) => (
             <article className="community-card" key={community.id}>
-              <div className="community-cover">
-                {community.imageUrl ? (
-                  <img alt="" src={community.imageUrl} />
-                ) : (
-                  <span>{community.name.slice(0, 1).toUpperCase()}</span>
-                )}
-              </div>
-              <div className="community-card-copy">
-                <div className="community-card-title">
-                  <strong>{community.name}</strong>
-                  <span
-                    className={`status-badge ${community.isActive ? "complete" : "incomplete"}`}
-                  >
-                    {community.isActive ? "Active" : "Hidden"}
-                  </span>
+              <Link className="community-card-link" href={`/communities/${community.id}`}>
+                <div className="community-cover">
+                  {community.imageUrl ? (
+                    <img alt="" src={community.imageUrl} />
+                  ) : (
+                    <span>{community.name.slice(0, 1).toUpperCase()}</span>
+                  )}
                 </div>
-                <p>{community.tagline}</p>
-                <div className="community-meta">
-                  <span>{community.category}</span>
-                  <span>{community.city}</span>
-                  <span>
-                    {formatNumber(community.baseMemberCount || 0)} members
-                  </span>
+                <div className="community-card-copy">
+                  <div className="community-card-title">
+                    <strong>{community.name}</strong>
+                    <span
+                      className={`status-badge ${community.isActive ? "complete" : "incomplete"}`}
+                    >
+                      {community.isActive ? "Active" : "Hidden"}
+                    </span>
+                  </div>
+                  <p>{community.tagline}</p>
+                  <div className="community-meta">
+                    <span>{community.category}</span>
+                    <span>{community.city}</span>
+                    <span>{formatNumber(community.baseMemberCount || 0)} members</span>
+                  </div>
+                  <div className="community-tags">
+                    {(community.tags || []).map((tag) => <span key={tag}>{tag}</span>)}
+                  </div>
                 </div>
-                <div className="community-tags">
-                  {(community.tags || []).map((tag) => (
-                    <span key={tag}>{tag}</span>
-                  ))}
-                </div>
-              </div>
+                <span className="community-open-arrow">View details →</span>
+              </Link>
               <form action={setCommunityStatusAction}>
                 <input name="communityId" type="hidden" value={community.id} />
                 <input

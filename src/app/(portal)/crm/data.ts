@@ -623,6 +623,35 @@ export async function getAgencyDetail(id: string) {
   }
 }
 
+export async function getBrandDetail(id: string) {
+  const objectId = toObjectId(id)
+  if (!objectId) return null
+  const doc = await db().collection('brand_profiles').findOne({ _id: objectId })
+  if (!doc) return null
+  const crm = await getCrmRecord(id, 'brand')
+
+  return {
+    id,
+    name: String(doc.brandName || 'Unnamed brand'),
+    mobile: String(doc.mobile || ''),
+    city: String(doc.city || ''),
+    industry: String(doc.industry || ''),
+    contactPerson: String(doc.contactPerson || doc.contactName || ''),
+    website: String(doc.website || ''),
+    instagramHandle: String(doc.instagramHandle || ''),
+    monthlyCampaignBudget: String(doc.monthlyCampaignBudget || ''),
+    description: String(doc.description || doc.bio || ''),
+    campaignInterests: Array.isArray(doc.campaignInterests)
+      ? doc.campaignInterests.map(String)
+      : [],
+    complete: doc.isProfileComplete === true,
+    profileImageUrl: roleProfileImage(doc as Record<string, unknown>),
+    createdAt: asIso(doc.createdAt),
+    updatedAt: asIso(doc.updatedAt),
+    crm,
+  }
+}
+
 export type AccountProfileSummary = {
   profileId: string
   name: string
