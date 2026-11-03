@@ -5,6 +5,7 @@ import { PortalShell } from "../components/portal-shell";
 import { requireSuperAdmin } from "../lib/auth";
 import { formatNumber } from "../lib/format";
 import { createCommunityAction, setCommunityStatusAction } from "./actions";
+import { CommunityCoverUpload } from "./community-cover-upload";
 
 export const dynamic = "force-dynamic";
 
@@ -81,10 +82,7 @@ export default async function CommunitiesPage() {
                 City
                 <input name="city" placeholder="Chandigarh" required />
               </label>
-              <label>
-                Cover image URL
-                <input name="imageUrl" placeholder="https://…" type="url" />
-              </label>
+              <CommunityCoverUpload />
               <label className="wide">
                 Tagline
                 <textarea
