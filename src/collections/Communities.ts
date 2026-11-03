@@ -26,7 +26,15 @@ export const Communities: CollectionConfig = {
     { name: 'tagline', type: 'textarea', required: true },
     { name: 'category', type: 'text', required: true, index: true },
     { name: 'city', type: 'text', required: true, index: true },
-    { name: 'imageUrl', type: 'text', label: 'Cover Image URL' },
+    {
+      name: 'imageUrl',
+      type: 'text',
+      label: 'Cover Image URL',
+      // Community covers are stored as compressed data URLs by the CRM uploader.
+      // Payload's default text limit is 40,000 characters, which is too small
+      // for even a compressed cover image.
+      maxLength: 1_000_000,
+    },
     {
       name: 'tags',
       type: 'text',
