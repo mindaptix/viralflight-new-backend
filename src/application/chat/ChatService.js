@@ -19,6 +19,15 @@ import { moderateCommunityMessage } from "./communityModerationService.js";
 
 const toId = (val) => (val ? String(val) : "");
 
+export const mobileLookupCandidates = (value) => {
+  const raw = String(value || "").trim();
+  const digits = raw.replace(/\D/g, "");
+  const local = digits.length >= 10 ? digits.slice(-10) : digits;
+  return [raw, digits, local, local ? `+91${local}` : ""]
+    .filter(Boolean)
+    .filter((item, index, values) => values.indexOf(item) === index);
+};
+
 const firstPlatformUsername = (profile) => {
   if (!Array.isArray(profile?.platforms)) return "";
   const platform = profile.platforms.find((item) => item?.username?.trim());
@@ -90,7 +99,10 @@ export const getParticipantProfile = async (userId) => {
       user = await User.findById(roleProfile.userId).lean();
     }
     if (!user && roleProfile.mobile) {
-      user = await User.findOne({ mobile: roleProfile.mobile, role }).lean();
+      user = await User.findOne({
+        mobile: { $in: mobileLookupCandidates(roleProfile.mobile) },
+        role,
+      }).lean();
     }
   }
 
@@ -111,7 +123,9 @@ export const getParticipantProfile = async (userId) => {
       (await InfluencerProfile.findOne({
         $or: [
           ...(user?._id ? [{ userId: user._id }] : []),
-          ...(user?.mobile ? [{ mobile: user.mobile }] : []),
+          ...(user?.mobile
+            ? [{ mobile: { $in: mobileLookupCandidates(user.mobile) } }]
+            : []),
         ],
       }).lean());
     if (infProfile) {
@@ -134,7 +148,9 @@ export const getParticipantProfile = async (userId) => {
       (await BrandProfile.findOne({
         $or: [
           ...(user?._id ? [{ userId: user._id }] : []),
-          ...(user?.mobile ? [{ mobile: user.mobile }] : []),
+          ...(user?.mobile
+            ? [{ mobile: { $in: mobileLookupCandidates(user.mobile) } }]
+            : []),
         ],
       }).lean());
     if (brandProfile) {
@@ -154,7 +170,9 @@ export const getParticipantProfile = async (userId) => {
       (await AgencyProfile.findOne({
         $or: [
           ...(user?._id ? [{ userId: user._id }] : []),
-          ...(user?.mobile ? [{ mobile: user.mobile }] : []),
+          ...(user?.mobile
+            ? [{ mobile: { $in: mobileLookupCandidates(user.mobile) } }]
+            : []),
         ],
       }).lean());
     if (agencyProfile) {

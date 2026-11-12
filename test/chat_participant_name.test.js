@@ -1,7 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { resolveParticipantDisplayName } from "../src/application/chat/ChatService.js";
+import {
+  mobileLookupCandidates,
+  resolveParticipantDisplayName,
+} from "../src/application/chat/ChatService.js";
+
+test("chat matches Indian mobile numbers with or without country code", () => {
+  assert.deepEqual(mobileLookupCandidates("+91 62845-47315"), [
+    "+91 62845-47315",
+    "916284547315",
+    "6284547315",
+    "+916284547315",
+  ]);
+});
 
 test("chat uses influencer profile name before generic fallbacks", () => {
   assert.equal(
