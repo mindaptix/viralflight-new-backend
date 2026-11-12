@@ -19,57 +19,157 @@ import { moderateCommunityMessage } from "./communityModerationService.js";
 
 const toId = (val) => (val ? String(val) : "");
 
+const firstPlatformUsername = (profile) => {
+  if (!Array.isArray(profile?.platforms)) return "";
+  const platform = profile.platforms.find((item) => item?.username?.trim());
+  return platform?.username?.trim() || "";
+};
+
+export const resolveParticipantDisplayName = ({ user, profile, role }) => {
+  if (role === "influencer") {
+    return (
+      profile?.name?.trim() ||
+      user?.displayName?.trim() ||
+      profile?.instagram?.handle?.trim() ||
+      firstPlatformUsername(profile) ||
+      "Creator"
+    );
+  }
+
+  if (role === "brand") {
+    return (
+      profile?.brandName?.trim() ||
+      profile?.contactPerson?.trim() ||
+      user?.displayName?.trim() ||
+      "Brand"
+    );
+  }
+
+  if (role === "agency") {
+    return (
+      profile?.agencyName?.trim() ||
+      profile?.contactPerson?.trim() ||
+      user?.displayName?.trim() ||
+      "Agency"
+    );
+  }
+
+  return user?.displayName?.trim() || "Partner";
+};
+
 export const getParticipantProfile = async (userId) => {
   if (!mongoose.Types.ObjectId.isValid(userId)) return null;
 
-  const user = await User.findById(userId).lean();
-  if (!user) return null;
+  let user = await User.findById(userId).lean();
+  let role = user?.role || "";
+  let roleProfile = null;
+
+  // Older conversations could store a role-profile ID instead of the login
+  // user ID. Resolve those records too so existing chats retain real names.
+  if (!user) {
+    const [influencerProfile, agencyProfile, brandProfile] = await Promise.all([
+      InfluencerProfile.findById(userId).lean(),
+      AgencyProfile.findById(userId).lean(),
+      BrandProfile.findById(userId).lean(),
+    ]);
+
+    if (influencerProfile) {
+      role = "influencer";
+      roleProfile = influencerProfile;
+    } else if (agencyProfile) {
+      role = "agency";
+      roleProfile = agencyProfile;
+    } else if (brandProfile) {
+      role = "brand";
+      roleProfile = brandProfile;
+    } else {
+      return null;
+    }
+
+    if (roleProfile.userId) {
+      user = await User.findById(roleProfile.userId).lean();
+    }
+    if (!user && roleProfile.mobile) {
+      user = await User.findOne({ mobile: roleProfile.mobile, role }).lean();
+    }
+  }
 
   let profile = {
-    userId: toId(user._id),
-    mobile: user.mobile || "",
-    role: user.role,
-    name: "",
-    profileImageUrl: user.avatar || "",
+    // Preserve the ID stored in the conversation. It is the identifier the
+    // message endpoints and sockets already use for this participant.
+    userId: toId(userId),
+    mobile: user?.mobile || roleProfile?.mobile || "",
+    role,
+    name: resolveParticipantDisplayName({ user, profile: roleProfile, role }),
+    profileImageUrl: user?.avatar || "",
     city: "",
   };
 
-  if (user.role === "influencer") {
-    const infProfile = await InfluencerProfile.findOne({
-      $or: [{ userId: user._id }, { mobile: user.mobile }],
-    }).lean();
+  if (role === "influencer") {
+    const infProfile =
+      roleProfile ||
+      (await InfluencerProfile.findOne({
+        $or: [
+          ...(user?._id ? [{ userId: user._id }] : []),
+          ...(user?.mobile ? [{ mobile: user.mobile }] : []),
+        ],
+      }).lean());
     if (infProfile) {
-      profile.name = infProfile.name || "";
-      profile.profileImageUrl = infProfile.profileImageUrl || profile.profileImageUrl;
+      profile.name = resolveParticipantDisplayName({
+        user,
+        profile: infProfile,
+        role,
+      });
+      profile.profileImageUrl =
+        infProfile.profileImageUrl ||
+        infProfile.instagram?.profilePictureUrl ||
+        profile.profileImageUrl;
       profile.city = infProfile.city || "";
-      profile.instagramHandle = infProfile.instagramHandle || "";
+      profile.instagramHandle =
+        infProfile.instagram?.handle || firstPlatformUsername(infProfile);
     }
-  } else if (user.role === "brand") {
-    const brandProfile = await BrandProfile.findOne({
-      $or: [{ userId: user._id }, { mobile: user.mobile }],
-    }).lean();
+  } else if (role === "brand") {
+    const brandProfile =
+      roleProfile ||
+      (await BrandProfile.findOne({
+        $or: [
+          ...(user?._id ? [{ userId: user._id }] : []),
+          ...(user?.mobile ? [{ mobile: user.mobile }] : []),
+        ],
+      }).lean());
     if (brandProfile) {
-      profile.name = brandProfile.brandName || brandProfile.contactPerson || "Brand";
-      profile.profileImageUrl = brandProfile.profileImageUrl || profile.profileImageUrl;
+      profile.name = resolveParticipantDisplayName({
+        user,
+        profile: brandProfile,
+        role,
+      });
+      profile.profileImageUrl =
+        brandProfile.profileImageUrl || profile.profileImageUrl;
       profile.city = brandProfile.city || "";
       profile.industry = brandProfile.industry || "";
     }
-  } else if (user.role === "agency") {
-    const agencyProfile = await AgencyProfile.findOne({
-      $or: [{ userId: user._id }, { mobile: user.mobile }],
-    }).lean();
+  } else if (role === "agency") {
+    const agencyProfile =
+      roleProfile ||
+      (await AgencyProfile.findOne({
+        $or: [
+          ...(user?._id ? [{ userId: user._id }] : []),
+          ...(user?.mobile ? [{ mobile: user.mobile }] : []),
+        ],
+      }).lean());
     if (agencyProfile) {
-      profile.name = agencyProfile.agencyName || agencyProfile.contactPerson || "Agency";
-      profile.profileImageUrl = agencyProfile.profileImageUrl || profile.profileImageUrl;
+      profile.name = resolveParticipantDisplayName({
+        user,
+        profile: agencyProfile,
+        role,
+      });
+      profile.profileImageUrl =
+        agencyProfile.profileImageUrl || profile.profileImageUrl;
       profile.city = agencyProfile.city || "";
     }
   }
 
-  if (!profile.name) {
-    profile.name = user.role.charAt(0).toUpperCase() + user.role.slice(1);
-  }
-
-  profile.lastSeenAt = user.lastSeenAt
+  profile.lastSeenAt = user?.lastSeenAt
     ? new Date(user.lastSeenAt).toISOString()
     : null;
 
@@ -86,7 +186,9 @@ export const mapChatMessageData = (doc) => ({
   media_type: doc.mediaType || null,
   is_read: Boolean(doc.isRead),
   read_at: doc.readAt ? new Date(doc.readAt).toISOString() : null,
-  created_at: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
+  created_at: doc.createdAt
+    ? new Date(doc.createdAt).toISOString()
+    : new Date().toISOString(),
 });
 
 export const getOrCreateConversation = async ({
@@ -264,11 +366,15 @@ export const listUserConversations = async ({ user, query = {} }) => {
   });
 
   const uniqueOtherIds = [...new Set(otherUserIds.filter(Boolean))];
-  const profilesArray = await Promise.all(uniqueOtherIds.map(getParticipantProfile));
+  const profilesArray = await Promise.all(
+    uniqueOtherIds.map(getParticipantProfile),
+  );
   const profileMap = new Map(profilesArray.map((p) => [toId(p?.userId), p]));
 
   const data = conversations.map((conv) => {
-    const otherId = toId(conv.participants.find((p) => toId(p) !== currentUserId));
+    const otherId = toId(
+      conv.participants.find((p) => toId(p) !== currentUserId),
+    );
     const unreadCount =
       (conv.unreadCounts &&
         (conv.unreadCounts[currentUserId] ??
@@ -304,7 +410,11 @@ export const listUserConversations = async ({ user, query = {} }) => {
   };
 };
 
-export const getConversationMessages = async ({ user, conversationId, query = {} }) => {
+export const getConversationMessages = async ({
+  user,
+  conversationId,
+  query = {},
+}) => {
   if (!mongoose.Types.ObjectId.isValid(conversationId)) {
     throw new ValidationError("Valid conversation_id is required");
   }
@@ -316,7 +426,9 @@ export const getConversationMessages = async ({ user, conversationId, query = {}
     throw new NotFoundError("Conversation not found");
   }
 
-  const isParticipant = conversation.participants.some((p) => toId(p) === currentUserId);
+  const isParticipant = conversation.participants.some(
+    (p) => toId(p) === currentUserId,
+  );
   if (!isParticipant) {
     throw new ForbiddenError("You are not a participant in this conversation");
   }
@@ -371,18 +483,27 @@ export const sendMessage = async ({
       throw new NotFoundError("Conversation not found");
     }
 
-    const isParticipant = conversation.participants.some((p) => toId(p) === currentUserId);
+    const isParticipant = conversation.participants.some(
+      (p) => toId(p) === currentUserId,
+    );
     if (!isParticipant) {
       throw new ForbiddenError("Not a participant in this conversation");
     }
 
-    const otherParticipant = conversation.participants.find((p) => toId(p) !== currentUserId);
+    const otherParticipant = conversation.participants.find(
+      (p) => toId(p) !== currentUserId,
+    );
     targetRecipientId = toId(otherParticipant);
   } else if (targetRecipientId) {
-    const res = await getOrCreateConversation({ user, recipientId: targetRecipientId });
+    const res = await getOrCreateConversation({
+      user,
+      recipientId: targetRecipientId,
+    });
     conversation = await Conversation.findById(res.conversation.id);
   } else {
-    throw new ValidationError("Either conversation_id or recipient_id is required");
+    throw new ValidationError(
+      "Either conversation_id or recipient_id is required",
+    );
   }
 
   // Persist community context so reopening the chat cannot bypass moderation.
@@ -397,7 +518,9 @@ export const sendMessage = async ({
       isBanned: { $ne: true },
     });
     if (!membership) {
-      throw new ForbiddenError("Join this community before messaging its members");
+      throw new ForbiddenError(
+        "Join this community before messaging its members",
+      );
     }
     conversation.communityId = metadata.communityId;
     await conversation.save();
@@ -436,7 +559,10 @@ export const sendMessage = async ({
       : conversation.unreadCounts[targetRecipientId]) || 0;
 
   if (typeof conversation.unreadCounts.set === "function") {
-    conversation.unreadCounts.set(targetRecipientId, currentRecipientUnread + 1);
+    conversation.unreadCounts.set(
+      targetRecipientId,
+      currentRecipientUnread + 1,
+    );
   } else {
     conversation.unreadCounts[targetRecipientId] = currentRecipientUnread + 1;
   }
@@ -449,7 +575,9 @@ export const sendMessage = async ({
       const senderName = senderProfile?.name || "New Message";
       const bodyText =
         trimmedText ||
-        (mediaType ? `Sent an attachment [${mediaType}]` : "Sent an attachment");
+        (mediaType
+          ? `Sent an attachment [${mediaType}]`
+          : "Sent an attachment");
 
       sendPushNotificationSafe({
         userId: targetRecipientId,
@@ -466,7 +594,10 @@ export const sendMessage = async ({
       });
     })
     .catch((err) => {
-      console.error("Error triggering chat message push notification:", err.message);
+      console.error(
+        "Error triggering chat message push notification:",
+        err.message,
+      );
     });
 
   return {
@@ -488,7 +619,9 @@ export const markConversationRead = async ({ user, conversationId }) => {
     throw new NotFoundError("Conversation not found");
   }
 
-  const isParticipant = conversation.participants.some((p) => toId(p) === currentUserId);
+  const isParticipant = conversation.participants.some(
+    (p) => toId(p) === currentUserId,
+  );
   if (!isParticipant) {
     throw new ForbiddenError("Not a participant in this conversation");
   }
@@ -505,7 +638,7 @@ export const markConversationRead = async ({ user, conversationId }) => {
         isRead: true,
         readAt,
       },
-    }
+    },
   );
 
   if (conversation.unreadCounts) {
