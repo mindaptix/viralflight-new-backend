@@ -41,14 +41,31 @@ export class SendOtpUseCase extends UseCase {
     method,
     type,
     otpChannel,
+    via,
+    channelType,
+    deliveryMethod,
+    isWhatsapp,
+    whatsapp,
+    sendOnWhatsapp,
   }) {
     const inputMobile = rawMobile || phone || phoneNumber;
     const mobile = normalizeMobile(inputMobile);
-    const requestedChannel = channel || method || type || otpChannel || "sms";
-    const selectedChannel =
-      String(requestedChannel).trim().toLowerCase() === "whatsapp"
-        ? "whatsapp"
-        : "sms";
+
+    const isWhatsappSelected = Boolean(
+      String(channel || "").trim().toLowerCase() === "whatsapp" ||
+      String(method || "").trim().toLowerCase() === "whatsapp" ||
+      String(type || "").trim().toLowerCase() === "whatsapp" ||
+      String(otpChannel || "").trim().toLowerCase() === "whatsapp" ||
+      String(via || "").trim().toLowerCase() === "whatsapp" ||
+      String(channelType || "").trim().toLowerCase() === "whatsapp" ||
+      String(deliveryMethod || "").trim().toLowerCase() === "whatsapp" ||
+      isWhatsapp === true ||
+      whatsapp === true ||
+      sendOnWhatsapp === true
+    );
+
+    const selectedChannel = isWhatsappSelected ? "whatsapp" : "sms";
+    console.log(`[SendOtpUseCase] Processing OTP for mobile=${mobile}, channel=${selectedChannel}`);
 
     if (!mobile) {
       throw new ValidationError(

@@ -4,7 +4,9 @@ import { sendSuccess } from "../../../shared/http/respond.js";
 import { deleteAccount as deleteAuthenticatedAccount } from '../../../application/auth/DeleteAccountService.js';
 
 export const sendOtp = asyncHandler(async (req, res) => {
+  console.log("[Auth:sendOtp] Received send-otp request body:", req.body);
   const result = await container.sendOtpUseCase.execute(req.body);
+  console.log("[Auth:sendOtp] Send-otp result:", result);
   sendSuccess(res, result);
 });
 
