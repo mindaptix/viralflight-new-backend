@@ -34,6 +34,31 @@ import {
   syncYoutube,
 } from "../controllers/youtubeController.js";
 import {
+  disconnectX,
+  getXConnectUrl,
+  getXStats,
+  handleXCallback,
+} from "../controllers/xController.js";
+import {
+  disconnectLinkedin,
+  getLinkedinConnectUrl,
+  getLinkedinStats,
+  handleLinkedinCallback,
+} from "../controllers/linkedinController.js";
+import {
+  getKycController,
+  getPayoutAccountController,
+  getPayoutHistoryController,
+  getWalletBalanceController,
+  setupPayoutAccountController,
+  submitKycController,
+  withdrawController,
+} from "../controllers/influencerKycPayoutController.js";
+import {
+  getReferralSummaryController,
+  getReferralsLedgerController,
+} from "../controllers/influencerReferralController.js";
+import {
   getMediaKit,
   getRateCard,
   listBrandInvites,
@@ -89,6 +114,32 @@ router.get("/youtube/callback", handleYoutubeCallback);
 router.get("/youtube/stats", authMiddleware, getYoutubeStats);
 router.post("/youtube/sync", authMiddleware, syncYoutube);
 router.delete("/youtube/disconnect", authMiddleware, disconnectYoutube);
+
+// ─── PART 1: X (Twitter) & LinkedIn OAuth ───────────────────────────────────
+router.get("/x/connect-url", authMiddleware, getXConnectUrl);
+router.get("/x/callback", handleXCallback);
+router.get("/x/stats", authMiddleware, getXStats);
+router.delete("/x/disconnect", authMiddleware, disconnectX);
+
+router.get("/linkedin/connect-url", authMiddleware, getLinkedinConnectUrl);
+router.get("/linkedin/callback", handleLinkedinCallback);
+router.get("/linkedin/stats", authMiddleware, getLinkedinStats);
+router.delete("/linkedin/disconnect", authMiddleware, disconnectLinkedin);
+
+// ─── PART 2: KYC & Payout Integration ───────────────────────────────────────
+router.get("/kyc", authMiddleware, getKycController);
+router.post("/kyc/submit", authMiddleware, submitKycController);
+
+router.get("/payouts/account", authMiddleware, getPayoutAccountController);
+router.post("/payouts/account", authMiddleware, setupPayoutAccountController);
+router.get("/payouts/balance", authMiddleware, getWalletBalanceController);
+router.post("/payouts/withdraw", authMiddleware, withdrawController);
+router.get("/payouts/history", authMiddleware, getPayoutHistoryController);
+
+// ─── PART 3: Referral Engine & Ledger ────────────────────────────────────────
+router.get("/referrals/summary", authMiddleware, getReferralSummaryController);
+router.get("/referrals/ledger", authMiddleware, getReferralsLedgerController);
+
 router.post("/full-onboarding", authMiddleware, saveFullOnboarding);
 router.post("/profile-views", profileViewerAuth, recordProfileView);
 router.post("/logout", authMiddleware, logout);

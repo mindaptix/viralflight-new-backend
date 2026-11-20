@@ -1,7 +1,7 @@
 import twilio from "twilio";
 
 import { env } from "../../../shared/config/env.js";
-import { TooManyRequestsError } from "../../../shared/errors/AppError.js";
+import { AppError, TooManyRequestsError } from "../../../shared/errors/AppError.js";
 import { normalizeMobile } from "../../../utils/mobileUtils.js";
 
 const isTestMobile = (mobile) => {
@@ -21,7 +21,7 @@ export class TwilioOtpService {
     }
   }
 
-  async sendOtp(mobile) {
+  async sendOtp(mobile, channel = "sms") {
     if (isTestMobile(mobile)) {
       return true;
     }
@@ -30,17 +30,30 @@ export class TwilioOtpService {
       throw new Error("Twilio Verify service is not configured");
     }
 
+    const selectedChannel =
+      String(channel || "").trim().toLowerCase() === "whatsapp"
+        ? "whatsapp"
+        : "sms";
+
     try {
       await this.client.verify.v2
         .services(env.twilioVerifyServiceSid)
         .verifications.create({
           to: mobile,
-          channel: "sms",
+          channel: selectedChannel,
         });
     } catch (error) {
       if (error.status === 429 || error.code === 20429) {
         throw new TooManyRequestsError(
           "Too many OTP requests. Please wait a few minutes and try again."
+        );
+      }
+      if (error.code === 21608) {
+        const targetDesc = selectedChannel === "whatsapp" ? "WhatsApp" : "SMS";
+        throw new AppError(
+          `Unable to send ${targetDesc} to unverified number (${mobile}). For Twilio trial/unregistered accounts, you must verify this number in the Twilio Console (Caller IDs) or approve your Primary Compliance Profile.`,
+          403,
+          { code: "TWILIO_UNVERIFIED_NUMBER", twilioCode: 21608 }
         );
       }
       throw error;

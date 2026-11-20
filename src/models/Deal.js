@@ -143,6 +143,23 @@ const dealSchema = new mongoose.Schema(
 dealSchema.index({ influencerUserId: 1, status: 1, createdAt: -1 });
 dealSchema.index({ brandUserId: 1, status: 1 });
 
+dealSchema.post("save", async function (doc, next) {
+  if (doc.status === "completed") {
+    try {
+      const { handleDealCompletionReward } = await import(
+        "../application/influencer/ReferralService.js"
+      );
+      await handleDealCompletionReward({ deal: doc });
+    } catch (err) {
+      console.warn(
+        "[Deal] Error in handleDealCompletionReward hook:",
+        err.message
+      );
+    }
+  }
+  if (typeof next === "function") next();
+});
+
 const Deal = mongoose.models.Deal || mongoose.model("Deal", dealSchema, "deals");
 
 export { milestoneSchema };

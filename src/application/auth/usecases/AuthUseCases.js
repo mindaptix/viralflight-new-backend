@@ -7,6 +7,7 @@ import {
 } from "../../../shared/errors/AppError.js";
 import { UseCase } from "../../../shared/usecase/UseCase.js";
 import { normalizeMobile } from "../../../utils/mobileUtils.js";
+import { recordRegistrationReferral } from "../../influencer/ReferralService.js";
 
 const getDashboardPath = (role) => `/dashboard/${role}`;
 const getOnboardingPath = (role) => `/onboarding/${role}`;
@@ -31,9 +32,23 @@ export class SendOtpUseCase extends UseCase {
     this.profileRepository = profileRepository;
   }
 
-  async execute({ mobile: rawMobile, phone, phoneNumber, role: rawRole }) {
+  async execute({
+    mobile: rawMobile,
+    phone,
+    phoneNumber,
+    role: rawRole,
+    channel,
+    method,
+    type,
+    otpChannel,
+  }) {
     const inputMobile = rawMobile || phone || phoneNumber;
     const mobile = normalizeMobile(inputMobile);
+    const requestedChannel = channel || method || type || otpChannel || "sms";
+    const selectedChannel =
+      String(requestedChannel).trim().toLowerCase() === "whatsapp"
+        ? "whatsapp"
+        : "sms";
 
     if (!mobile) {
       throw new ValidationError(
@@ -66,7 +81,7 @@ export class SendOtpUseCase extends UseCase {
     }
 
     if (!isTest) {
-      await this.otpService.sendOtp(mobile);
+      await this.otpService.sendOtp(mobile, selectedChannel);
     }
 
     await this.userRepository.upsertOtpRequest({
@@ -83,9 +98,10 @@ export class SendOtpUseCase extends UseCase {
     });
 
     return {
-      message: "OTP sent successfully",
+      message: `OTP sent successfully via ${selectedChannel === "whatsapp" ? "WhatsApp" : "SMS"}`,
       selectedRole: role,
       mobile,
+      channel: selectedChannel,
     };
   }
 }
@@ -99,7 +115,7 @@ export class VerifyOtpUseCase extends UseCase {
     this.otpService = otpService;
   }
 
-  async execute({ mobile: rawMobile, phone, phoneNumber, otp, role }) {
+  async execute({ mobile: rawMobile, phone, phoneNumber, otp, role, referralCode }) {
     const inputMobile = rawMobile || phone || phoneNumber;
     const mobile = normalizeMobile(inputMobile);
     const isTest = isTestMobile(mobile);
@@ -159,6 +175,17 @@ export class VerifyOtpUseCase extends UseCase {
       user.isProfileComplete = true;
     }
     await this.userRepository.save(user);
+
+    if (referralCode && !user.referredBy) {
+      try {
+        await recordRegistrationReferral({
+          newUser: user,
+          referralCode,
+        });
+      } catch (err) {
+        console.warn("[Auth] Error attributing referral code:", err.message);
+      }
+    }
 
     const profile = await this.profileRepository.ensureRoleProfile(user, mobile);
 

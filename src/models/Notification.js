@@ -12,6 +12,9 @@ const NOTIFICATION_TYPES = [
   "connection",
   "invite_accepted",
   "invite_declined",
+  "referral_reward",
+  "payout",
+  "kyc",
 ];
 
 const notificationSchema = new mongoose.Schema(

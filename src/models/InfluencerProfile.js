@@ -260,6 +260,83 @@ const instagramConnectionSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const xConnectionSchema = new mongoose.Schema(
+  {
+    handle: { type: String, trim: true },
+    followersCount: { type: Number, min: 0, default: 0 },
+    followingCount: { type: Number, min: 0, default: 0 },
+    tweetCount: { type: Number, min: 0, default: 0 },
+    profileImageUrl: { type: String, trim: true },
+    isConnected: { type: Boolean, default: false },
+    lastSyncedAt: { type: Date },
+    connectedAt: { type: Date },
+  },
+  { _id: false }
+);
+
+const linkedinConnectionSchema = new mongoose.Schema(
+  {
+    handle: { type: String, trim: true },
+    name: { type: String, trim: true },
+    profilePictureUrl: { type: String, trim: true },
+    email: { type: String, trim: true },
+    isConnected: { type: Boolean, default: false },
+    lastSyncedAt: { type: Date },
+    connectedAt: { type: Date },
+  },
+  { _id: false }
+);
+
+const kycSchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ["not_submitted", "pending", "verified", "rejected"],
+      default: "not_submitted",
+      index: true,
+    },
+    panNumber: { type: String, trim: true },
+    panName: { type: String, trim: true },
+    dob: { type: String, trim: true },
+    gstNumber: { type: String, trim: true },
+    rejectionReason: { type: String, default: null },
+    verifiedAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
+const bankAccountSchema = new mongoose.Schema(
+  {
+    accountNumber: { type: String, trim: true },
+    accountNumberMasked: { type: String, trim: true },
+    ifsc: { type: String, trim: true },
+    bankName: { type: String, trim: true },
+    beneficiaryName: { type: String, trim: true },
+    isVerified: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
+const payoutAccountSchema = new mongoose.Schema(
+  {
+    bankAccount: { type: bankAccountSchema, default: null },
+    vpa: { type: String, trim: true, default: null },
+    contactId: { type: String, trim: true },
+    fundAccountId: { type: String, trim: true },
+  },
+  { _id: false }
+);
+
+const walletSchema = new mongoose.Schema(
+  {
+    availableBalance: { type: Number, default: 0, min: 0 },
+    pendingClearance: { type: Number, default: 0, min: 0 },
+    lifetimeEarnings: { type: Number, default: 0, min: 0 },
+    currency: { type: String, default: "INR", trim: true, uppercase: true },
+  },
+  { _id: false }
+);
+
 const influencerProfileSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true },
@@ -287,6 +364,12 @@ const influencerProfileSchema = new mongoose.Schema(
 
     platforms: { type: [platformSchema], default: [] },
     instagram: { type: instagramConnectionSchema, default: () => ({}) },
+    x: { type: xConnectionSchema, default: () => ({}) },
+    linkedin: { type: linkedinConnectionSchema, default: () => ({}) },
+    referralCode: { type: String, trim: true, uppercase: true, index: true, sparse: true },
+    kyc: { type: kycSchema, default: () => ({ status: "not_submitted" }) },
+    payoutAccount: { type: payoutAccountSchema, default: () => ({}) },
+    wallet: { type: walletSchema, default: () => ({ availableBalance: 0, pendingClearance: 0, lifetimeEarnings: 0, currency: "INR" }) },
 
     contentCategories: {
       type: [{ type: String, enum: CONTENT_CATEGORIES, trim: true }],

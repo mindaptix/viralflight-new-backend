@@ -10,6 +10,12 @@ import {
   exchangeCodeAndSync as exchangeYoutubeCodeAndSync,
   syncWithStoredToken as youtubeSyncWithStoredToken,
 } from "../../infrastructure/external/youtube/YoutubeOAuthService.js";
+import {
+  exchangeCodeAndSync as exchangeXCodeAndSync,
+} from "../../infrastructure/external/x/XOAuthService.js";
+import {
+  exchangeCodeAndSync as exchangeLinkedinCodeAndSync,
+} from "../../infrastructure/external/linkedin/LinkedinOAuthService.js";
 import { formatFollowersDisplay } from "../../shared/utils/followerFormat.js";
 import { getOrCreateRoleProfile } from "../../utils/profileControllerUtils.js";
 
@@ -117,6 +123,52 @@ const PLATFORM_LABELS = {
   instagram: "Instagram",
   facebook: "Facebook",
   youtube: "YouTube",
+  x: "X (Twitter)",
+  twitter: "X (Twitter)",
+  linkedin: "LinkedIn",
+};
+
+const buildXResponse = (connection) => {
+  if (!connection?.isConnected) {
+    return {
+      isConnected: false,
+      handle: "",
+      followers: 0,
+      posts: 0,
+      profilePictureUrl: "",
+      lastSyncedAt: null,
+    };
+  }
+
+  return {
+    isConnected: true,
+    handle: connection.handle || "",
+    followers: connection.followers ?? 0,
+    posts: connection.tweetCount ?? connection.mediaCount ?? 0,
+    profilePictureUrl: connection.profilePictureUrl || "",
+    lastSyncedAt: connection.lastSyncedAt || null,
+  };
+};
+
+const buildLinkedinResponse = (connection) => {
+  if (!connection?.isConnected) {
+    return {
+      isConnected: false,
+      handle: "",
+      followers: 0,
+      profilePictureUrl: "",
+      lastSyncedAt: null,
+    };
+  }
+
+  return {
+    isConnected: true,
+    handle: connection.handle || "",
+    name: connection.pageName || connection.handle || "",
+    followers: connection.followers ?? 0,
+    profilePictureUrl: connection.profilePictureUrl || "",
+    lastSyncedAt: connection.lastSyncedAt || null,
+  };
 };
 
 const buildYoutubeResponse = (connection) => {
@@ -150,6 +202,9 @@ const buildYoutubeResponse = (connection) => {
 const buildPlatformResponse = (platform, connection) => {
   if (platform === "instagram") return buildInstagramResponse(connection);
   if (platform === "facebook") return buildFacebookResponse(connection);
+  if (platform === "youtube") return buildYoutubeResponse(connection);
+  if (platform === "x" || platform === "twitter") return buildXResponse(connection);
+  if (platform === "linkedin") return buildLinkedinResponse(connection);
   return buildYoutubeResponse(connection);
 };
 
@@ -272,6 +327,69 @@ const updateInfluencerProfileFromConnection = async (user, platform, syncData) =
     }
   }
 
+  if (platform === "x" || platform === "twitter") {
+    profile.x = {
+      handle: syncData.handle,
+      followersCount: syncData.followers_count ?? syncData.followers ?? 0,
+      followingCount: syncData.following_count ?? 0,
+      tweetCount: syncData.tweet_count ?? syncData.mediaCount ?? 0,
+      profileImageUrl: syncData.profile_image_url ?? syncData.profilePictureUrl ?? "",
+      isConnected: true,
+      lastSyncedAt: new Date(),
+      connectedAt: profile.x?.connectedAt || new Date(),
+    };
+
+    const platformIndex = profile.platforms.findIndex(
+      (item) => item.platform === "twitter" || item.platform === "x"
+    );
+    const platformData = {
+      platform: "twitter",
+      username: syncData.handle,
+      followers: syncData.followers_count ?? syncData.followers ?? 0,
+      engagement: syncData.engagementRate ?? 0,
+    };
+
+    if (platformIndex >= 0) {
+      profile.platforms[platformIndex] = {
+        ...profile.platforms[platformIndex].toObject?.(),
+        ...platformData,
+      };
+    } else {
+      profile.platforms.push(platformData);
+    }
+  }
+
+  if (platform === "linkedin") {
+    profile.linkedin = {
+      handle: syncData.handle,
+      name: syncData.name,
+      email: syncData.email,
+      profilePictureUrl: syncData.profilePictureUrl || "",
+      isConnected: true,
+      lastSyncedAt: new Date(),
+      connectedAt: profile.linkedin?.connectedAt || new Date(),
+    };
+
+    const platformIndex = profile.platforms.findIndex(
+      (item) => item.platform === "linkedin"
+    );
+    const platformData = {
+      platform: "linkedin",
+      username: syncData.handle,
+      followers: syncData.followers ?? 0,
+      engagement: syncData.engagementRate ?? 0,
+    };
+
+    if (platformIndex >= 0) {
+      profile.platforms[platformIndex] = {
+        ...profile.platforms[platformIndex].toObject?.(),
+        ...platformData,
+      };
+    } else {
+      profile.platforms.push(platformData);
+    }
+  }
+
   await profile.save();
   return profile;
 };
@@ -283,14 +401,16 @@ const upsertConnection = async (userId, platform, syncData, tokenData) => {
     platform,
     platformUserId: syncData.platformUserId,
     handle: syncData.handle,
-    followers: syncData.followers,
-    follows: syncData.follows,
-    mediaCount: syncData.mediaCount,
+    followers: syncData.followers ?? syncData.followers_count ?? 0,
+    follows: syncData.follows ?? syncData.following_count ?? 0,
+    followingCount: syncData.following_count ?? syncData.follows ?? 0,
+    tweetCount: syncData.tweet_count ?? 0,
+    mediaCount: syncData.mediaCount ?? syncData.tweet_count ?? 0,
     views: syncData.views,
     videoCount: syncData.videoCount,
     likes: syncData.likes,
     engagementRate: syncData.engagementRate,
-    profilePictureUrl: syncData.profilePictureUrl,
+    profilePictureUrl: syncData.profilePictureUrl || syncData.profile_image_url,
     accountType: syncData.accountType,
     pageName: syncData.pageName,
     facebookPageId: syncData.facebookPageId,
@@ -319,7 +439,7 @@ const upsertConnection = async (userId, platform, syncData, tokenData) => {
   ).exec();
 };
 
-const connectFromOAuth = async ({ user, platform, code }) => {
+const connectFromOAuth = async ({ user, platform, code, state }) => {
   if (platform === "instagram") {
     console.log(`[SocialConnection:Instagram] 🔗 connectFromOAuth initiated for user: ${user?.userId}`);
   }
@@ -330,6 +450,10 @@ const connectFromOAuth = async ({ user, platform, code }) => {
   const syncData =
     platform === "youtube"
       ? await exchangeYoutubeCodeAndSync({ code })
+      : platform === "x" || platform === "twitter"
+      ? await exchangeXCodeAndSync({ code, state })
+      : platform === "linkedin"
+      ? await exchangeLinkedinCodeAndSync({ code, state })
       : await exchangeCodeAndSync({
           code,
           platform,
@@ -479,6 +603,27 @@ const getStats = async ({ user, platform, autoSyncIfStale = true }) => {
       });
     }
 
+    if ((platform === "x" || platform === "twitter") && profile?.x?.isConnected) {
+      return buildXResponse({
+        isConnected: true,
+        handle: profile.x.handle,
+        followers: profile.x.followersCount,
+        tweetCount: profile.x.tweetCount,
+        profilePictureUrl: profile.x.profileImageUrl,
+        lastSyncedAt: profile.x.lastSyncedAt,
+      });
+    }
+
+    if (platform === "linkedin" && profile?.linkedin?.isConnected) {
+      return buildLinkedinResponse({
+        isConnected: true,
+        handle: profile.linkedin.handle,
+        name: profile.linkedin.name,
+        profilePictureUrl: profile.linkedin.profilePictureUrl,
+        lastSyncedAt: profile.linkedin.lastSyncedAt,
+      });
+    }
+
     return buildPlatformResponse(platform, null);
   }
 
@@ -596,6 +741,12 @@ const disconnectConnection = async ({ user, platform }) => {
       await profile.save();
     } else if (platform === "youtube" && profile.youtube) {
       profile.youtube.isConnected = false;
+      await profile.save();
+    } else if ((platform === "x" || platform === "twitter") && profile.x) {
+      profile.x.isConnected = false;
+      await profile.save();
+    } else if (platform === "linkedin" && profile.linkedin) {
+      profile.linkedin.isConnected = false;
       await profile.save();
     }
   }
