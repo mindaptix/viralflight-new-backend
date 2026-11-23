@@ -57,6 +57,7 @@ import {
 import {
   getReferralSummaryController,
   getReferralsLedgerController,
+  validateReferralCodeController,
 } from "../controllers/influencerReferralController.js";
 import {
   getMediaKit,
@@ -139,6 +140,8 @@ router.get("/payouts/history", authMiddleware, getPayoutHistoryController);
 // ─── PART 3: Referral Engine & Ledger ────────────────────────────────────────
 router.get("/referrals/summary", authMiddleware, getReferralSummaryController);
 router.get("/referrals/ledger", authMiddleware, getReferralsLedgerController);
+router.post("/referrals/validate", validateReferralCodeController);
+router.get("/referrals/validate", validateReferralCodeController);
 
 router.post("/full-onboarding", authMiddleware, saveFullOnboarding);
 router.post("/profile-views", profileViewerAuth, recordProfileView);

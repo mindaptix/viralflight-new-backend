@@ -284,3 +284,40 @@ export const handleDealCompletionReward = async ({ deal }) => {
     creatorName,
   };
 };
+
+export const validateReferralCode = async (code, customFind = null) => {
+  if (!code || typeof code !== "string" || !code.trim()) {
+    return {
+      valid: false,
+      message: "Please enter a referral code",
+    };
+  }
+
+  const normalizedCode = code.trim().toUpperCase();
+
+  let referrerProfile = null;
+  if (customFind) {
+    referrerProfile = await customFind(normalizedCode);
+  } else if (mongoose.connection.readyState === 1) {
+    referrerProfile = await InfluencerProfile.findOne({
+      referralCode: normalizedCode,
+    })
+      .select("name userId")
+      .lean();
+  }
+
+  if (!referrerProfile) {
+    return {
+      valid: false,
+      message: `Invalid referral code '${normalizedCode}'. Please check and try again.`,
+    };
+  }
+
+  return {
+    valid: true,
+    message: "Referral code applied successfully!",
+    referralCode: normalizedCode,
+    referrerName: referrerProfile.name || "Creator",
+  };
+};
+

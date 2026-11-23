@@ -9,6 +9,7 @@ import {
   showDataDeletionInstructions,
   showPrivacyPolicy,
 } from "../controllers/authController.js";
+import { validateReferralCodeController } from "../controllers/influencerReferralController.js";
 import { requireRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -16,6 +17,9 @@ const requireAuth = requireRoles(["agency", "influencer", "brand"]);
 
 router.post("/send-otp", sendOtp);
 router.post("/verify-otp", verifyOtp);
+router.post("/validate-referral", validateReferralCodeController);
+router.get("/validate-referral", validateReferralCodeController);
+router.post("/apply-referral", validateReferralCodeController);
 router.post("/refresh-token", refreshToken);
 router.get("/privacy-policy", showPrivacyPolicy);
 router.get("/data-deletion", showDataDeletionInstructions);
