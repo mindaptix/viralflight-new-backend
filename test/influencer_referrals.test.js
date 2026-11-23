@@ -17,17 +17,24 @@ test("Referral code generation fallback with empty name", async () => {
   assert.ok(code.startsWith("CREATOR"));
 });
 
-test("validateReferralCode returns valid=false when code is empty or not found", async () => {
+test("validateReferralCode validates official platform code and rejects unknown code", async () => {
   const { validateReferralCode } = await import("../src/application/influencer/ReferralService.js");
 
   const emptyRes = await validateReferralCode("");
   assert.equal(emptyRes.valid, false);
 
-  const invalidRes = await validateReferralCode("VIRAL50");
+  // Official code VIRAL50 is always valid
+  const viralRes = await validateReferralCode("VIRAL50");
+  assert.equal(viralRes.valid, true);
+  assert.equal(viralRes.referralCode, "VIRAL50");
+  assert.equal(viralRes.referrerName, "ViralFlight Official");
+
+  // Unknown code is invalid
+  const invalidRes = await validateReferralCode("UNKNOWN99");
   assert.equal(invalidRes.valid, false);
   assert.match(invalidRes.message, /invalid referral code/i);
 
-  // Test valid code with mock
+  // Test valid creator code with mock
   const validRes = await validateReferralCode("DEEKSHA77", async (code) => {
     return code === "DEEKSHA77" ? { name: "Deeksha Sharma", userId: "507f1f77bcf86cd799439001" } : null;
   });

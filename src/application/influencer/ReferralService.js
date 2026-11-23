@@ -92,6 +92,14 @@ export const recordRegistrationReferral = async ({
 
   const normalizedCode = String(referralCode).trim().toUpperCase();
 
+  // Official platform referral code
+  if (normalizedCode === "VIRAL50") {
+    await User.findByIdAndUpdate(newUser._id, {
+      referredBy: "VIRAL50",
+    });
+    return { platformCode: true, referralCode: "VIRAL50" };
+  }
+
   // Find referrer by their referral code
   const referrerProfile = await InfluencerProfile.findOne({
     referralCode: normalizedCode,
@@ -294,6 +302,16 @@ export const validateReferralCode = async (code, customFind = null) => {
   }
 
   const normalizedCode = code.trim().toUpperCase();
+
+  // Official platform referral code
+  if (normalizedCode === "VIRAL50") {
+    return {
+      valid: true,
+      message: "Referral code applied successfully!",
+      referralCode: "VIRAL50",
+      referrerName: "ViralFlight Official",
+    };
+  }
 
   let referrerProfile = null;
   if (customFind) {
