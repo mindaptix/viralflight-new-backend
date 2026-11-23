@@ -1,7 +1,7 @@
 import twilio from "twilio";
 
 import { env } from "../../../shared/config/env.js";
-import { AppError, TooManyRequestsError } from "../../../shared/errors/AppError.js";
+import { AppError, TooManyRequestsError, ValidationError } from "../../../shared/errors/AppError.js";
 import { normalizeMobile } from "../../../utils/mobileUtils.js";
 
 const isTestMobile = (mobile) => {
@@ -98,13 +98,25 @@ export class TwilioOtpService {
       throw new Error("Twilio Verify service is not configured");
     }
 
-    const result = await this.client.verify.v2
-      .services(env.twilioVerifyServiceSid)
-      .verificationChecks.create({
-        to: mobile,
-        code,
-      });
+    try {
+      const result = await this.client.verify.v2
+        .services(env.twilioVerifyServiceSid)
+        .verificationChecks.create({
+          to: mobile,
+          code,
+        });
 
-    return result.status === "approved";
+      return result.status === "approved";
+    } catch (error) {
+      if (error.status === 404 || error.code === 20404) {
+        console.warn(
+          `[TwilioOtpService] Verification check not found for ${mobile} (expired or already checked)`
+        );
+        throw new ValidationError(
+          "OTP has expired or was already used. Please request a new OTP."
+        );
+      }
+      throw error;
+    }
   }
 }

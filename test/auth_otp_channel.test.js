@@ -46,3 +46,44 @@ test("SendOtpUseCase passes whatsapp channel to otpService when selected", async
   assert.equal(sentChannel, "sms");
   assert.equal(resultSms.channel, "sms");
 });
+
+test("TwilioOtpService.verifyOtp throws friendly ValidationError when check is not found (404)", async () => {
+  const { env } = await import("../src/shared/config/env.js");
+  const originalSid = env.twilioVerifyServiceSid;
+  env.twilioVerifyServiceSid = "VA_test_sid";
+
+  const { TwilioOtpService } = await import("../src/infrastructure/external/otp/TwilioOtpService.js");
+  const service = new TwilioOtpService();
+
+  service.client = {
+    verify: {
+      v2: {
+        services: () => ({
+          verificationChecks: {
+            create: async () => {
+              const err = new Error("The requested resource was not found");
+              err.status = 404;
+              err.code = 20404;
+              throw err;
+            },
+          },
+        }),
+      },
+    },
+  };
+
+  try {
+    await assert.rejects(
+      async () => {
+        await service.verifyOtp("+917591033165", "798498");
+      },
+      (err) => {
+        assert.equal(err.name, "ValidationError");
+        assert.match(err.message, /expired or was already used/i);
+        return true;
+      }
+    );
+  } finally {
+    env.twilioVerifyServiceSid = originalSid;
+  }
+});
