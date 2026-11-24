@@ -48,6 +48,17 @@ test("chat can use connected Instagram handle for an older creator profile", () 
   );
 });
 
+test("chat can use a connected LinkedIn name for an older creator profile", () => {
+  assert.equal(
+    resolveParticipantDisplayName({
+      role: "influencer",
+      user: null,
+      profile: { linkedin: { name: "Ananya Sharma" } },
+    }),
+    "Ananya Sharma",
+  );
+});
+
 test("chat only shows Creator when no identity field exists", () => {
   assert.equal(
     resolveParticipantDisplayName({

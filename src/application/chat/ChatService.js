@@ -39,6 +39,7 @@ export const resolveParticipantDisplayName = ({ user, profile, role }) => {
     return (
       profile?.name?.trim() ||
       user?.displayName?.trim() ||
+      profile?.linkedin?.name?.trim() ||
       profile?.instagram?.handle?.trim() ||
       firstPlatformUsername(profile) ||
       "Creator"
