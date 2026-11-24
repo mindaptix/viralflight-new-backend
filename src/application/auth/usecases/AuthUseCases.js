@@ -152,6 +152,7 @@ export class VerifyOtpUseCase extends UseCase {
     }
 
     let user = await this.userRepository.findLatestByMobile(mobile, selectedRole);
+    const isFirstVerifiedLogin = !user?.lastLoginAt;
     if (!user && isTest) {
       user = await this.userRepository.upsertOtpRequest({
         mobile,
@@ -193,7 +194,7 @@ export class VerifyOtpUseCase extends UseCase {
     }
     await this.userRepository.save(user);
 
-    if (referralCode && !user.referredBy) {
+    if (referralCode && isFirstVerifiedLogin && !user.referredBy && !user.referralSourceCode) {
       try {
         await recordRegistrationReferral({
           newUser: user,

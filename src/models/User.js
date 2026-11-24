@@ -60,6 +60,13 @@ const userSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    referralSourceCode: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: null,
+      index: true,
+    },
   },
   { timestamps: true }
 );

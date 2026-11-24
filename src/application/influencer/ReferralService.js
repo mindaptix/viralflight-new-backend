@@ -95,7 +95,7 @@ export const recordRegistrationReferral = async ({
   // Official platform referral code
   if (normalizedCode === "VIRAL50") {
     await User.findByIdAndUpdate(newUser._id, {
-      referredBy: "VIRAL50",
+      referralSourceCode: "VIRAL50",
     });
     return { platformCode: true, referralCode: "VIRAL50" };
   }

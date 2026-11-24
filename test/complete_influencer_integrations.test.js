@@ -360,6 +360,22 @@ test("Referral Service: recordRegistrationReferral attributes referrer", async (
   assert.equal(upsertedLedger.isPaid, false);
 });
 
+test("Referral Service: official code uses a source field, not ObjectId attribution", async (t) => {
+  let updatedUserDoc;
+  t.mock.method(User, "findByIdAndUpdate", async (_id, update) => {
+    updatedUserDoc = update;
+  });
+
+  const result = await recordRegistrationReferral({
+    newUser: { _id: "507f1f77bcf86cd799439002" },
+    referralCode: "viral50",
+  });
+
+  assert.equal(updatedUserDoc.referralSourceCode, "VIRAL50");
+  assert.equal(updatedUserDoc.referredBy, undefined);
+  assert.equal(result.platformCode, true);
+});
+
 test("Referral Service: handleDealCompletionReward triggers reward credit and notification", async (t) => {
   const creatorUserId = "507f1f77bcf86cd799439002";
   const referrerUserId = "507f1f77bcf86cd799439001";

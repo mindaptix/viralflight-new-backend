@@ -568,7 +568,7 @@ export const finishProfile = async (req, res) => {
     if (req.body.referralCode) {
       try {
         const user = await User.findById(req.user.userId);
-        if (user && !user.referredBy) {
+        if (user && !user.referredBy && !user.referralSourceCode) {
           await recordRegistrationReferral({
             newUser: user,
             referralCode: req.body.referralCode,
@@ -709,7 +709,7 @@ export const saveFullOnboarding = async (req, res) => {
     if (req.body.referralCode) {
       try {
         const user = await User.findById(req.user.userId);
-        if (user && !user.referredBy) {
+        if (user && !user.referredBy && !user.referralSourceCode) {
           await recordRegistrationReferral({
             newUser: user,
             referralCode: req.body.referralCode,
