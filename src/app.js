@@ -40,6 +40,10 @@ app.get(["/privacy", "/privacy/"], (_req, res) => {
   res.sendFile(path.join(publicDir, "privacy.html"));
 });
 
+app.get(["/terms", "/terms/"], (_req, res) => {
+  res.sendFile(path.join(publicDir, "terms.html"));
+});
+
 app.use(express.static(publicDir));
 app.use("/uploads", express.static(uploadsRoot));
 
