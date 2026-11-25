@@ -44,6 +44,10 @@ app.get(["/terms", "/terms/"], (_req, res) => {
   res.sendFile(path.join(publicDir, "terms.html"));
 });
 
+app.get(["/about", "/about/"], (_req, res) => {
+  res.sendFile(path.join(publicDir, "about.html"));
+});
+
 app.use(express.static(publicDir));
 app.use("/uploads", express.static(uploadsRoot));
 
