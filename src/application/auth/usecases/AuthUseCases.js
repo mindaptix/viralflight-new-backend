@@ -7,7 +7,10 @@ import {
 } from "../../../shared/errors/AppError.js";
 import { UseCase } from "../../../shared/usecase/UseCase.js";
 import { normalizeMobile } from "../../../utils/mobileUtils.js";
-import { recordRegistrationReferral } from "../../influencer/ReferralService.js";
+import {
+  REFERRALS_ENABLED,
+  recordRegistrationReferral,
+} from "../../influencer/ReferralService.js";
 
 const getDashboardPath = (role) => `/dashboard/${role}`;
 const getOnboardingPath = (role) => `/onboarding/${role}`;
@@ -194,7 +197,13 @@ export class VerifyOtpUseCase extends UseCase {
     }
     await this.userRepository.save(user);
 
-    if (referralCode && isFirstVerifiedLogin && !user.referredBy && !user.referralSourceCode) {
+    if (
+      REFERRALS_ENABLED &&
+      referralCode &&
+      isFirstVerifiedLogin &&
+      !user.referredBy &&
+      !user.referralSourceCode
+    ) {
       try {
         await recordRegistrationReferral({
           newUser: user,

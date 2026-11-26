@@ -3,10 +3,21 @@ import { sendSuccess } from "../../../shared/http/respond.js";
 import {
   getReferralSummary,
   getReferralsLedger,
+  REFERRALS_ENABLED,
   validateReferralCode,
 } from "../../../application/influencer/ReferralService.js";
 
+const rejectWhenReferralsDisabled = (res) => {
+  if (REFERRALS_ENABLED) return false;
+  res.status(503).json({
+    success: false,
+    message: "The referral programme is temporarily unavailable.",
+  });
+  return true;
+};
+
 export const getReferralSummaryController = asyncHandler(async (req, res) => {
+  if (rejectWhenReferralsDisabled(res)) return;
   const result = await getReferralSummary({ user: req.user });
   sendSuccess(res, {
     message: "Referral summary retrieved successfully",
@@ -15,6 +26,7 @@ export const getReferralSummaryController = asyncHandler(async (req, res) => {
 });
 
 export const getReferralsLedgerController = asyncHandler(async (req, res) => {
+  if (rejectWhenReferralsDisabled(res)) return;
   const result = await getReferralsLedger({ user: req.user });
   sendSuccess(res, {
     message: "Referral ledger retrieved successfully",
@@ -23,6 +35,7 @@ export const getReferralsLedgerController = asyncHandler(async (req, res) => {
 });
 
 export const validateReferralCodeController = asyncHandler(async (req, res) => {
+  if (rejectWhenReferralsDisabled(res)) return;
   const code =
     req.body?.code ||
     req.body?.referralCode ||

@@ -1,7 +1,10 @@
 import InfluencerProfile from "../../../models/InfluencerProfile.js";
 import User from "../../../models/User.js";
 import ReferralLedger from "../../../models/ReferralLedger.js";
-import { recordRegistrationReferral } from "../../../application/influencer/ReferralService.js";
+import {
+  REFERRALS_ENABLED,
+  recordRegistrationReferral,
+} from "../../../application/influencer/ReferralService.js";
 import {
   getOnboardingSettings,
 } from "../../../infrastructure/cms/onboardingSettingsService.js";
@@ -565,7 +568,7 @@ export const finishProfile = async (req, res) => {
 
     await profile.save();
 
-    if (req.body.referralCode) {
+    if (REFERRALS_ENABLED && req.body.referralCode) {
       try {
         const user = await User.findById(req.user.userId);
         if (user && !user.referredBy && !user.referralSourceCode) {
@@ -580,12 +583,14 @@ export const finishProfile = async (req, res) => {
     }
 
     // Update referral status to profile_completed if user was referred
-    try {
-      await ReferralLedger.updateOne(
-        { referredUserId: req.user.userId, status: "registered" },
-        { $set: { status: "profile_completed" } }
-      );
-    } catch (_) {}
+    if (REFERRALS_ENABLED) {
+      try {
+        await ReferralLedger.updateOne(
+          { referredUserId: req.user.userId, status: "registered" },
+          { $set: { status: "profile_completed" } }
+        );
+      } catch (_) {}
+    }
 
     res.json({
       success: true,
@@ -706,7 +711,7 @@ export const saveFullOnboarding = async (req, res) => {
 
     await profile.save();
 
-    if (req.body.referralCode) {
+    if (REFERRALS_ENABLED && req.body.referralCode) {
       try {
         const user = await User.findById(req.user.userId);
         if (user && !user.referredBy && !user.referralSourceCode) {
@@ -721,12 +726,14 @@ export const saveFullOnboarding = async (req, res) => {
     }
 
     // Update referral status to profile_completed if user was referred
-    try {
-      await ReferralLedger.updateOne(
-        { referredUserId: req.user.userId, status: "registered" },
-        { $set: { status: "profile_completed" } }
-      );
-    } catch (_) {}
+    if (REFERRALS_ENABLED) {
+      try {
+        await ReferralLedger.updateOne(
+          { referredUserId: req.user.userId, status: "registered" },
+          { $set: { status: "profile_completed" } }
+        );
+      } catch (_) {}
+    }
 
     res.json({
       success: true,

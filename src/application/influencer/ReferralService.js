@@ -10,6 +10,11 @@ import { getOrCreateRoleProfile } from "../../utils/profileControllerUtils.js";
 const REWARD_PER_REFERRAL = 500;
 const SHARE_BASE_URL = process.env.SHARE_BASE_URL || "https://viralflight.in";
 
+// Referral programme is temporarily disabled. Keep the implementation below
+// intact so existing referral history is preserved and the feature can be
+// restored deliberately later.
+export const REFERRALS_ENABLED = false;
+
 const sanitizeNamePart = (name) => {
   if (!name || typeof name !== "string") return "CREATOR";
   const firstWord = name.trim().split(/\s+/)[0];
@@ -88,6 +93,7 @@ export const recordRegistrationReferral = async ({
   newUser,
   referralCode,
 }) => {
+  if (!REFERRALS_ENABLED) return null;
   if (!referralCode || !newUser?._id) return null;
 
   const normalizedCode = String(referralCode).trim().toUpperCase();
@@ -205,6 +211,7 @@ export const getReferralsLedger = async ({ user }) => {
  * - Create an in-app notification: "You earned ₹500 referral bonus for <Name>'s first completed collaboration!"
  */
 export const handleDealCompletionReward = async ({ deal }) => {
+  if (!REFERRALS_ENABLED) return null;
   if (!deal || deal.status !== "completed") return null;
 
   const creatorUserId = deal.influencerUserId;
@@ -294,6 +301,13 @@ export const handleDealCompletionReward = async ({ deal }) => {
 };
 
 export const validateReferralCode = async (code, customFind = null) => {
+  if (!REFERRALS_ENABLED) {
+    return {
+      valid: false,
+      message: "The referral programme is temporarily unavailable.",
+    };
+  }
+
   if (!code || typeof code !== "string" || !code.trim()) {
     return {
       valid: false,
