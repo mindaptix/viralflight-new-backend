@@ -21,8 +21,10 @@ import { getOrCreateRoleProfile } from "../../utils/profileControllerUtils.js";
 
 const STALE_SYNC_MS = 24 * 60 * 60 * 1000;
 
-const tokenSelectFields =
-  "+accessToken.iv +accessToken.tag +accessToken.value +refreshToken.iv +refreshToken.tag +refreshToken.value";
+// Both token containers are excluded by default at the schema level. Selecting
+// only their nested properties does not override the parent's `select: false`,
+// so syncs received an empty token object even after a successful OAuth flow.
+const tokenSelectFields = "+accessToken +refreshToken";
 
 const migrateLegacyInstagramConnection = async (userId) => {
   console.log(`[SocialConnection:Instagram] 🔄 Checking legacy Instagram connection migration for user: ${userId}`);

@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const encryptedTokenSchema = new mongoose.Schema(
   {
-    iv: { type: String, select: false },
-    tag: { type: String, select: false },
-    value: { type: String, select: false },
+    iv: { type: String },
+    tag: { type: String },
+    value: { type: String },
   },
   { _id: false }
 );
